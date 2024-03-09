@@ -6,19 +6,14 @@ load_dotenv()
 download_dir = os.getenv('DOWNLOAD_DIR')
 
 
-async def handle_dm_attachments(attachments, *gog):
-    # Handle up to two attachments
-    attachments = attachments[:2]
-    await download_attachments(attachments)
-
-
-async def download_attachments(attachments, *name) -> str:
+async def download_attachments(attachments, file_name=None) -> str:
     # TODO: Prematurely handle Directory missing error
-    if len(name) == 0:
-        name = str(uuid.uuid4())
+    if len(file_name) == 0:
+        file_name = str(uuid.uuid4())
     for attachment in attachments:
         file_type = attachment.filename.split(".")[-1]
-        file_path = f"{download_dir}/{name}.{file_type}"
-        with open(file_path, "x") as file:
-            await attachment.save(fp=file_path)
-    return name
+        file_path = f"{download_dir}/{file_name}.{file_type}"
+        file = open(file_path, "x")
+        await attachment.save(fp=file_path)
+        file.close()
+    return file_name

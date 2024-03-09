@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 from utils import download_attachments
-from utils import handle_dm_attachments
+from api import submissions
 
 # load environmental variables
 load_dotenv()
@@ -14,6 +14,9 @@ token = os.getenv('DISCORD_TOKEN')
 download_dir = os.getenv('DOWNLOAD_DIR')
 initial_extensions = ['commands.prefix',
                       'commands.encode']
+if not os.path.isdir(download_dir):
+    os.mkdir(download_dir)
+    print(f"Created {download_dir}")
 
 
 class Bot(commands.Bot):
@@ -44,9 +47,8 @@ async def on_message(message) -> None:
     await bot.process_commands(message)
     # Handle DMs
     # Maybe there's a better way to handle this
-    attachments = message.attachments
     if isinstance(message.channel, discord.DMChannel):
-        await handle_dm_attachments(attachments)
+        await submissions.handle_submissions(message)
 
 
 @bot.event
