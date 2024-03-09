@@ -1,18 +1,5 @@
 from discord.ext import commands
-import uuid
-from dotenv import load_dotenv
-import os
-
-
-load_dotenv()
-download_dir = os.getenv('DOWNLOAD_DIR')
-
-
-def download_attachments(attachments) -> str:
-    new_uuid = str(uuid.uuid4())
-    for attachment in attachments:
-        attachment.save(fp=f"{download_dir}/{new_uuid}")
-    return new_uuid
+from utils import download_attachments
 
 
 class Encode(commands.Cog):

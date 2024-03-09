@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
+from utils import download_attachments
+from utils import handle_dm_attachments
 
 # load environmental variables
 load_dotenv()
@@ -39,8 +41,12 @@ async def on_ready():
 
 @bot.event
 async def on_message(message) -> None:
-    print("hello\n")
     await bot.process_commands(message)
+    # Handle DMs
+    # Maybe there's a better way to handle this
+    attachments = message.attachments
+    if isinstance(message.channel, discord.DMChannel):
+        await handle_dm_attachments(attachments)
 
 
 @bot.event
