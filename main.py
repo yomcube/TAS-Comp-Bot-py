@@ -1,11 +1,9 @@
-import asyncio
 import sys
 import traceback
 import os
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
-from utils import download_attachments
 from api import submissions
 
 # load environmental variables
@@ -13,7 +11,8 @@ load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
 download_dir = os.getenv('DOWNLOAD_DIR')
 initial_extensions = ['commands.prefix',
-                      'commands.encode']
+                      'commands.encode',
+                      'commands.comp.submit']
 if not os.path.isdir(download_dir):
     os.mkdir(download_dir)
     print(f"Created {download_dir}")
