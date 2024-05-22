@@ -1,4 +1,4 @@
-from api.utils import download_attachments
+from utils import download_attachments
 
 
 async def handle_submissions(message):
