@@ -1,18 +1,5 @@
 import uuid
 import msgspec as ms
-import sqlite3
-
-def connect_tasks():
-    connection = sqlite3.connect("database/tasks.db")
-    cursor = connection.cursor()
-    cursor.execute("""CREATE TABLE tasks (
-                        task INTEGER, 
-                        year INTEGER, 
-                        is_active INTEGER
-                        )""")
-    connection.commit()
-    connection.close()
-
 
 async def download_attachments(attachments, file_name=None) -> str:
     # TODO: Prematurely handle Directory missing error
