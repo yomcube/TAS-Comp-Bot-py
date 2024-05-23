@@ -12,7 +12,7 @@ token = os.getenv('TOKEN')
 commands_ext = ['commands.dev.sync',
                 'commands.db.start-task',
                 'commands.db.submit',
-                'commands.db.status',
+                'commands.db.info',
                 'commands.fun.ping',
                 'commands.fun.slots',
                 'commands.fun.say',
