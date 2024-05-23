@@ -9,10 +9,16 @@ from discord.ext import commands
 load_dotenv()
 token = os.getenv('TOKEN')
 
+activity = discord.Game(name="Dolphin Emulator")
+
 commands_ext = ['commands.dev.sync',
                 'commands.db.start-task',
+                'commands.db.end-task',
+                'commands.db.edit-submissions',
                 'commands.db.submit',
-                'commands.db.status',
+                'commands.db.info',
+                'commands.misc.dm',
+                'commands.fun.connect4',
                 'commands.fun.ping',
                 'commands.fun.slots',
                 'commands.fun.say',
@@ -27,7 +33,8 @@ class Bot(commands.Bot):
         super().__init__(
             command_prefix='$',
             intents=discord.Intents.all(),
-            description='Python Discord bot for MKWii TAS Comp'
+            description='Python Discord bot for MKWii TAS Comp',
+            activity=activity
         )
 
     async def setup_hook(self):
