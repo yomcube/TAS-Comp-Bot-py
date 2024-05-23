@@ -3,8 +3,7 @@ import msgspec as ms
 import sqlite3
 
 def connect_tasks():
-    # TODO: Save table in database folder instead of root
-    connection = sqlite3.connect("tasks.db")
+    connection = sqlite3.connect("database/tasks.db")
     cursor = connection.cursor()
     cursor.execute("""CREATE TABLE tasks (
                         task INTEGER, 
@@ -22,7 +21,7 @@ async def download_attachments(attachments, file_name=None) -> str:
     for attachment in attachments:
         file_type = attachment.filename.split(".")[-1]
         file_path = f"database/{file_name}.{file_type}"
-        file = open(file_path, "x")
+        file = open(file_path, "w") # changed this from x to w, because as submitters, we can submit multiple times
         await attachment.save(fp=file_path)
         file.close()
     return file_name
