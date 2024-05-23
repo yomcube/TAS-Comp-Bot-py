@@ -8,7 +8,7 @@ class Ready(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        # creates tables if dont exist
+        # Database for tasks and submissions
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS tasks (
@@ -27,6 +27,17 @@ class Ready(commands.Cog):
                                 time TEXT,
                                 dq INTEGER
                                 )""") # dq is boolean: 0 or 1
+        connection.commit()
+        connection.close()
+        
+        
+        # Database for economy commands
+        connection = sqlite3.connect("database/economy.db")
+        cursor = connection.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS slots (
+                                username TEXT, 
+                                coins INTEGER
+                                )""")
         connection.commit()
         connection.close()
 
