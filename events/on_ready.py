@@ -25,9 +25,9 @@ class Ready(commands.Cog):
                                 name TEXT,
                                 id INTEGER, 
                                 url TEXT, 
-                                time TEXT,
+                                time FLOAT,
                                 dq INTEGER
-                                )""") # dq is boolean: 0 or 1
+                                )""") # dq is boolean: 0 or 1. Time is counted in SECONDS
         connection.commit()
         connection.close()
         
@@ -39,6 +39,32 @@ class Ready(commands.Cog):
                                 username TEXT, 
                                 coins INTEGER
                                 )""")
+        connection.commit()
+        connection.close()
+
+
+        # Database for settings
+        connection = sqlite3.connect("database/settings.db")
+        cursor = connection.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS submission_channel (
+                                        comp TEXT, 
+                                        id INTEGER
+                                        )""")
+                                        # comp refers to the competition: mkw, sm64, etc.
+        connection.commit()
+        connection.close()
+
+        # Database for users -> user (handle), id, display_name (used for submission list)
+        connection = sqlite3.connect("database/users.db")
+        cursor = connection.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS userbase (
+                                                user TEXT, 
+                                                id INTEGER,
+                                                display_name TEXT
+                                                )""")
+
+        # TODO: flag can_change_name; if it's 0, user is locked from changing their name
+
         connection.commit()
         connection.close()
 

@@ -1,5 +1,7 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
+import typing
 import random
 
 class Connect4(commands.Cog):
@@ -82,14 +84,34 @@ class Connect4(commands.Cog):
         else:
             await ctx.send(f'Column {col + 1} is full!')
 
+    #autocomplete
+    async def command_autocompletion(
+            interaction: discord.Interaction,
+<<<<<<< HEAD
+            current: str
+        ) -> typing.List[app_commands.Choice[str]]:
+            data = []
+            for choice in ["easy", "normal", "hard"]:
+=======
+            current: str,
+            mode: typing.Literal["easy", "normal", "hard"]
+        ) -> typing.List[app_commands.Choice[str]]:
+            data = []
+            for choice in mode:
+>>>>>>> ba2dfdb720e069a89fda978c9974818ccf16058e
+                if current.lower() in choice.lower():
+                    data.append(app_commands.Choice(name=choice, value=choice))
+            return data
+            
     @commands.hybrid_command(name="connect4", description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!", with_app_command=True)
+    @app_commands.autocomplete(mode=command_autocompletion)
+<<<<<<< HEAD
     async def command(self, ctx, mode="easy"):
+=======
+    async def command(self, ctx, mode):
+>>>>>>> ba2dfdb720e069a89fda978c9974818ccf16058e
         self.__init__(self.bot)
         self.mode = mode.lower()
-
-        if self.mode not in ["easy", "normal", "hard"]:
-            await ctx.send(f'Invalid more. Choose easy, normal or hard')
-            return
 
         await ctx.send(f'Starting a new Connect 4 game in {mode.lower()} mode!')
         await ctx.send(self.print_board())

@@ -2,25 +2,107 @@ from utils import download_attachments
 import discord
 import sqlite3
 
+def get_submission_channel(connection, comp):
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
+    result = cursor.fetchone()
+
+    channel_id = result[1]
+    return channel_id
 
 def first_time_submission(connection, id):
     """Check if a certain user id has submitted to this competition already"""
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM submissions WHERE id = ?", (id,))
     result = cursor.fetchone()
-    return not (result)
+    return not result
+
+def new_competitor(connection, id):
+    """Checks if a competitor has EVER submitted (present and past tasks)."""
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM userbase WHERE id = ?", (id,))
+    result = cursor.fetchone()
+    return not result
+
+def getDisplayname(connection, id):
+    """Returns the display name of a certain user ID."""
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM userbase WHERE id = ?", (id,))
+    result = cursor.fetchone()
+    return result[2]
+
+def count_submissions(connection):
+    """Counts the number of submissions in the current task."""
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM submissions")
+    result = cursor.fetchall()
+    connection.close()
+
+    return len(result)
 
 
-async def handle_submissions(message, file, num, year):
-    attachments = message.attachments
+
+# old parameters: message, file, num, year
+async def handle_submissions(message, self):
+    #attachments = message.attachments
     # TODO: Detect which comp, to limit number of files
-    attachments = attachments[:2]
-    if file == "rkg":
-        file_name = f"Task{num}-{year}By{message.author.display_name}"
-        await download_attachments(attachments, file_name)
-    elif file == "rksys":
-        file_name = f"Task{num}-{year}By{message.author.display_name}_rksys"
-        await download_attachments(attachments, file_name)
+    #attachments = attachments[:2]
+    #if file == "rkg":
+     #   file_name = f"Task{num}-{year}By{message.author.display_name}"
+    #    await download_attachments(attachments, file_name)
+    #elif file == "rksys":
+    #    file_name = f"Task{num}-{year}By{message.author.display_name}_rksys"
+    #    await download_attachments(attachments, file_name)
+
+
+
+    # Checking if submitter has ever participated before
+    if new_competitor(sqlite3.connect("database/users.db"), message.author.id):
+        # adding him to the user database.
+
+        connection = sqlite3.connect("database/users.db")
+        cursor = connection.cursor()
+        cursor.execute(f"INSERT INTO userbase (user, id, display_name) VALUES (?, ?, ?)", (message.author.name, message.author.id, message.author.display_name))
+
+        connection.commit()
+        connection.close()
+
+    ####################################
+    # Adding submitter to the list
+    ####################################
+
+
+    submission_channel = get_submission_channel(sqlite3.connect("database/settings.db"), "mkw")
+    channel = self.bot.get_channel(submission_channel)
+
+
+    if not channel:
+        print("Could not find the channel.")
+        return
+
+    async for msg in channel.history(limit=1):
+        last_message = msg
+        break
+    else:
+        last_message = None
+
+    if last_message:
+        if last_message.author == self.bot.user:
+            # If the last message is sent by the bot, edit it
+            new_content = f"{last_message.content}\n{count_submissions(sqlite3.connect("database/tasks.db"))}. {getDisplayname(sqlite3.connect("database/users.db"), message.author.id)}"
+            await last_message.edit(content=new_content)
+
+        else: # there are no submission (brand-new task); send a message on first submission
+
+            # If the last message is not sent by the bot, send a new one -- this is the case for MKWTASComp server
+
+            await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(sqlite3.connect("database/users.db"), message.author.id)}")
+
+    else: # blank channel
+        # there are no submission (brand-new task); send a message on first submission
+        await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(sqlite3.connect("database/users.db"), message.author.id)}")
+
 
 
 async def handle_dms(message, self):
@@ -32,7 +114,7 @@ async def handle_dms(message, self):
 
 
         # this logs messages to a channel -> my private server for testing purposes
-        channel = self.bot.get_channel(1239709261634732103)
+        channel = self.bot.get_channel(1243651327226019890)
         attachments = message.attachments
         if len(attachments) > 0:
             filename = attachments[0].filename
@@ -41,7 +123,9 @@ async def handle_dms(message, self):
             await channel.send("Message from " + str(message.author.display_name) + ": " + message.content + " "
                                .join([attachment.url for attachment in message.attachments if message.attachments]))
 
-
+        #########################
+        # Recognizing submission
+        #########################
 
         # recognition of rkg submission
         if attachments and filename.endswith('.rkg'):
@@ -56,8 +140,8 @@ async def handle_dms(message, self):
 
             if current_task:
 
-                # rename file
-                await handle_submissions(message, "rkg", current_task[0], 2024)
+                # handle submission
+                await handle_submissions(message, self)
 
                 # Add first-time submission
                 if first_time_submission(connection, message.author.id):
