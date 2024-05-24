@@ -87,23 +87,20 @@ class Connect4(commands.Cog):
     #autocomplete
     async def command_autocompletion(
             interaction: discord.Interaction,
-            current: str
+            current: str,
+            mode: typing.Literal["easy", "normal", "hard"]
         ) -> typing.List[app_commands.Choice[str]]:
             data = []
-            for choice in ["easy", "normal", "hard"]:
+            for choice in mode:
                 if current.lower() in choice.lower():
                     data.append(app_commands.Choice(name=choice, value=choice))
             return data
             
     @commands.hybrid_command(name="connect4", description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!", with_app_command=True)
     @app_commands.autocomplete(mode=command_autocompletion)
-    async def command(self, ctx, mode="easy"):
+    async def command(self, ctx, mode):
         self.__init__(self.bot)
         self.mode = mode.lower()
-
-        if self.mode not in ["easy", "normal", "hard"]:
-            await ctx.send(f'Invalid more. Choose easy, normal or hard')
-            return
 
         await ctx.send(f'Starting a new Connect 4 game in {mode.lower()} mode!')
         await ctx.send(self.print_board())

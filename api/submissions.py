@@ -32,7 +32,7 @@ async def handle_dms(message, self):
 
 
         # this logs messages to a channel -> my private server for testing purposes
-        channel = self.bot.get_channel(1239709261634732103)
+        channel = self.bot.get_channel(1243651327226019890)
         attachments = message.attachments
         if len(attachments) > 0:
             filename = attachments[0].filename
