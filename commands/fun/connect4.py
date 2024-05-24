@@ -1,5 +1,7 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
+import typing
 import random
 
 class Connect4(commands.Cog):
@@ -82,7 +84,19 @@ class Connect4(commands.Cog):
         else:
             await ctx.send(f'Column {col + 1} is full!')
 
+    #autocomplete
+    async def command_autocompletion(
+            interaction: discord.Interaction,
+            current: str
+        ) -> typing.List[app_commands.Choice[str]]:
+            data = []
+            for choice in ["easy", "normal", "hard"]:
+                if current.lower() in choice.lower():
+                    data.append(app_commands.Choice(name=choice, value=choice))
+            return data
+            
     @commands.hybrid_command(name="connect4", description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!", with_app_command=True)
+    @app_commands.autocomplete(mode=command_autocompletion)
     async def command(self, ctx, mode="easy"):
         self.__init__(self.bot)
         self.mode = mode.lower()
