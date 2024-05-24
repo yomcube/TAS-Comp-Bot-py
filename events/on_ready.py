@@ -22,7 +22,8 @@ class Ready(commands.Cog):
                                         # multiple_tracks and speed_task are booleans: 0 or 1
         cursor.execute("""CREATE TABLE IF NOT EXISTS submissions (
                                 task INTEGER,
-                                name TEXT, 
+                                name TEXT,
+                                id INTEGER, 
                                 url TEXT, 
                                 time TEXT,
                                 dq INTEGER
