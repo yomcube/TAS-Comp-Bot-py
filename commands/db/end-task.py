@@ -15,19 +15,20 @@ class End(commands.Cog):
         # Is a task running?
         cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
         currently_running = cursor.fetchone()
-        
-        number = currently_running[0]
-        year = currently_running[1]
+
 
         if currently_running:
+            number = currently_running[0]
+            year = currently_running[1]
+
             cursor.execute("UPDATE tasks SET is_active = 0 WHERE is_active = 1")
 
             connection.commit()  # actually update the database
             connection.close()
             
-            await ctx.send(f"Sucesfully ended Task {number}-{year}.")
+            await ctx.send(f"Sucesfully ended Task {number}, {year}.")
         else:
-            await ctx.send(f"Current Task {number}-{year} is already finished.")
+            await ctx.send(f"There is already no ongoing task!")
 
 
 async def setup(bot) -> None:
