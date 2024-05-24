@@ -17,10 +17,16 @@ class Start(commands.Cog):
         currently_running = cursor.fetchone()
 
         if not currently_running:
+            # Mark task as ongoing
             cursor.execute(f"INSERT INTO tasks VALUES ({number}, {year}, 1, {collab}, {multiple_tracks}, {speed_task})")
 
-            connection.commit()  # actually update the database
+            # Clear submissions from previous task
+            cursor.execute("DELETE FROM submissions")
+
+            # Commit changes to both tables affected
+            connection.commit()
             connection.close()
+
 
             await ctx.send(f"Starting task {number}, {year}.")
 

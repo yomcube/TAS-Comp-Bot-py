@@ -20,7 +20,7 @@ class End(commands.Cog):
         year = currently_running[1]
 
         if currently_running:
-            cursor.execute("EDIT tasks SET is_active = 0 WHERE is_active = 1")
+            cursor.execute("UPDATE tasks SET is_active = 0 WHERE is_active = 1")
 
             connection.commit()  # actually update the database
             connection.close()
