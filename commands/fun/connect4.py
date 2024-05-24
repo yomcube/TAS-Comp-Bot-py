@@ -70,54 +70,61 @@ class Connect4(commands.Cog):
             self.drop_piece(row, col, piece)
             if self.winning_move(piece):
                 self.game_over = True
-                await ctx.send(self.print_board())
+                await self.send_message(ctx, self.print_board())
                 if piece == 'X':
-                    await ctx.send('You won!')
+                    await self.send_message(ctx, 'You won!')
                 else:
-                    await ctx.send('I won! Better luck next time!')
+                    await self.send_message(ctx, 'I won! Better luck next time!')
             elif all(self.board[0][c] != ' ' for c in range(self.columns)):
                 self.game_over = True
-                await ctx.send(self.print_board())
-                await ctx.send('The game is a tie!')
+                await self.send_message(ctx, self.print_board())
+                await self.send_message(ctx, 'The game is a tie!')
             else:
                 self.current_player = 'O' if self.current_player == 'X' else 'X'
         else:
-            await ctx.send(f'Column {col + 1} is full!')
+            await self.send_message(ctx, f'Column {col + 1} is full!')
 
-    #autocomplete
+    # autocomplete
     async def command_autocompletion(
-            interaction: discord.Interaction,
-            current: str,
-            mode: typing.Literal["easy", "normal", "hard"]
-        ) -> typing.List[app_commands.Choice[str]]:
-            data = []
-            for choice in mode:
-                if current.lower() in choice.lower():
-                    data.append(app_commands.Choice(name=choice, value=choice))
-            return data
-            
-    @commands.hybrid_command(name="connect4", description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!", with_app_command=True)
+        self, 
+        interaction: discord.Interaction, 
+        current: str
+    ) -> typing.List[app_commands.Choice[str]]:
+        modes = ["easy", "normal", "hard"]
+        return [
+            app_commands.Choice(name=mode, value=mode)
+            for mode in modes if current.lower() in mode.lower()
+        ]
+
+    @commands.hybrid_command(
+        name="connect4", 
+        description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!", 
+        with_app_command=True
+    )
     @app_commands.autocomplete(mode=command_autocompletion)
-    async def command(self, ctx, mode):
-        self.__init__(self.bot)
+    async def command(self, ctx: commands.Context, mode: str = "easy"):
         self.mode = mode.lower()
 
-        await ctx.send(f'Starting a new Connect 4 game in {mode.lower()} mode!')
-        await ctx.send(self.print_board())
-        await ctx.send(f'{ctx.author.mention}, it\'s your turn!')
+        if self.mode not in ["easy", "normal", "hard"]:
+            await self.send_message(ctx, f'Invalid mode. Choose easy, normal, or hard')
+            return
+
+        await self.send_message(ctx, f'Starting a new Connect 4 game in {mode.lower()} mode!')
+        await self.send_message(ctx, self.print_board())
+        await self.send_message(ctx, f'{ctx.author.mention}, it\'s your turn!')
 
         def check(m):
             return m.author == ctx.author and m.content.isdigit() and 1 <= int(m.content) <= self.columns
 
         while not self.game_over:
             if self.current_player == 'X':
-                await ctx.send(f'{ctx.author.mention}, choose a column (1-{self.columns}):')
+                await self.send_message(ctx, f'{ctx.author.mention}, choose a column (1-{self.columns}):')
                 try:
                     msg = await self.bot.wait_for('message', check=check, timeout=60)
                     col = int(msg.content) - 1
                     await self.make_move(ctx, col, self.current_player)
                 except TimeoutError:
-                    await ctx.send('You took too long to respond! Game over.')
+                    await self.send_message(ctx, 'You took too long to respond! Game over.')
                     self.game_over = True
             else:
                 if self.mode == "easy":
@@ -127,11 +134,20 @@ class Connect4(commands.Cog):
                 else:
                     col = self.minimax(7, -float('inf'), float('inf'), True)[0]
 
-                await ctx.send(f'Bot chooses column {col + 1}')
+                await self.send_message(ctx, f'Bot chooses column {col + 1}')
                 await self.make_move(ctx, col, self.current_player)
 
             if not self.game_over:
-                await ctx.send(self.print_board())
+                await self.send_message(ctx, self.print_board())
+
+    async def send_message(self, ctx, message):
+        if isinstance(ctx, commands.Context):
+            await ctx.send(message)
+        else:
+            if ctx.response.is_done():
+                await ctx.followup.send(message)
+            else:
+                await ctx.response.send_message(message)
 
     def minimax(self, depth, alpha, beta, maximizing_player):
         valid_locations = [c for c in range(self.columns) if self.is_valid_location(c)]
