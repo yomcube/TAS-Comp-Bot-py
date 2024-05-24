@@ -11,6 +11,7 @@ class Prefix(commands.Cog):
         print(new_prefix)
         await ctx.message.channel.send(new_prefix)
     # TODO use JSON file to store prefixes per guild
+    # On second thought, we could streamline all the data with sqlite3, since that's what we are using here
 
 
 async def setup(bot) -> None:

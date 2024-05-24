@@ -11,9 +11,14 @@ class Message(commands.Cog):
     async def on_message(self, message):
         # Handle DMs
         # Maybe there's a better way to handle this
+        #TODO: Move this all away; it's possible to do this via removing the prefix in dms
+        #TODO: submissions.py could be used for this. It's nice to have it out of on_message - Crackhex
+
         if isinstance(message.channel, discord.DMChannel) and message.author != self.bot.user:
             await self.bot.process_commands(message)
-            
+
+
+            #TODO: move to file for sqlite functions
             connection = sqlite3.connect("database/tasks.db")
             cursor = connection.cursor()
 
@@ -23,8 +28,9 @@ class Message(commands.Cog):
             # this logs messages to a channel -> my private server for testing purposes
             channel = self.bot.get_channel(1233075197561536553)
             attachments = message.attachments
-            filename = attachments[0].filename
-            url = attachments[0].url
+            if len(attachments) > 0:
+                filename = attachments[0].filename
+                url = attachments[0].url
             if channel:
                 await channel.send(
                     f"Message from {message.author.display_name}:\n{message.content}".join(

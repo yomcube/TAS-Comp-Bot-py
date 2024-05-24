@@ -28,10 +28,18 @@ events_ext = ['events.on_ready',
               'events.errors',
               'events.command_completion',]
 
+def get_prefix(bot, message):
+    #TODO:  code to get prefix
+    guild = message.guild
+    if guild is None:
+        return "" # returns no prefix if messaged in DMs; avoids on_message handling directly.
+    else:
+        return "$"
+
 class Bot(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix='$',
+            command_prefix=get_prefix,
             intents=discord.Intents.all(),
             description='Python Discord bot for MKWii TAS Comp',
             activity=activity
