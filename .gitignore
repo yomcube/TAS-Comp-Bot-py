@@ -1,6 +1,6 @@
 .env
-*__pycache__/
-*.rkg
-*.dat
-*.db
+**/__pycache__/
+.rkg
+.dat
+.db
 *.pyc
