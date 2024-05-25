@@ -66,6 +66,7 @@ async def handle_submissions(message, self):
     author_id = message.author.id
     author_dn = message.author.display_name
 
+
     # Checking if submitter has ever participated before
     if new_competitor(author_id):
         # adding him to the user database.
@@ -128,14 +129,14 @@ async def handle_submissions(message, self):
 
             # Add a new line only if it's a new user ID submitting
             if first_time_submission(author_id):
-                new_content = f"{last_message.content}\n{count_submissions()}. {new_display_name}"
+                new_content = f"{last_message.content}\n{count_submissions()}. {new_display_name} ||{author.mention}||)"
                 await last_message.edit(content=new_content)
         else:
             # If the last message is not sent by the bot, send a new one
-            await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)}")
+            await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)} ||{author.mention}||")
     else:
         # There are no submissions (brand-new task); send a message on the first submission
-        await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)}")
+        await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)} ||{author.mention}||")
 
 
 
