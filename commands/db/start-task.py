@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 import sqlite3
+from datetime import date
+from utils import is_task_currently_running
 
 
 class Start(commands.Cog):
@@ -8,15 +10,17 @@ class Start(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="start-task", description="Start a task", with_app_command=True)
-    async def command(self, ctx, number: int, year: int, collab: int = 0, multiple_tracks: int = 0, speed_task: int = 0):
-        connection = sqlite3.connect("database/tasks.db")
-        cursor = connection.cursor()
+    async def command(self, ctx, number: int, year: int=None, collab: int = 0, multiple_tracks: int = 0, speed_task: int = 0):
 
-        # Is a task running?
-        cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-        currently_running = cursor.fetchone()
 
-        if not currently_running:
+
+        if not year:
+            year = date.today().year
+
+        if not is_task_currently_running():
+            connection = sqlite3.connect("database/tasks.db")
+            cursor = connection.cursor()
+
             # Mark task as ongoing
             cursor.execute(f"INSERT INTO tasks VALUES ({number}, {year}, 1, {collab}, {multiple_tracks}, {speed_task})")
 
@@ -28,11 +32,11 @@ class Start(commands.Cog):
             connection.close()
 
 
-            await ctx.send(f"Starting task {number}, {year}.")
+            await ctx.send(f"Succesfully started **Task {number} - {year}**!")
 
         else:
             # if a task is already ongoing...
-            await ctx.send(f"ERROR: A task is already ongoing.")
+            await ctx.send(f"A task is already ongoing.\nPlease use `/end-task` to end the current task.")
             return
 
 

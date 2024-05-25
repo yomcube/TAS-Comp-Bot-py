@@ -25,6 +25,17 @@ async def check_json_guild(file, guild_id):     # TODO: Normalise file handling,
 
     return False
 
+def is_task_currently_running():
+    """Check if a task is currently running"""
+    connection = sqlite3.connect("database/tasks.db")
+    cursor = connection.cursor()
+
+    # Is a task running?
+    cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
+    currently_running = cursor.fetchone()
+    connection.close()
+    return currently_running
+
 def get_balance(username):
     connection = sqlite3.connect("database/economy.db")
     cursor = connection.cursor()

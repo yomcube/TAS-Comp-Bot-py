@@ -1,6 +1,7 @@
 from utils import download_attachments
 import discord
 import sqlite3
+from utils import is_task_currently_running
 
 def get_submission_channel(comp):
     connection = sqlite3.connect("database/settings.db")
@@ -28,7 +29,7 @@ def new_competitor(id):
     connection.close()
     return not result
 
-def getDisplayname(id):
+def get_display_name(id):
     """Returns the display name of a certain user ID."""
     connection = sqlite3.connect("database/users.db")
     cursor = connection.cursor()
@@ -66,7 +67,6 @@ async def handle_submissions(message, self):
     author_id = message.author.id
     author_dn = message.author.display_name
 
-
     # Checking if submitter has ever participated before
     if new_competitor(author_id):
         # adding him to the user database.
@@ -77,7 +77,9 @@ async def handle_submissions(message, self):
         connection.commit()
         connection.close()
 
-    # Adding submitter to the list
+    ##################################################
+    # Adding submission to submission list channel
+    ##################################################
     submission_channel = get_submission_channel("mkw")
     channel = self.bot.get_channel(submission_channel)
 
@@ -94,49 +96,19 @@ async def handle_submissions(message, self):
     if last_message:
         # Try to find an editable message by the bot
         if last_message.author == self.bot.user:
-            # Fetch the user data to check for display name update
-            connection = sqlite3.connect("database/users.db")
-            cursor = connection.cursor()
-            cursor.execute("SELECT display_name, needs_update FROM userbase WHERE id = ?", (author_id,))
-            user_data = cursor.fetchone()
-            connection.close()
-
-
-            if user_data:
-                new_display_name, needs_update = user_data
-
-                # Update the submission message if the display name has changed
-                if needs_update == 1:
-                    # Update the message content with the new display name
-                    #TODO: FIX, doesn't work for now. doesn't edit message
-                    content_lines = last_message.content.split('\n')
-                    updated_content_lines = []
-                    for line in content_lines:
-                        if str(author_id) in line:
-                            updated_content_lines.append(line.replace(getDisplayname(author_id), new_display_name))
-                        else:
-                            updated_content_lines.append(line)
-
-                    new_content = '\n'.join(updated_content_lines)
-                    await last_message.edit(content=new_content)
-
-                    # Reset the needs_update flag
-                    connection = sqlite3.connect("database/users.db")
-                    cursor = connection.cursor()
-                    cursor.execute("UPDATE userbase SET needs_update = 0 WHERE id = ?", (author_id,))
-                    connection.commit()
-                    connection.close()
 
             # Add a new line only if it's a new user ID submitting
             if first_time_submission(author_id):
-                new_content = f"{last_message.content}\n{count_submissions()}. {new_display_name} ||{author.mention}||)"
+                new_content = f"{last_message.content}\n{count_submissions()}. {get_display_name(author_id)} ||{author.mention}||"
                 await last_message.edit(content=new_content)
         else:
             # If the last message is not sent by the bot, send a new one
-            await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)} ||{author.mention}||")
+            await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
     else:
-        # There are no submissions (brand-new task); send a message on the first submission
-        await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)} ||{author.mention}||")
+        # There are no submissions (brand-new task); send a message on the first submission -> this is for blank channels
+        print("beginning")
+        await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
+
 
 
 
@@ -154,7 +126,7 @@ async def handle_dms(message, self):
 
 
         # this logs messages to a channel -> my private server for testing purposes
-        channel = self.bot.get_channel(1239709261634732103)
+        channel = self.bot.get_channel(1243652270537707722)
         attachments = message.attachments
         if len(attachments) > 0:
             filename = attachments[0].filename
@@ -186,7 +158,7 @@ async def handle_dms(message, self):
                 # Add first-time submission
                 if first_time_submission(author_id):
                     cursor.execute(
-                        f"INSERT INTO submissions VALUES ({current_task[0]}, '{author_name}', {author_id}, '{url}', 0, 0)")
+                        f"INSERT INTO submissions VALUES ({current_task[0]}, '{author_name}', {author_id}, '{url}', 0, 0, '')")
                     connection.commit()
                     connection.close()
 

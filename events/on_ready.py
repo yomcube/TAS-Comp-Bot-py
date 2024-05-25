@@ -26,7 +26,8 @@ class Ready(commands.Cog):
                                 id INTEGER, 
                                 url TEXT, 
                                 time FLOAT,
-                                dq INTEGER
+                                dq INTEGER,
+                                dq_reason TEXT
                                 )""") # dq is boolean: 0 or 1. Time is counted in SECONDS
         connection.commit()
         connection.close()
@@ -60,8 +61,7 @@ class Ready(commands.Cog):
         cursor.execute("""CREATE TABLE IF NOT EXISTS userbase (
                                                 user TEXT, 
                                                 id INTEGER,
-                                                display_name TEXT,
-                                                needs_update INTEGER
+                                                display_name TEXT
                                                 )""")
 
         # TODO: flag can_change_name; if it's 0, user is locked from changing their name
