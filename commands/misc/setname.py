@@ -2,8 +2,32 @@ import sqlite3
 import discord
 from discord.ext import commands
 
-def rename_in_submission_list(old_display_name, new_display_name):
-    pass
+def get_submission_channel(comp):
+    connection = sqlite3.connect("database/settings.db")
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
+    result = cursor.fetchone()
+
+    channel_id = result[1]
+    return channel_id
+
+async def rename_in_submission_list(self, old_display_name, new_display_name):
+    submission_channel = get_submission_channel("mkw")
+    channel = self.bot.get_channel(submission_channel)
+
+    async for message in channel.history(limit=1):
+        # Check if the message was sent by the bot
+        if message.author == self.bot.user:
+            lines = message.content.split('\n')
+            new_lines = []
+            for line in lines:
+                if old_display_name in line:
+                    line = line.replace(old_display_name, new_display_name)
+                new_lines.append(line)
+            new_content = '\n'.join(new_lines)
+            if new_content != message.content:
+                await message.edit(content=new_content)
+            break  # Stop after finding the last bot message
 
 
 class Setname(commands.Cog):
@@ -18,7 +42,7 @@ class Setname(commands.Cog):
 
         try:
             # retrieve old name
-            cursor.execute("SELECT from userbase WHERE id = ?", (ctx.author.id))
+            cursor.execute("SELECT * from userbase WHERE id = ?", (ctx.author.id,))
             result = cursor.fetchone()
             old_display_name = result[2]
 
@@ -32,7 +56,8 @@ class Setname(commands.Cog):
             else: # if name is found in the userbase
                 connection.commit()
                 await ctx.send(f"Name successfully set to {new_name}.")
-                print("test")
+
+                await rename_in_submission_list(self, old_display_name, new_name)
 
         except sqlite3.OperationalError:
             await ctx.send("Error occured. Maybe try submitting, then retrying?")
