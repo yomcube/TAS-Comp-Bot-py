@@ -69,22 +69,16 @@ async def handle_submissions(message, self):
     # Checking if submitter has ever participated before
     if new_competitor(author_id):
         # adding him to the user database.
-
         connection = sqlite3.connect("database/users.db")
         cursor = connection.cursor()
-        cursor.execute(f"INSERT INTO userbase (user, id, display_name) VALUES (?, ?, ?)", (author_name, author_id, author_dn))
-
+        cursor.execute("INSERT INTO userbase (user, id, display_name) VALUES (?, ?, ?)",
+                       (author_name, author_id, author_dn))
         connection.commit()
         connection.close()
 
-    ####################################
     # Adding submitter to the list
-    ####################################
-
-
-    submission_channel = get_submission_channel("subm-channel")
+    submission_channel = get_submission_channel("mkw")
     channel = self.bot.get_channel(submission_channel)
-
 
     if not channel:
         print("Could not find the channel.")
@@ -97,19 +91,50 @@ async def handle_submissions(message, self):
         last_message = None
 
     if last_message:
+        # Try to find an editable message by the bot
         if last_message.author == self.bot.user:
-            # If the last message is sent by the bot, edit it
-            new_content = f"{last_message.content}\n{count_submissions()}. {getDisplayname(author_id)}"
-            await last_message.edit(content=new_content)
+            # Fetch the user data to check for display name update
+            connection = sqlite3.connect("database/users.db")
+            cursor = connection.cursor()
+            cursor.execute("SELECT display_name, needs_update FROM userbase WHERE id = ?", (author_id,))
+            user_data = cursor.fetchone()
+            connection.close()
 
-        else: # there are no submission (brand-new task); send a message on first submission
 
-            # If the last message is not sent by the bot, send a new one -- this is the case for MKWTASComp server
+            if user_data:
+                new_display_name, needs_update = user_data
 
+                # Update the submission message if the display name has changed
+                if needs_update == 1:
+                    # Update the message content with the new display name
+                    #TODO: FIX, doesn't work for now. doesn't edit message
+                    content_lines = last_message.content.split('\n')
+                    updated_content_lines = []
+                    for line in content_lines:
+                        if str(author_id) in line:
+                            updated_content_lines.append(line.replace(getDisplayname(author_id), new_display_name))
+                        else:
+                            updated_content_lines.append(line)
+
+                    new_content = '\n'.join(updated_content_lines)
+                    await last_message.edit(content=new_content)
+
+                    # Reset the needs_update flag
+                    connection = sqlite3.connect("database/users.db")
+                    cursor = connection.cursor()
+                    cursor.execute("UPDATE userbase SET needs_update = 0 WHERE id = ?", (author_id,))
+                    connection.commit()
+                    connection.close()
+
+            # Add a new line only if it's a new user ID submitting
+            if first_time_submission(author_id):
+                new_content = f"{last_message.content}\n{count_submissions()}. {new_display_name}"
+                await last_message.edit(content=new_content)
+        else:
+            # If the last message is not sent by the bot, send a new one
             await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)}")
-
-    else: # blank channel
-        # there are no submission (brand-new task); send a message on first submission
+    else:
+        # There are no submissions (brand-new task); send a message on the first submission
         await channel.send(f"**__Current Submissions:__**\n1. {getDisplayname(author_id)}")
 
 

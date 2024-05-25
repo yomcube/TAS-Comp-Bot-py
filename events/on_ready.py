@@ -60,7 +60,8 @@ class Ready(commands.Cog):
         cursor.execute("""CREATE TABLE IF NOT EXISTS userbase (
                                                 user TEXT, 
                                                 id INTEGER,
-                                                display_name TEXT
+                                                display_name TEXT,
+                                                needs_update INTEGER
                                                 )""")
 
         # TODO: flag can_change_name; if it's 0, user is locked from changing their name
