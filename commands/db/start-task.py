@@ -12,8 +12,6 @@ class Start(commands.Cog):
     @commands.hybrid_command(name="start-task", description="Start a task", with_app_command=True)
     async def command(self, ctx, number: int, year: int=None, collab: int = 0, multiple_tracks: int = 0, speed_task: int = 0):
 
-
-
         if not year:
             year = date.today().year
 

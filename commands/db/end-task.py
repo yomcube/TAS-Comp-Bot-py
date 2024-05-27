@@ -26,7 +26,7 @@ class End(commands.Cog):
             connection.commit()  # actually update the database
             connection.close()
             
-            await ctx.send(f"Sucesfully ended Task {number}, {year}.")
+            await ctx.send(f"Sucesfully ended *Task {number} - {year}*!")
         else:
             await ctx.send(f"There is already no ongoing task!")
 

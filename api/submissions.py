@@ -1,7 +1,5 @@
 import discord
 import sqlite3
-import aiofiles
-import os
 from utils import is_task_currently_running, download_attachments, get_lap_time, readable_to_float, float_to_readable
 
 def get_submission_channel(comp):
@@ -193,7 +191,7 @@ async def handle_dms(message, self):
 
             # No ongoing task
             else:
-                await message.channel.send("There is no active task.")
+                await message.channel.send("There is no active task yet.")
 
         #################################
         # recognition of rksys submission
