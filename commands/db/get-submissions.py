@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import sqlite3
+from api.submissions import get_display_name
 
 class Get(commands.Cog):
     def __init__(self, bot) -> None:
@@ -27,26 +28,14 @@ class Get(commands.Cog):
         total_submissions = cursor.fetchone()[0]  # Get the count
         
         connection.close()
-        
-        embed = discord.Embed(
-            title=f"Task {active_task} submissions",
-            description=f"Total submissions: {total_submissions}"
-        )
-        
-        # Add many fields depending on the number of submissions
+
+        content = f"__Task {active_task} submissions__:\n(Total submissions: {total_submissions})\n\n"
+
+        # Add many lines depending on the number of submissions
         for submission in submissions:
-            if submission[5] == 0:
-                dq = False
-            elif submission[5] == 1:
-                dq = True
-                
-            embed.add_field(name="Submission ID", value=f"{submission[0]}", inline=True)
-            embed.add_field(name="User", value=f"{submission[1]}", inline=True)
-            embed.add_field(name="URL", value=f"{submission[3]}", inline=True)
-            embed.add_field(name="Time", value=f"{submission[4]}", inline=True)
-            embed.add_field(name="DQ", value=f"{dq}", inline=True)
-        
-        await ctx.reply(embed=embed)
+            content += f"{get_display_name(submission[2])} : {submission[3]} | Fetched time: {submission[4]}\n"
+
+        await ctx.reply(content=content)
 
 async def setup(bot) -> None:
     await bot.add_cog(Get(bot))
