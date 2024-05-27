@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import sqlite3
+from utils import float_to_readable
 
 
 class Edit(commands.Cog):
@@ -23,9 +24,11 @@ class Edit(commands.Cog):
             data_dq = False
         elif data[5] == 1:
             data_dq = True
-            
+
+        readable_time = float_to_readable(time)
+
         server_text = f"Succesfully edited {user}'s submission with:\nTime: from {data[4]} to {time}\nDQ: from {data_dq} to {dq}"
-        dm_text = f"Your submission has been edited:\nTime: from {data[4]} to {time}\nDQ: from {data_dq} to {dq}"
+        dm_text = f"Your submission has been edited:\nTime: from {float_to_readable(data[4])} to {readable_time}\nDQ: from {data_dq} to {dq}"
         
         if dq == True:
             server_text += f" ({dq_reason})"
