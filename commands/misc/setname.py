@@ -55,7 +55,7 @@ class Setname(commands.Cog):
 
             else: # if name is found in the userbase
                 connection.commit()
-                await ctx.send(f"Name successfully set to {new_name}.")
+                await ctx.send(f"Name successfully set to **{new_name}**.")
 
                 await rename_in_submission_list(self, old_display_name, new_name)
 

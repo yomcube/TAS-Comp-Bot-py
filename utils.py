@@ -1,6 +1,8 @@
+import struct
 import uuid
 import msgspec as ms
 import sqlite3
+import time
 
 async def download_attachments(attachments, file_name=None) -> str:
     # TODO: Prematurely handle Directory missing error
@@ -8,7 +10,7 @@ async def download_attachments(attachments, file_name=None) -> str:
         file_name = str(uuid.uuid4())
     for attachment in attachments:
         file_type = attachment.filename.split(".")[-1]
-        file_path = f"database/{file_name}.{file_type}"
+        file_path = f"download/{file_name}.{file_type}"
         file = open(file_path, "w") # changed this from x to w, because as submitters, we can submit multiple times
         await attachment.save(fp=file_path)
         file.close()
@@ -25,6 +27,48 @@ async def check_json_guild(file, guild_id):     # TODO: Normalise file handling,
 
     return False
 
+
+def readable_to_float(time_str):
+    """Convert a time string 'M:SS.mmm' to seconds (float)."""
+    try:
+        minutes, seconds = time_str.split(':')
+        minutes = int(minutes)
+        seconds = float(seconds)
+        total_seconds = minutes * 60 + seconds
+        return total_seconds
+    except ValueError:
+       print("Invalid time format. Expected 'MM:SS.mmm'.")
+
+
+def float_to_readable(seconds):
+    """Convert seconds (float) to a time string 'M:SS.mmm'."""
+    if seconds < 0:
+        print("Seconds cannot be negative.")
+        return
+
+    minutes = int(seconds // 60)
+    remaining_seconds = seconds % 60
+    time_str = f"{minutes}:{remaining_seconds:06.3f}"
+    return time_str
+
+
+def get_lap_time(rkg):
+    """Retrieves the lap times of all laps of a given RKG file"""
+    # Check if compressed and remove potential CTGP data
+    if (rkg[12] & 0x08) == 0x08:
+        rkg_length = struct.unpack('>I', rkg[0x88:0x8C])[0] + 0x90
+        rkg = rkg[:rkg_length]
+
+    # Extract the number of laps
+    nr_laps = rkg[0x10]
+    lap_times = []
+    for i in range(nr_laps):
+        min = rkg[0x11 + i * 3] >> 1
+        sec = ((rkg[0x11 + i * 3] & 0x1) << 6) | (rkg[0x12 + i * 3] >> 2)
+        mil = ((rkg[0x12 + i * 3] & 0x3) << 8) | rkg[0x13 + i * 3]
+        lap_times.append(f"{min}:{sec:02}.{mil:03}")
+    return lap_times
+
 def is_task_currently_running():
     """Check if a task is currently running"""
     connection = sqlite3.connect("database/tasks.db")
@@ -35,6 +79,7 @@ def is_task_currently_running():
     currently_running = cursor.fetchone()
     connection.close()
     return currently_running
+
 
 def get_balance(username):
     connection = sqlite3.connect("database/economy.db")

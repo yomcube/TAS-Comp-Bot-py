@@ -1,7 +1,8 @@
-from utils import download_attachments
 import discord
 import sqlite3
-from utils import is_task_currently_running
+import aiofiles
+import os
+from utils import is_task_currently_running, download_attachments, get_lap_time, readable_to_float, float_to_readable
 
 def get_submission_channel(comp):
     connection = sqlite3.connect("database/settings.db")
@@ -9,8 +10,14 @@ def get_submission_channel(comp):
     cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
     result = cursor.fetchone()
 
-    channel_id = result[1]
-    return channel_id
+    if result is not None:  # Check if result is not None before accessing index
+        channel_id = result[1]
+        return channel_id
+    else:
+        # Handle case where no rows are found in the database
+        print(f"No submission channel found for competition '{comp}'.")
+        return None  # or raise an exception, depending on your application's logic
+
 
 def first_time_submission(id):
     """Check if a certain user id has submitted to this competition already"""
@@ -52,15 +59,6 @@ def count_submissions():
 
 # old parameters: message, file, num, year
 async def handle_submissions(message, self):
-    #attachments = message.attachments
-    # TODO: Detect which comp, to limit number of files
-    #attachments = attachments[:2]
-    #if file == "rkg":
-     #   file_name = f"Task{num}-{year}By{author_dn}"
-    #    await download_attachments(attachments, file_name)
-    #elif file == "rksys":
-    #    file_name = f"Task{num}-{year}By{author_dn}_rksys"
-    #    await download_attachments(attachments, file_name)
 
     author = message.author
     author_name = message.author.name
@@ -106,15 +104,12 @@ async def handle_submissions(message, self):
             await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
     else:
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank channels
-        print("beginning")
         await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
 
 
 
 
 async def handle_dms(message, self):
-    # Handle DMs
-    # Maybe there's a better way to handle this
     
     author = message.author
     author_name = message.author.name
@@ -122,8 +117,6 @@ async def handle_dms(message, self):
     author_dn = message.author.display_name
 
     if isinstance(message.channel, discord.DMChannel) and author != self.bot.user:
-        #await self.bot.process_commands(message) --> for some reason, this proccessed the command twice (the bot would dm me twice in DMs).
-
 
         # this logs messages to a channel -> my private server for testing purposes
         channel = self.bot.get_channel(1243652270537707722)
@@ -138,64 +131,87 @@ async def handle_dms(message, self):
         #########################
         # Recognizing submission
         #########################
+        
+        connection = sqlite3.connect("database/tasks.db")
+        cursor = connection.cursor()
+        
+        current_task = is_task_currently_running()
 
+        #################################
         # recognition of rkg submission
+        #################################
+
         if attachments and filename.endswith('.rkg'):
 
-            connection = sqlite3.connect("database/tasks.db")
-            cursor = connection.cursor()
+            if current_task:
+                
+                # Tell the user the submission has been received
+                print(f"File received!\nBy: {author}\nMessage sent: {message.content}")
+                await message.channel.send(
+                    "`.rkg` file detected!\nThe file was successfully saved. Type `/info` for more information about the file.")
+
+                # handle submission
+                await handle_submissions(message, self)
 
 
-            # check if a task is running
-            cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-            current_task = cursor.fetchone()
+
+                # retrieving lap time, to estimate submission time
+
+                rkg_data = await attachments[0].read()
+
+                try:
+                    rkg = bytearray(rkg_data)
+                    if rkg[:4] == b'RKGD':
+                        lap_times = get_lap_time(rkg)
+
+                    # float time to upload to db
+                    time = readable_to_float(lap_times[0]) # For most (but not all) mkw single-track tasks, the first lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
+
+                except UnboundLocalError:
+                    # This exception catches blank rkg files
+                    time = 0
+                    await message.channel.send("Nice blank rkg there")
+
+
+
+                # Add first-time submission
+                if first_time_submission(author_id):
+                    # Assuming the table `submissions` has columns: task, name, id, url, time, dq, dq_reason
+                    cursor.execute(
+                        "INSERT INTO submissions (task, name, id, url, time, dq, dq_reason) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                        (current_task[0], author_name, author_id, url, time, 0, '')
+                    )
+                    connection.commit()
+                    connection.close()
+
+
+                # If not first submission: replace old submission
+                else:
+                    cursor.execute("UPDATE submissions SET url=?, time=? WHERE id=?", (url, time, author_id))
+                    connection.commit()
+                    connection.close()
+
+            # No ongoing task
+            else:
+                await message.channel.send("There is no active task.")
+
+        #################################
+        # recognition of rksys submission
+        #################################
+
+
+        elif attachments and filename.endswith('.dat'):
 
             if current_task:
 
                 # handle submission
                 await handle_submissions(message, self)
 
-                # Add first-time submission
-                if first_time_submission(author_id):
-                    cursor.execute(
-                        f"INSERT INTO submissions VALUES ({current_task[0]}, '{author_name}', {author_id}, '{url}', 0, 0, '')")
-                    connection.commit()
-                    connection.close()
-
-                # If not first submission: replace old submission
-                else:
-                    cursor.execute("UPDATE submissions SET url=? WHERE id=?", (url, author_id))
-                    connection.commit()
-                    connection.close()
-
-                # Tell the user the submission has been received
-                print(f"File received!\nBy: {author}\nMessage sent: {message.content}")
-                await message.channel.send(
-                    "`.rkg` file detected!\nThe file was successfully saved. Type `/info` for more information about the file.")
-
-            # No ongoing task
-            else:
-                await message.channel.send("There is no active task.")
-
-
-        # recognition of rksys submission
-        elif attachments and filename == 'rksys.dat':
-            connection = sqlite3.connect("database/tasks.db")
-            cursor = connection.cursor()
-
-            # check if a task is running
-            cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-            current_task = cursor.fetchone()
-
-            if current_task:
-
-                # rename file
-                await handle_submissions(message, "rksys", current_task[0], 2024)
 
                 # Add first-time submission
                 if first_time_submission(author_id):
                     cursor.execute(
-                        f"INSERT INTO submissions VALUES ({current_task[0]}, '{author_name}', {author_id}, '{url}', 0, 0)")
+                        f"INSERT INTO submissions VALUES (task, name, id, url, time, dq, dq_reason) VALUES (?, ?, ?, ?, ?, ?)", (current_task[0], author_name, author_id, url, 0, 0, ''))
                     connection.commit()
                     connection.close()
 

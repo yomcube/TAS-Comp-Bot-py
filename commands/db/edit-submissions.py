@@ -8,7 +8,7 @@ class Edit(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="edit-submissions", description="Edit submissions", with_app_command=True)
-    async def command(self, ctx, user: discord.Member, time: float, dq: bool, dq_reason: str):
+    async def command(self, ctx, user: discord.Member, time: float, dq: bool, dq_reason: str = ''):
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
         

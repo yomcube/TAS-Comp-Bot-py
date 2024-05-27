@@ -21,12 +21,12 @@ class Slots(commands.Cog):
         emojis_list = [str(emoji) for emoji in emojis]
         random_emojis = random.choices(emojis_list, k=number)
         result = " ".join(random_emojis)
-        play_again_text = f"Please Play Again\n{get_balance(username)} coins left in your account"
+        play_again_text = f"{get_balance(username)} coins left in your account\nPlease Play Again"
         
         while len(result) > 2000:
             random_emojis.pop()
             result = " ".join(random_emojis)
-            play_again_text = f"*(message above was truncated since {number} exceeds the max length of 2000 characters)*\nPlease Play Again\n{get_balance(username)} coins left in your account."
+            play_again_text = f"*(message above was truncated since {number} exceeds the max length of 2000 characters)*\n{get_balance(username)} coins left in your account\nPlease Play Again"
             
         if number <= 0:
             await ctx.reply("What did you think would happen uh?")

@@ -10,27 +10,26 @@ class Get(commands.Cog):
     async def command(self, ctx):
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
-        
+
         # Get current task
-        cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-        active_task = cursor.fetchone()
-        
-        if not active_task:
-            await ctx.reply(f"There is no ongoing task!\nUse `/start-task` to start a new task.")
-            return  # Early return if there's no active task
+        cursor.execute("SELECT * FROM submissions LIMIT 1")
+        result = cursor.fetchone()
+        active_task = result[0]
+
+
         
         # Get submissions from current task
-        cursor.execute("SELECT * FROM submissions WHERE task = ?", (active_task[0],))
+        cursor.execute("SELECT * FROM submissions WHERE task = ?", (active_task,))
         submissions = cursor.fetchall()  # Fetch all rows
         
         # Count submissions from current task
-        cursor.execute("SELECT COUNT(*) FROM submissions WHERE task = ?", (active_task[0],))
+        cursor.execute("SELECT COUNT(*) FROM submissions WHERE task = ?", (active_task,))
         total_submissions = cursor.fetchone()[0]  # Get the count
         
         connection.close()
         
         embed = discord.Embed(
-            title=f"Task {active_task[0]} - {active_task[1]} submissions",
+            title=f"Task {active_task} submissions",
             description=f"Total submissions: {total_submissions}"
         )
         

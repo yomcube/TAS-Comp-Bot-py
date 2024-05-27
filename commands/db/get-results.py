@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 import sqlite3
+from utils import float_to_readable
+from api.submissions import get_display_name
 
 class Results(commands.Cog):
     def __init__(self, bot) -> None:
@@ -12,32 +14,29 @@ class Results(commands.Cog):
         cursor = connection.cursor()
         
         # Get current task
-        cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-        active_task = cursor.fetchone()
-        
-        if not active_task:
-            await ctx.reply(f"There is no ongoing task!\nUse `/start-task` to start a new task.")
-            return  # Early return if there's no active task
+        cursor.execute("SELECT * FROM submissions LIMIT 1")
+        result = cursor.fetchone()
+        active_task = result[0]
         
         # Get all submissions ordered by time
-        cursor.execute("SELECT * FROM submissions WHERE task = ? ORDER BY time ASC", (active_task[0],))
+        cursor.execute("SELECT * FROM submissions WHERE task = ? ORDER BY time ASC", (active_task,))
         submissions = cursor.fetchall()
-        
+
+
         connection.close()
         
-        content = f"**__Task {active_task[0]} Results__**:\n\n"
+        content = f"**__Task {active_task} Results__**:\n\n"
         
         # Add lines in time order
-        for submission in submissions:
-            if submission[5] == 0:
-                dq = False
-            elif submission[5] == 1:
-                dq = True
-            # put 1st, 2nd etc 
-            
-            
-        
-        await ctx.reply(content=content)
+        for (n, submission) in enumerate(submissions, start=1):
+            if submission[5]: # dq
+                continue
+            display_name = get_display_name(submission[2])
+            readable_time = float_to_readable(submission[4])
+            content += f'{n}. {display_name} — {readable_time}\n'
+
+        await ctx.send(content)
+
 
 async def setup(bot) -> None:
     await bot.add_cog(Results(bot))
