@@ -19,21 +19,34 @@ class Results(commands.Cog):
         active_task = result[0]
         
         # Get all submissions ordered by time
-        cursor.execute("SELECT * FROM submissions WHERE task = ? ORDER BY time ASC", (active_task,))
+        cursor.execute("SELECT * FROM submissions WHERE task = ? AND dq = 0 ORDER BY time ASC", (active_task,))
         submissions = cursor.fetchall()
+
+        # Get all DQs ordered by time
+        cursor.execute("SELECT * FROM submissions WHERE task = ? AND dq = 1 ORDER BY time ASC", (active_task,))
+        DQs = cursor.fetchall()
 
 
         connection.close()
         
         content = f"**__Task {active_task} Results__**:\n\n"
         
-        # Add lines in time order
+        # Rank valid submissions in order
         for (n, submission) in enumerate(submissions, start=1):
-            if submission[5]: # dq
-                continue
             display_name = get_display_name(submission[2])
             readable_time = float_to_readable(submission[4])
             content += f'{n}. {display_name} — {readable_time}\n'
+
+        # add return incase of DQs.
+        content += '\n'
+
+
+        # Rank DQs in order
+        for run in DQs:
+            display_name = get_display_name(run[2])
+            readable_time = float_to_readable(run[4])
+            dq_reason = run[6]
+            content += f'DQ. {display_name} — {readable_time} [{dq_reason}]\n'
 
         await ctx.send(content)
 
