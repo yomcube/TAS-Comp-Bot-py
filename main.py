@@ -19,10 +19,11 @@ commands_ext = ['commands.dev.sync',
                 'commands.db.get-results',
                 'commands.db.submit',
                 'commands.db.info',
+                'commands.help.help',
                 'commands.misc.dm',
+                'commands.misc.ping',
                 'commands.misc.setname',
                 'commands.fun.connect4',
-                'commands.fun.ping',
                 'commands.fun.addcoins',
                 'commands.fun.balance',
                 'commands.fun.rig',
@@ -71,6 +72,7 @@ class Bot(commands.Bot):
                 traceback.print_exc()
 
 bot = Bot()
+bot.remove_command("help")
 
 if __name__ == '__main__':
     bot.run(token)
