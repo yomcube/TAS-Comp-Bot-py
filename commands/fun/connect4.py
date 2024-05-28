@@ -14,6 +14,11 @@ class Connect4(commands.Cog):
         self.game_over = False
         self.mode = "easy"
 
+    def reset_game(self):
+        self.board = [[' ' for _ in range(self.columns)] for _ in range(self.rows)]
+        self.current_player = 'X'
+        self.game_over = False
+
     def print_board(self):
         board_string = '```\n'
         emoji_map = {'X': '🔴', 'O': '🟡', ' ': '⚪️'}
@@ -86,8 +91,8 @@ class Connect4(commands.Cog):
 
     # autocomplete
     async def command_autocompletion(
-        self, 
-        interaction: discord.Interaction, 
+        self,
+        interaction: discord.Interaction,
         current: str
     ) -> typing.List[app_commands.Choice[str]]:
         modes = ["easy", "normal", "hard"]
@@ -97,12 +102,13 @@ class Connect4(commands.Cog):
         ]
 
     @commands.hybrid_command(
-        name="connect4", 
-        description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!", 
+        name="connect4",
+        description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!",
         with_app_command=True
     )
     @app_commands.autocomplete(mode=command_autocompletion)
     async def command(self, ctx: commands.Context, mode: str = "easy"):
+        self.reset_game()
         self.mode = mode.lower()
 
         if self.mode not in ["easy", "normal", "hard"]:
@@ -130,9 +136,9 @@ class Connect4(commands.Cog):
                 if self.mode == "easy":
                     col = random.choice([c for c in range(self.columns) if self.is_valid_location(c)])
                 elif self.mode == "normal":
-                    col = self.minimax(4, -float('inf'), float('inf'), True)[0]
+                    col = self.minimax(3, -float('inf'), float('inf'), True)[0]
                 else:
-                    col = self.minimax(7, -float('inf'), float('inf'), True)[0]
+                    col = self.minimax(6, -float('inf'), float('inf'), True)[0]
 
                 await self.send_message(ctx, f'Bot chooses column {col + 1}')
                 await self.make_move(ctx, col, self.current_player)
