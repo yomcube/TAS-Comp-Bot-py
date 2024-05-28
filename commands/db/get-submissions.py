@@ -32,10 +32,15 @@ class Get(commands.Cog):
         content = f"__Task {active_task} submissions__:\n(Total submissions: {total_submissions})\n\n"
 
         # Add many lines depending on the number of submissions
-        for submission in submissions:
-            content += f"{get_display_name(submission[2])} : {submission[3]} | Fetched time: {submission[4]}\n"
+        try:
+            for submission in submissions:
+                content += f"{get_display_name(submission[2])} : {submission[3]} | Fetched time: {submission[4]}\n"
 
-        await ctx.reply(content=content)
+            await ctx.reply(content=content)
+
+        except TypeError: # can happen if get_display_name throws an error; an id is not found in user.db
+            # Happens, for example, if an admin /submit for someone who is not in the user.db
+            await ctx.send("Someone's submission could not be retrieved.")
 
 async def setup(bot) -> None:
     await bot.add_cog(Get(bot))

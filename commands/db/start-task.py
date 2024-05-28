@@ -3,6 +3,7 @@ from discord.ext import commands
 import sqlite3
 from datetime import date
 from utils import is_task_currently_running
+from api.submissions import get_submission_channel
 
 
 class Start(commands.Cog):
@@ -28,6 +29,15 @@ class Start(commands.Cog):
             # Commit changes to both tables affected
             connection.commit()
             connection.close()
+
+            # Delete previous "Current submissions" message in submission channel
+            channel_id = get_submission_channel("mkw")
+            channel = self.bot.get_channel(channel_id)
+
+            async for message in channel.history(limit=5):  # Adjust limit as necessary
+                if message.author == self.bot.user:
+                    await message.delete()
+                    break
 
 
             await ctx.send(f"Succesfully started **Task {number} - {year}**!")

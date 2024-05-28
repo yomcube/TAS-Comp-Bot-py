@@ -12,51 +12,54 @@ class Submit(commands.Cog):
 
     @commands.hybrid_command(name='submit', description='Submit', with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def submit(self, ctx, file: discord.Attachment=None, user: discord.Member=None):
+    async def submit(self, ctx, user: discord.Member, file: discord.Attachment):
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
         if not user:
             user = ctx.author
-        
+
         current_task = is_task_currently_running()
         url = file.url
         id = user.id
-        
-        # retrieving lap time, to estimate submission time
 
-        rkg_data = await file[0].read()
+        # retrieving lap time, to estimate submission time
+        rkg_data = await file.read()
 
         try:
             rkg = bytearray(rkg_data)
             if rkg[:4] == b'RKGD':
                 lap_times = get_lap_time(rkg)
 
-            # float time to upload to db
-            time = readable_to_float(lap_times[0]) # For most (but not all) mkw single-track tasks, the first lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
+                # float time to upload to db
+                time = readable_to_float(lap_times[
+                                             0])  # For most (but not all) mkw single-track tasks, the first lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
+            else:
+                time = 0
+                await ctx.reply("Invalid RKG file format")
+                return
 
         except UnboundLocalError:
             # This exception catches blank rkg files
             time = 0
             await ctx.reply("Nice blank rkg there")
-                    
+            return
+
         if first_time_submission(id):
-            # Assuming the table `submissions` has columns: task, name, id, url, time, dq, dq_reason
+
             cursor.execute(
-                "INSERT INTO submissions (task, name, id, url, time, dq, dq_reason) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                "INSERT INTO submissions (task, name, id, url, time, dq, dq_reason) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (current_task[0], user.name, id, url, time, 0, '')
             )
             connection.commit()
             connection.close()
 
-
-            # If not first submission: replace old submission
         else:
-            cursor.execute("UPDATE submissions SET url=?, WHERE id=?", (url, id))
+            cursor.execute("UPDATE submissions SET url=?, time=? WHERE id=?", (url, time, id))
             connection.commit()
             connection.close()
-            
-        
-        await ctx.reply("submitted!")
+
+        await ctx.reply(f"A submission has been added for {user.name}!")
+
 
 async def setup(bot) -> None:
     await bot.add_cog(Submit(bot))
