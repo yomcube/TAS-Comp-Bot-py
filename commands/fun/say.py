@@ -6,8 +6,10 @@ class Say(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="say", description="Say everything you say", with_app_command=True)
-    async def command(self, ctx, text):
-        await ctx.reply(text)
+    async def command(self, ctx, channel: discord.TextChannel, *, message: str):
+        # Send the message to the specified channel
+        await channel.send(message)
+        await ctx.reply(f"Message sent to {channel.mention}.")
 
 
 async def setup(bot) -> None:

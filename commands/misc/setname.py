@@ -36,7 +36,7 @@ class Setname(commands.Cog):
 
     @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list",
                              with_app_command=True)
-    async def command(self, ctx, new_name):
+    async def command(self, ctx, *, new_name):
         connection = sqlite3.connect("database/users.db")
         cursor = connection.cursor()
 
