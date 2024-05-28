@@ -146,7 +146,7 @@ async def handle_dms(message, self):
                 # Tell the user the submission has been received
                 print(f"File received!\nBy: {author}\nMessage sent: {message.content}")
                 await message.channel.send(
-                    "`.rkg` file detected!\nThe file was successfully saved. Type `/info` for more information about the file.")
+                    "`.rkg` file detected!\nThe file was successfully saved. Type `$info` for more information about the file.")
 
                 # handle submission
                 await handle_submissions(message, self)
@@ -222,7 +222,7 @@ async def handle_dms(message, self):
                 # Tell the user the submission has been received
                 print(f"File received!\nBy: {author}\nMessage sent: {message.content}")
                 await message.channel.send(
-                    "`rksys.dat` detected!\nThe file was successfully saved. Type `/info` for more information about the file.")
+                    "`rksys.dat` detected!\nThe file was successfully saved. Type `$info` for more information about the file.")
 
 
             else:
