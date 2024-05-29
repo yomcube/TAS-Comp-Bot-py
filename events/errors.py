@@ -25,6 +25,10 @@ class Errors(commands.Cog):
             return await ctx.send(f"{ctx.command} is not a valid command.")
         elif isinstance(error, commands.MissingRequiredArgument):
             return await ctx.send(f'Missing fields in {ctx.command}.')
+        elif isinstance(error, commands.CheckFailure): # I use checks to verify for permissions (if someone has the correct role for X command)
+            return await ctx.send("You may not use this command!")
+        elif isinstance(error, commands.PrivateMessageOnly):
+            return await ctx.send("This command is only usable in DMs with the bot.")
         print(f'Ignoring exception in command {ctx.command}:', file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 

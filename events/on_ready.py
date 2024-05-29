@@ -1,12 +1,18 @@
 from discord.ext import commands
 import sqlite3
 
+host_role_id = None
+
 class Ready(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
+
     @commands.Cog.listener()
     async def on_ready(self):
+
+
 
         # Database for tasks and submissions
         connection = sqlite3.connect("database/tasks.db")
@@ -52,6 +58,12 @@ class Ready(commands.Cog):
                                         id INTEGER
                                         )""")
                                         # comp refers to the competition: mkw, sm64, etc.
+        cursor.execute("""CREATE TABLE IF NOT EXISTS host_role (
+                                        comp TEXT,
+                                        name TEXT,
+                                        id INTEGER
+                                        )""")
+
         connection.commit()
         connection.close()
 
@@ -70,6 +82,9 @@ class Ready(commands.Cog):
         connection.close()
 
         print('Bot is ready!')
+
+
+
 
 
 
