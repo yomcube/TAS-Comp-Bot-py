@@ -17,9 +17,9 @@ class Message(commands.Cog):
 
         msg_list = ["kierio", "crazy", "😃"]
 
-        if msg_list[0] in lower_content and message.author != self.bot.user:
+        if str(lower_content).startswith(msg_list[0]) and message.author != self.bot.user:
             await message.reply("kiro*")
-        elif msg_list[1] in lower_content and message.author != self.bot.user:
+        elif str(lower_content).startswith(msg_list[1]) and message.author != self.bot.user:
             await message.reply("Crazy?")
             await self.wait_crazy(message)
         elif msg_list[2] in lower_content and message.author != self.bot.user:
