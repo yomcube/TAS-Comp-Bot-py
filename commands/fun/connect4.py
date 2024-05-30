@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
+from discord import app_commands, Button, ButtonStyle
 import typing
 import random
+import asyncio
 
 class Connect4(commands.Cog):
     def __init__(self, bot):
@@ -12,12 +13,18 @@ class Connect4(commands.Cog):
         self.board = [[' ' for _ in range(self.columns)] for _ in range(self.rows)]
         self.current_player = 'X'
         self.game_over = False
-        self.mode = "easy"
+        self.players = {}
+        self.game_channel = None
+        self.pending_challenges = {}
+        self.move_timeout = 60  # Timeout in seconds
+        self.timeout_task = None
 
     def reset_game(self):
         self.board = [[' ' for _ in range(self.columns)] for _ in range(self.rows)]
         self.current_player = 'X'
         self.game_over = False
+        self.players = {}
+        self.game_channel = None
 
     def print_board(self):
         board_string = '```\n'
@@ -69,25 +76,64 @@ class Connect4(commands.Cog):
 
         return False
 
-    async def make_move(self, ctx, col, piece):
+    async def start_timer(self):
+        await asyncio.sleep(self.move_timeout)
+        if not self.game_over:
+            self.game_over = True
+            await self.game_channel.send("Time's up! The game has ended due to inactivity.")
+            # Optionally, you can declare a winner based on who the current player is
+
+    async def make_move(self, col, piece):
+        if col < 0 or col >= self.columns:
+            await self.game_channel.send("Invalid column! Please select a column between 1 and 7.")
+            return
+
         if self.is_valid_location(col):
             row = self.get_next_open_row(col)
             self.drop_piece(row, col, piece)
             if self.winning_move(piece):
                 self.game_over = True
-                await self.send_message(ctx, self.print_board())
-                if piece == 'X':
-                    await self.send_message(ctx, 'You won!')
-                else:
-                    await self.send_message(ctx, 'I won! Better luck next time!')
+                await self.game_channel.send(self.print_board())
+                winner = self.players[piece]
+                await self.game_channel.send(f'Congratulations {winner.mention}, you won!')
             elif all(self.board[0][c] != ' ' for c in range(self.columns)):
                 self.game_over = True
-                await self.send_message(ctx, self.print_board())
-                await self.send_message(ctx, 'The game is a tie!')
+                await self.game_channel.send(self.print_board())
+                await self.game_channel.send('The game is a tie!')
             else:
                 self.current_player = 'O' if self.current_player == 'X' else 'X'
+                await self.game_channel.send(self.print_board())
+                await self.game_channel.send(f'It\'s {self.players[self.current_player].mention}\'s turn!')
+
+                # handle inactivity
+                if self.timeout_task:
+                    self.timeout_task.cancel()  # Cancel the existing timer task
+                self.timeout_task = self.bot.loop.create_task(self.start_timer())  # Start a new timer task
         else:
-            await self.send_message(ctx, f'Column {col + 1} is full!')
+            await self.game_channel.send(f'Column {col + 1} is full!')
+            
+    async def send_challenge(self, ctx, opponent):
+        challenge_message = await ctx.send(
+            f'{opponent.mention}, you have been challenged to a Connect 4 duel by {ctx.author.mention}!',
+            components=[[Button(style=ButtonStyle.green, label="Accept"), Button(style=ButtonStyle.red, label="Decline")]]
+        )
+        self.pending_challenges[opponent.id] = challenge_message
+
+    async def handle_button_click(self, interaction):
+        if interaction.component.label == "Accept":
+            opponent_id = interaction.user.id
+            if opponent_id in self.pending_challenges:
+                challenge_message = self.pending_challenges[opponent_id]
+                await challenge_message.delete()
+                del self.pending_challenges[opponent_id]
+                # Start the game between interaction.user.id and challenger_id
+                # You can access the Member object using bot.get_user(challenger_id)
+        elif interaction.component.label == "Decline":
+            opponent_id = interaction.user.id
+            if opponent_id in self.pending_challenges:
+                challenge_message = self.pending_challenges[opponent_id]
+                await challenge_message.delete()
+                del self.pending_challenges[opponent_id]
 
     # autocomplete
     async def command_autocompletion(
@@ -107,9 +153,21 @@ class Connect4(commands.Cog):
         with_app_command=True
     )
     @app_commands.autocomplete(mode=command_autocompletion)
-    async def command(self, ctx: commands.Context, mode: str = "easy"):
+    async def command(self, ctx: commands.Context, opponent: discord.Member=None, mode: str = "easy"):
         self.reset_game()
         self.mode = mode.lower()
+        
+        if self.game_over or len(self.players) == 0:
+            self.reset_game()
+            self.players = {'X': ctx.author, 'O': opponent}
+            self.game_channel = ctx.channel
+
+            if opponent:
+                await self.send_challenge(ctx, opponent)
+            else:
+                await ctx.send("Please specify an opponent to challenge.")
+        else:
+            await ctx.send('A game is already in progress. Finish that game before starting a new one!')
 
         if self.mode not in ["easy", "normal", "hard"]:
             await self.send_message(ctx, f'Invalid mode. Choose easy, normal, or hard')
