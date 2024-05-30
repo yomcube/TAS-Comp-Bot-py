@@ -14,7 +14,7 @@ def get_submission_channel(comp):
     else:
         # Handle case where no rows are found in the database
         print(f"No submission channel found for competition '{comp}'.")
-        return None  # or raise an exception, depending on your application's logic
+        return None
 
 
 def first_time_submission(id):
