@@ -57,12 +57,12 @@ class Ready(commands.Cog):
                                         comp TEXT, 
                                         id INTEGER
                                         )""")
-                                        # comp refers to the competition: mkw, sm64, etc.
         cursor.execute("""CREATE TABLE IF NOT EXISTS host_role (
                                         comp TEXT,
                                         name TEXT,
                                         id INTEGER
                                         )""")
+                                        # comp refers to mkw, sm64, etc
 
         connection.commit()
         connection.close()

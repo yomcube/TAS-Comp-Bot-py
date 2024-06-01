@@ -34,7 +34,7 @@ class ChallengeView(discord.ui.View):
         await interaction.response.send_message("Challenge declined!", ephemeral=True)
         self.stop()
 
-class GameView(discord.ui.View):
+class CoinFlipView(discord.ui.View):
     def __init__(self, ctx, opponent=None):
         super().__init__(timeout=10)
         self.ctx = ctx
@@ -65,42 +65,36 @@ class GameView(discord.ui.View):
         else:
             await self.ctx.send(f"{interaction.user.mention} has made their choice. Waiting for the other player.")
 
-    @discord.ui.button(label="🪨 Rock", style=ButtonStyle.secondary)
-    async def rock_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.button_callback(interaction, "rock")
+    @discord.ui.button(label="Heads", style=ButtonStyle.primary)
+    async def heads_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.button_callback(interaction, "heads")
 
-    @discord.ui.button(label="📰 Paper", style=ButtonStyle.success)
-    async def paper_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.button_callback(interaction, "paper")
+    @discord.ui.button(label="Tails", style=ButtonStyle.secondary)
+    async def tails_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.button_callback(interaction, "tails")
 
-    @discord.ui.button(label="✂️ Scissors", style=ButtonStyle.danger)
-    async def scissors_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.button_callback(interaction, "scissors")
-
-class RPS(commands.Cog):
+class CoinFlip(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(name="rockpaperscissors", description="Play Rock Paper Scissors", aliases=["rps"], with_app_command=True)
+    @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"], with_app_command=True)
     async def command(self, ctx, opponent: discord.Member = None):
-        choices = ['rock', 'paper', 'scissors']
         username = ctx.author.name
         opponent_username = opponent.name if opponent else None
 
         if opponent:
-            
             if ctx.author.id == opponent.id:
                 await ctx.send("You can't play against yourself.")
                 return
 
             challenge_view = ChallengeView(ctx, opponent)
-            challenge_message = await ctx.send(f"{opponent.mention}, you have been challenged to a game of Rock Paper Scissors by {ctx.author.mention}. Do you accept?", view=challenge_view)
+            challenge_message = await ctx.send(f"{opponent.mention}, you have been challenged to a game of Head or Tail by {ctx.author.mention}. Do you accept?", view=challenge_view)
             await challenge_view.wait()
 
             if challenge_view.response == "accepted":
                 await challenge_message.delete()
-                view = GameView(ctx, opponent)
-                message = await ctx.send(f"{ctx.author.mention} and {opponent.mention}, choose either rock, paper, or scissors!", view=view)
+                view = CoinFlipView(ctx, opponent)
+                message = await ctx.send(f"{ctx.author.mention} and {opponent.mention}, choose either Heads or Tails!", view=view)
                 view.message = message
                 await view.wait()
 
@@ -109,16 +103,21 @@ class RPS(commands.Cog):
                 if user_choice is None or opponent_choice is None:
                     return
 
-                if (user_choice == 'rock' and opponent_choice == 'scissors') or (user_choice == 'paper' and opponent_choice == 'rock') or (user_choice == 'scissors' and opponent_choice == 'paper'):
+                flip_result = random.choice(['heads', 'tails'])
+                if user_choice == flip_result and opponent_choice != flip_result:
                     add_balance(username, 5)
                     deduct_balance(opponent_username, 5)
-                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded 5 coins to {ctx.author.mention}, {get_balance(username)} left in their account.\nDeducted 5 coins from {opponent.mention}, {get_balance(opponent_username)} left in their account."
-                elif (user_choice == 'rock' and opponent_choice == 'paper') or (user_choice == 'paper' and opponent_choice == 'scissors') or (user_choice == 'scissors' and opponent_choice == 'rock'):
+                    msg = (f"{ctx.author.mention} wins! The coin landed on {flip_result}.\n"
+                           f"Added 5 coins to {ctx.author.mention}, {get_balance(username)} left in their account.\n"
+                           f"Deducted 5 coins from {opponent.mention}, {get_balance(opponent_username)} left in their account.")
+                elif opponent_choice == flip_result and user_choice != flip_result:
                     deduct_balance(username, 5)
                     add_balance(opponent_username, 5)
-                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded 5 coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\nDeducted 5 coins from {ctx.author.mention}, {get_balance(username)} left in their account."
+                    msg = (f"{opponent.mention} wins! The coin landed on {flip_result}.\n"
+                           f"Added 5 coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\n"
+                           f"Deducted 5 coins from {ctx.author.mention}, {get_balance(username)} left in their account.")
                 else:
-                    msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added."
+                    msg = f"It's a tie! The coin landed on {flip_result}.\nNo coins added."
 
                 await ctx.send(msg)
             else:
@@ -126,8 +125,8 @@ class RPS(commands.Cog):
             return
 
         else:
-            view = GameView(ctx)
-            message = await ctx.reply(f"{ctx.author.mention}, choose either rock, paper, or scissors!", view=view)
+            view = CoinFlipView(ctx)
+            message = await ctx.reply(f"{ctx.author.mention}, choose either Heads or Tails!", view=view)
             view.message = message
             await view.wait()
 
@@ -135,19 +134,17 @@ class RPS(commands.Cog):
             if user_choice is None:
                 return
 
-            bot_choice = random.choice(choices)
+            flip_result = random.choice(['heads', 'tails'])
 
-            if (user_choice == 'rock' and bot_choice == 'scissors') or (user_choice == 'paper' and bot_choice == 'rock') or (user_choice == 'scissors' and bot_choice == 'paper'):
+            if user_choice == flip_result:
                 add_balance(username, 5)
-                msg = f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded 5 coins, {get_balance(username)} left in your account."
-            elif (user_choice == 'rock' and bot_choice == 'paper') or (user_choice == 'paper' and bot_choice == 'scissors') or (user_choice == 'scissors' and bot_choice == 'rock'):
-                deduct_balance(username, 5)
-                msg = f"You lose! Bot's {bot_choice} beats your {user_choice}.\nDeducted 5 coins, {get_balance(username)} left in your account."
+                msg = f"You win! The coin landed on {flip_result}.\nAdded 5 coins, {get_balance(username)} left in your account."
             else:
-                msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added or deducted."
+                deduct_balance(username, 5)
+                msg = f"You lose! The coin landed on {flip_result}.\nDeducted 5 coins, {get_balance(username)} left in your account."
 
             await ctx.send(msg)
             return
 
 async def setup(bot):
-    await bot.add_cog(RPS(bot))
+    await bot.add_cog(CoinFlip(bot))

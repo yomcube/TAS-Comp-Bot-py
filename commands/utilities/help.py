@@ -27,8 +27,10 @@ Note: Most commands are available using the prefix, aswell as using `/`.
 Fun commands 👀\n
 **Commands**:
   **balance** -- Prints your balance
-  **connect4** -- Play connect 4 against MKWTASCompBot in any of 3 modes: easy, normal and hard
-  **slots** -- Play the famous slot machine. Default number of emotes is 3. Be warned: Actual coins are involved!
+  **coinflip** -- Bet on a coinflip against the bot, or another player. For now, only betting 5 coins is possible.
+  **connect4** -- Play connect 4 against MKWTASCompBot in any of 3 modes: easy, normal and hard, or against another player.
+  **rps** -- Play rock paper scissors against the bot, or against another player. Coins are involved.
+  **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
 """
 
         elif category == "misc":
@@ -38,7 +40,7 @@ Miscellaenous commands\n
   **setname** -- Changes your display name for the submission channel (Not your server name!)
   **tracks** -- Picks a random track from the game!
   **urban** -- Search urban dictionary for a word or expression!
-  **weather** -- get the weather of a city!
+  **weather** -- Get the weather of a city!
 """
 
         elif category == "host":

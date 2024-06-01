@@ -2,6 +2,7 @@ from discord.ext import commands
 import sqlite3
 from api.submissions import get_display_name
 from utils import has_host_role
+from api.submissions import float_to_readable
 
 class Get(commands.Cog):
     def __init__(self, bot) -> None:
@@ -13,10 +14,16 @@ class Get(commands.Cog):
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
 
-        # Get current task
+        # Get current task by taking random submission, and extracting task number
         cursor.execute("SELECT * FROM submissions LIMIT 1")
         result = cursor.fetchone()
-        active_task = result[0]
+
+        try:
+            active_task = result[0]
+
+        except TypeError:
+            await ctx.send("There were no submissions.")
+            return
 
 
         
@@ -35,7 +42,7 @@ class Get(commands.Cog):
         # Add many lines depending on the number of submissions
         try:
             for submission in submissions:
-                content += f"{get_display_name(submission[2])} : {submission[3]} | Fetched time: {submission[4]}\n"
+                content += f"{get_display_name(submission[2])} : {submission[3]} | Fetched time: ||{float_to_readable(submission[4])}||\n"
 
             await ctx.reply(content=content)
 

@@ -8,7 +8,7 @@ class Sethostrole(commands.Cog):
 
     @commands.hybrid_command(name="set-host-role", aliases=['shr'], description="Set the current host role", with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, comp, role: discord.Role):
+    async def command(self, ctx, role: discord.Role, comp: str = 'mkw'):
         connection = sqlite3.connect("database/settings.db")
         cursor = connection.cursor()
         

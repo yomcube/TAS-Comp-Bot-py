@@ -10,7 +10,7 @@ class Setsubmissionchannel(commands.Cog):
     @commands.hybrid_command(name="set-submission-channel", aliases=['ssc'],
                              description="Set the public submission display channel", with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, comp, channel: discord.TextChannel):
+    async def command(self, ctx, channel: discord.TextChannel, comp: str = 'mkw'):
         # TODO: detect which server you are in, so the comp argument is no longer needed
 
         connection = sqlite3.connect("database/settings.db")

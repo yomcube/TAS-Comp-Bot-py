@@ -3,21 +3,18 @@ import requests
 from bs4 import BeautifulSoup
 import random
 
-class Yoshi(commands.Cog):
-    def __init__(self, bot) -> None:
+class Shadow(commands.Cog):
+    def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="dashsupersecretcommand", aliases=['dashcmd'])
-    async def yoshi(self, ctx):
-        # Google Image Search URL for Yoshi
-        url = "https://www.google.com/search?tbm=isch&q=yoshi"
+    @commands.command(name="shadowsupersecretcommand", aliases=['shxdcmd'])
+    async def command(self, ctx):
+        # Google Image Search URL for "human shadow images"
+        url = "https://www.google.com/search?tbm=isch&q=human+shadow+images"
 
-        # Headers to mimic a real browser request
+        # Send a request to the URL
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-        }
-
-        # Send a request to the URL with headers
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"}
         response = requests.get(url, headers=headers)
 
         # Parse the HTML content
@@ -33,10 +30,10 @@ class Yoshi(commands.Cog):
             # Select a random image link
             random_image = random.choice(valid_images)
 
-            # Send the random Yoshi image
+            # Send the random image URL
             await ctx.send(random_image)
         else:
             await ctx.send("No images found.")
 
-async def setup(bot) -> None:
-    await bot.add_cog(Yoshi(bot))
+async def setup(bot):
+    await bot.add_cog(Shadow(bot))
