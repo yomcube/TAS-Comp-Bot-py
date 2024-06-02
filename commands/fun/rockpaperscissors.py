@@ -5,10 +5,11 @@ import random
 from utils import get_balance, add_balance, deduct_balance
 
 class ChallengeView(discord.ui.View):
-    def __init__(self, ctx, opponent):
+    def __init__(self, ctx, opponent, bet_amount):
         super().__init__(timeout=10)
         self.ctx = ctx
         self.opponent = opponent
+        self.bet_amount = bet_amount
         self.response = None
 
     async def on_timeout(self):
@@ -35,10 +36,11 @@ class ChallengeView(discord.ui.View):
         self.stop()
 
 class GameView(discord.ui.View):
-    def __init__(self, ctx, opponent=None):
+    def __init__(self, ctx, opponent=None, bet_amount=5):
         super().__init__(timeout=10)
         self.ctx = ctx
         self.opponent = opponent
+        self.bet_amount = bet_amount
         self.choices = {ctx.author.id: None}
         if opponent:
             self.choices[opponent.id] = None
@@ -82,24 +84,31 @@ class RPS(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="rockpaperscissors", description="Play Rock Paper Scissors", aliases=["rps"], with_app_command=True)
-    async def command(self, ctx, opponent: discord.Member = None):
+    async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 5):
         choices = ['rock', 'paper', 'scissors']
         username = ctx.author.name
         opponent_username = opponent.name if opponent else None
 
-        if opponent:
-            
+        if opponent != self.bot.user:
+            if get_balance(username) < bet_amount:
+                await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
+                return
+
+            if get_balance(opponent_username) < bet_amount:
+                await ctx.send(f"{opponent.mention} does not have enough coins to place this bet.")
+                return
+
             if ctx.author.id == opponent.id:
                 await ctx.send("You can't play against yourself.")
                 return
 
-            challenge_view = ChallengeView(ctx, opponent)
-            challenge_message = await ctx.send(f"{opponent.mention}, you have been challenged to a game of Rock Paper Scissors by {ctx.author.mention}. Do you accept?", view=challenge_view)
+            challenge_view = ChallengeView(ctx, opponent, bet_amount)
+            challenge_message = await ctx.send(f"{opponent.mention}, you have been challenged to a game of Rock Paper Scissors by {ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?", view=challenge_view)
             await challenge_view.wait()
 
             if challenge_view.response == "accepted":
                 await challenge_message.delete()
-                view = GameView(ctx, opponent)
+                view = GameView(ctx, opponent, bet_amount)
                 message = await ctx.send(f"{ctx.author.mention} and {opponent.mention}, choose either rock, paper, or scissors!", view=view)
                 view.message = message
                 await view.wait()
@@ -110,13 +119,13 @@ class RPS(commands.Cog):
                     return
 
                 if (user_choice == 'rock' and opponent_choice == 'scissors') or (user_choice == 'paper' and opponent_choice == 'rock') or (user_choice == 'scissors' and opponent_choice == 'paper'):
-                    add_balance(username, 5)
-                    deduct_balance(opponent_username, 5)
-                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded 5 coins to {ctx.author.mention}, {get_balance(username)} left in their account.\nDeducted 5 coins from {opponent.mention}, {get_balance(opponent_username)} left in their account."
+                    add_balance(username, bet_amount)
+                    deduct_balance(opponent_username, bet_amount)
+                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded {bet_amount} coins to {ctx.author.mention}, {get_balance(username)} left in their account.\nDeducted {bet_amount} coins from {opponent.mention}, {get_balance(opponent_username)} left in their account."
                 elif (user_choice == 'rock' and opponent_choice == 'paper') or (user_choice == 'paper' and opponent_choice == 'scissors') or (user_choice == 'scissors' and opponent_choice == 'rock'):
-                    deduct_balance(username, 5)
-                    add_balance(opponent_username, 5)
-                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded 5 coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\nDeducted 5 coins from {ctx.author.mention}, {get_balance(username)} left in their account."
+                    deduct_balance(username, bet_amount)
+                    add_balance(opponent_username, bet_amount)
+                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded {bet_amount} coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\nDeducted {bet_amount} coins from {ctx.author.mention}, {get_balance(username)} left in their account."
                 else:
                     msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added."
 
@@ -126,7 +135,12 @@ class RPS(commands.Cog):
             return
 
         else:
-            view = GameView(ctx)
+            bet_amount = 5  # Force bet amount to 5 coins when playing against the bot
+            if get_balance(username) < bet_amount:
+                await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
+                return
+
+            view = GameView(ctx, bet_amount=bet_amount)
             message = await ctx.reply(f"{ctx.author.mention}, choose either rock, paper, or scissors!", view=view)
             view.message = message
             await view.wait()
@@ -138,11 +152,11 @@ class RPS(commands.Cog):
             bot_choice = random.choice(choices)
 
             if (user_choice == 'rock' and bot_choice == 'scissors') or (user_choice == 'paper' and bot_choice == 'rock') or (user_choice == 'scissors' and bot_choice == 'paper'):
-                add_balance(username, 5)
-                msg = f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded 5 coins, {get_balance(username)} left in your account."
+                add_balance(username, bet_amount)
+                msg = f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded {bet_amount} coins, {get_balance(username)} left in your account."
             elif (user_choice == 'rock' and bot_choice == 'paper') or (user_choice == 'paper' and bot_choice == 'scissors') or (user_choice == 'scissors' and bot_choice == 'rock'):
-                deduct_balance(username, 5)
-                msg = f"You lose! Bot's {bot_choice} beats your {user_choice}.\nDeducted 5 coins, {get_balance(username)} left in your account."
+                deduct_balance(username, bet_amount)
+                msg = f"You lose! Bot's {bot_choice} beats your {user_choice}.\nDeducted {bet_amount} coins, {get_balance(username)} left in your account."
             else:
                 msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added or deducted."
 
