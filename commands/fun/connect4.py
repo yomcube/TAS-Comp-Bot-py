@@ -32,12 +32,10 @@ class Connect4(commands.Cog):
         self.is_bot_game = False
 
     def print_board(self):
-        #board_string = '```\n'
         board_string = ''
-        emoji_map = {'X': ':red_circle:\u200a', 'O': ':yellow_circle:\u200a', ' ': ':white_circle:\u200a'}
+        emoji_map = {'X': ':red_circle: ', 'O': ':yellow_circle: ', ' ': ':white_circle: '}
         for row in self.board:
             board_string += ''.join(emoji_map[cell] for cell in row) + '\n'
-        #board_string += '```'
         return board_string
 
     def is_valid_location(self, col):
@@ -119,7 +117,7 @@ class Connect4(commands.Cog):
     async def update_board_message(self):
         if self.last_board_message:
             await self.last_board_message.delete()
-        embed = discord.Embed(description = self.print_board())
+        embed = discord.Embed(description = self.print_board(), colour = 0x0858ee)
         self.last_board_message = await self.game_channel.send(embed = embed)
 
     async def send_challenge(self, ctx, opponent):
@@ -168,7 +166,7 @@ class Connect4(commands.Cog):
                     col = int(msg.content) - 1
                     await self.make_move(col, self.current_player)
                 except asyncio.TimeoutError:
-                    await self.game_channel.send('You took too long to respond! Game over.')
+                    #await self.game_channel.send('You took too long to respond! Game over.')
                     self.game_over = True
             else:
                 await self.game_channel.send('Bot is thinking...')
