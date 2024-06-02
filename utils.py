@@ -140,9 +140,9 @@ def deduct_balance(username, amount):
     new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
     update_balance(username, new_balance)
 
-def calculate_winnings(num_emojis, slot_number, base_amount=10):
-    probability = 1 / (num_emojis ** slot_number)
-    winnings = base_amount * (1 / probability)
+def calculate_winnings(num_emojis, slot_number, constant=3):
+    probability = 1 / (num_emojis ** (slot_number - 1))
+    winnings = constant * slot_number * (1 / probability)
     return int(winnings)
 
 
