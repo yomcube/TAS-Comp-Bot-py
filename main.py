@@ -9,6 +9,9 @@ from discord.ext import commands
 load_dotenv()
 token = os.getenv('TOKEN')
 
+if not os.path.exists("database"): 
+    os.makedirs("database")
+
 activity = discord.Game(name="Dolphin Emulator")
 
 commands_ext = ['commands.db.host.start-task',
