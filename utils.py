@@ -2,7 +2,7 @@ import struct
 import uuid
 import discord
 from discord.ext import commands
-import msgspec as ms
+import json
 import sqlite3
 
 def get_host_role():
@@ -48,7 +48,7 @@ async def download_attachments(attachments, file_name=None) -> str:
 async def check_json_guild(file, guild_id):     # TODO: Normalise file handling, rename function
     with open(file, "r") as f:
 
-        data = ms.json.decode(f.read())
+        data = json.loads(f.read())
         for guild in data:
             if guild == guild_id:
                 return True
@@ -148,3 +148,4 @@ def calculate_winnings(num_emojis, slot_number, constant=3):
 
 tracks = [ "Luigi Circuit", "Moo Moo Meadows", "Mushroom Gorge", "Toad's Factory", "Mario Circuit", "Coconut Mall", "DK Summit", "Wario's Gold Mine", "Daisy Circuit", "Koopa Cape", "Maple Treeway", "Grumble Volcano", "Dry Dry Ruins", "Moonview Highway", "Bowser's Castle", "Rainbow Road", "GCN Peach Beach", "DS Yoshi Falls", "SNES Ghost Valley 2", "N64 Mario Raceway", "N64 Sherbet Land", "GBA Shy Guy Beach", "DS Delfino Square", "GCN Waluigi Stadium", "DS Desert Hills", "GBA Bowser Castle 3", "N64 DK's Jungle Parkway", "GCN Mario Circuit", "SNES Mario Circuit 3", "DS Peach Gardens", "GCN DK Mountain", "N64 Bowser's Castle" ]
 tracks_abbreviated = [ 'LC', 'MMM', 'MG', 'TF', 'MC', 'CM', 'DKSC', 'WGM', 'DC', 'KC', 'MT', 'GV', 'DDR', 'MH', 'BC', 'RR', 'rPB', 'rYF', 'rGV2', 'rMR', 'rSL', 'rSGB', 'rDS', 'rWS', 'rDH', 'rBC3', 'rDKJP', 'rMC', 'rMC3', 'rPG', 'rDKM', 'rBC' ]
+

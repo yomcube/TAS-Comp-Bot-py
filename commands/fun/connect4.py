@@ -32,11 +32,12 @@ class Connect4(commands.Cog):
         self.is_bot_game = False
 
     def print_board(self):
-        board_string = '```\n'
-        emoji_map = {'X': '🔴', 'O': '🟡', ' ': '⚪️'}
+        #board_string = '```\n'
+        board_string = ''
+        emoji_map = {'X': ':red_circle:\u200a', 'O': ':yellow_circle:\u200a', ' ': ':white_circle:\u200a'}
         for row in self.board:
             board_string += ''.join(emoji_map[cell] for cell in row) + '\n'
-        board_string += '```'
+        #board_string += '```'
         return board_string
 
     def is_valid_location(self, col):
@@ -118,7 +119,8 @@ class Connect4(commands.Cog):
     async def update_board_message(self):
         if self.last_board_message:
             await self.last_board_message.delete()
-        self.last_board_message = await self.game_channel.send(self.print_board())
+        embed = discord.Embed(description = self.print_board())
+        self.last_board_message = await self.game_channel.send(embed = embed)
 
     async def send_challenge(self, ctx, opponent):
         view = ChallengeView(self, ctx, opponent)
@@ -355,3 +357,4 @@ class ChallengeView(discord.ui.View):
 
 async def setup(bot) -> None:
     await bot.add_cog(Connect4(bot))
+
