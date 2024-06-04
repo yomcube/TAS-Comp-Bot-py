@@ -36,7 +36,6 @@ class Weather(commands.Cog):
         if 'name' not in response or 'sys' not in response or 'country' not in response['sys']:
             await ctx.reply("Error: Incomplete weather data received.")
             return
-        print(response)
         
         embed = discord.Embed(title=f"Weather for {response['name']}, {response['sys']['country']}", color=discord.Color.blue())
         embed.add_field(name="Temperature", value=f"{(response['main']['temp']):.1f}°C")
