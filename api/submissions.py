@@ -1,6 +1,9 @@
 import discord
 import sqlite3
-from utils import is_task_currently_running, download_attachments, get_lap_time, readable_to_float, float_to_readable
+
+from utils import is_task_currently_running, download_attachments, get_lap_time, readable_to_float, float_to_readable, \
+    get_file_types
+
 
 def get_submission_channel(comp):
     connection = sqlite3.connect("database/settings.db")
@@ -25,6 +28,7 @@ def first_time_submission(id):
     result = cursor.fetchone()
     return not result
 
+
 def new_competitor(id):
     """Checks if a competitor has EVER submitted (present and past tasks)."""
     connection = sqlite3.connect("database/users.db")
@@ -34,6 +38,7 @@ def new_competitor(id):
     connection.close()
     return not result
 
+
 def get_display_name(id):
     """Returns the display name of a certain user ID."""
     connection = sqlite3.connect("database/users.db")
@@ -42,6 +47,7 @@ def get_display_name(id):
     result = cursor.fetchone()
     connection.close()
     return result[2]
+
 
 def count_submissions():
     """Counts the number of submissions in the current task."""
@@ -57,7 +63,6 @@ def count_submissions():
 
 # old parameters: message, file, num, year
 async def handle_submissions(message, self):
-
     author = message.author
     author_name = message.author.name
     author_id = message.author.id
@@ -105,10 +110,7 @@ async def handle_submissions(message, self):
         await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
 
 
-
-
 async def handle_dms(message, self):
-    
     author = message.author
     author_name = message.author.name
     author_id = message.author.id
@@ -129,103 +131,21 @@ async def handle_dms(message, self):
         #########################
         # Recognizing submission
         #########################
-        
-        connection = sqlite3.connect("database/tasks.db")
-        cursor = connection.cursor()
-        
-        current_task = is_task_currently_running()
+        if len(attachments) > 0:
 
-        #################################
-        # recognition of rkg submission
-        #################################
+            file_dict = get_file_types(attachments)
+            connection = sqlite3.connect("database/tasks.db")
+            cursor = connection.cursor()
 
-        if attachments and filename.endswith('.rkg'):
+            current_task = is_task_currently_running()
 
-            if current_task:
-                
-                # Tell the user the submission has been received
-                print(f"File received!\nBy: {author}\nMessage sent: {message.content}")
-                await message.channel.send(
-                    "`.rkg` file detected!\nThe file was successfully saved. Type `$info` for more information about the file.")
+            #################################
+            # recognition of file submission
+            #################################
+            from api.mkwii.mkwii_file_handling import handle_mkwii_files  # TODO: use a class here?
 
-                # handle submission
-                await handle_submissions(message, self)
+            try:
+                await handle_mkwii_files(message, attachments, file_dict, self)
 
-
-
-                # retrieving lap time, to estimate submission time
-
-                rkg_data = await attachments[0].read()
-
-                try:
-                    rkg = bytearray(rkg_data)
-                    if rkg[:4] == b'RKGD':
-                        lap_times = get_lap_time(rkg)
-
-                    # float time to upload to db
-                    time = readable_to_float(lap_times[0]) # For most (but not all) mkw single-track tasks, the first lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
-
-                except UnboundLocalError:
-                    # This exception catches blank rkg files
-                    time = 0
-                    await message.channel.send("Nice blank rkg there")
-
-
-
-                # Add first-time submission
-                if first_time_submission(author_id):
-                    # Assuming the table `submissions` has columns: task, name, id, url, time, dq, dq_reason
-                    cursor.execute(
-                        "INSERT INTO submissions (task, name, id, url, time, dq, dq_reason) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                        (current_task[0], author_name, author_id, url, time, 0, '')
-                    )
-                    connection.commit()
-                    connection.close()
-
-
-                # If not first submission: replace old submission
-                else:
-                    cursor.execute("UPDATE submissions SET url=?, time=? WHERE id=?", (url, time, author_id))
-                    connection.commit()
-                    connection.close()
-
-            # No ongoing task
-            else:
-                await message.channel.send("There is no active task yet.")
-
-        #################################
-        # recognition of rksys submission
-        #################################
-
-
-        elif attachments and filename.endswith('.dat'):
-
-            if current_task:
-
-                # handle submission
-                await handle_submissions(message, self)
-
-
-                # Add first-time submission
-                if first_time_submission(author_id):
-                    cursor.execute(
-                        f"INSERT INTO submissions VALUES (task, name, id, url, time, dq, dq_reason) VALUES (?, ?, ?, ?, ?, ?)", (current_task[0], author_name, author_id, url, 0, 0, ''))
-                    connection.commit()
-                    connection.close()
-
-                # If not first submission: replace old submission
-                else:
-                    cursor.execute("UPDATE submissions SET url=? WHERE id=?", (url, author_id))
-                    connection.commit()
-                    connection.close()
-
-                # Tell the user the submission has been received
-                print(f"File received!\nBy: {author}\nMessage sent: {message.content}")
-                await message.channel.send(
-                    "`rksys.dat` detected!\nThe file was successfully saved. Type `$info` for more information about the file.")
-
-
-            else:
-                await message.channel.send("There is no active task.")
-
-            # TODO make info command be an actual info command
+            except TimeoutError:
+                await channel.send("Could not process Files!")

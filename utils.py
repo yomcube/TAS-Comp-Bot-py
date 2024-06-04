@@ -145,6 +145,27 @@ def calculate_winnings(num_emojis, slot_number, constant=3):
     winnings = constant * slot_number * (1 / probability)
     return int(winnings)
 
+def get_file_types(attachments):
+    file_list = []
+    for file in attachments:
+        file_list.append(file.filename.partition(".")[-1])
+    file_tuples = enumerate(file_list, start=1)
+    # Check for uniqueness by assigning index to dictionary
+    # Iterates over dictionary to find if an index has been assigned
+    file_dict = {}
+    for index, filetype in file_tuples:
+        if filetype not in file_dict:
+            file_dict[filetype] = index
+    return file_dict
+
+
+
+
+
+
+
+
+
 
 tracks = [ "Luigi Circuit", "Moo Moo Meadows", "Mushroom Gorge", "Toad's Factory", "Mario Circuit", "Coconut Mall", "DK Summit", "Wario's Gold Mine", "Daisy Circuit", "Koopa Cape", "Maple Treeway", "Grumble Volcano", "Dry Dry Ruins", "Moonview Highway", "Bowser's Castle", "Rainbow Road", "GCN Peach Beach", "DS Yoshi Falls", "SNES Ghost Valley 2", "N64 Mario Raceway", "N64 Sherbet Land", "GBA Shy Guy Beach", "DS Delfino Square", "GCN Waluigi Stadium", "DS Desert Hills", "GBA Bowser Castle 3", "N64 DK's Jungle Parkway", "GCN Mario Circuit", "SNES Mario Circuit 3", "DS Peach Gardens", "GCN DK Mountain", "N64 Bowser's Castle" ]
 tracks_abbreviated = [ 'LC', 'MMM', 'MG', 'TF', 'MC', 'CM', 'DKSC', 'WGM', 'DC', 'KC', 'MT', 'GV', 'DDR', 'MH', 'BC', 'RR', 'rPB', 'rYF', 'rGV2', 'rMR', 'rSL', 'rSGB', 'rDS', 'rWS', 'rDH', 'rBC3', 'rDKJP', 'rMC', 'rMC3', 'rPG', 'rDKM', 'rBC' ]
