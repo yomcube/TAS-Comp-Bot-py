@@ -200,13 +200,16 @@ class Connect4(commands.Cog):
 
     @commands.hybrid_command(
         name="connect4",
-        description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode!",
+        description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode, or against another player!",
         with_app_command=True
     )
     @app_commands.autocomplete(mode=command_autocompletion)
-    async def command(self, ctx: commands.Context, opponent: discord.Member, mode: str = "easy"):
+    async def command(self, ctx: commands.Context, mode: str = "easy", opponent: discord.Member = None, ):
         self.reset_game()
         self.mode = mode.lower()
+
+        if opponent is None:
+            opponent = self.bot.user
 
         if self.game_over or len(self.players) == 0:
             if opponent == self.bot.user:
