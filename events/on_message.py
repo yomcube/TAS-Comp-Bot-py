@@ -19,7 +19,7 @@ class Message(commands.Cog):
 
         if str(lower_content).startswith(msg_list[0]) and message.author != self.bot.user:
             await message.reply("kiro*")
-        elif str(lower_content).startswith(msg_list[1]) and message.author != self.bot.user:
+        elif (str(lower_content).startswith(msg_list[1]) or str(lower_content).endswith(msg_list[1])) and message.author != self.bot.user:
             await message.reply("Crazy?")
             await self.wait_crazy(message)
         elif msg_list[2] in lower_content and message.author != self.bot.user:
@@ -38,10 +38,7 @@ class Message(commands.Cog):
             response_lower = response.content.lower()
             if response_lower.startswith(crazy_list[1]):
                 await response.reply("A rubber room with rats.")
-                response = await self.bot.wait_for('message', check=check)
-                response_lower = response.content.lower()
-                if response_lower.startswith(crazy_list[2]):
-                    await response.reply("Crazy?")
+
 
 
 async def setup(bot):
