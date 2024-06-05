@@ -98,6 +98,10 @@ class CoinFlip(commands.Cog):
         username = ctx.author.name
         opponent_username = opponent.name if opponent else None
 
+        if bet_amount <= 0:
+            await ctx.send("Nice try! Please enter a positive bet amount.")
+            return
+
         if get_balance(username) < bet_amount:
             await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
             return
