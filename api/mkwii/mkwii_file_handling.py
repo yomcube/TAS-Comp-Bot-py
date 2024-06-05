@@ -1,5 +1,5 @@
 from api.submissions import handle_submissions, first_time_submission
-from utils import is_task_currently_running, download_attachments, get_lap_time, readable_to_float, float_to_readable
+from api.utils import is_task_currently_running, get_lap_time, readable_to_float
 import sqlite3
 
 

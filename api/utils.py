@@ -1,3 +1,4 @@
+import os
 import struct
 import uuid
 import discord
@@ -5,21 +6,26 @@ from discord.ext import commands
 import json
 import sqlite3
 
+from dotenv import load_dotenv
+
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
+
 def get_host_role():
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
-    connection = sqlite3.connect("database/settings.db")
+    connection = sqlite3.connect("./database/settings.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM host_role")
+    cursor.execute("SELECT * FROM host_role WHERE comp = ?",
+                   (DEFAULT,))  # chooses default in dotenv
     role = cursor.fetchone()
 
     if role:
-        host_role = role[0]
+        host_role = role[1]
         connection.close()
         return host_role
     else:
         connection.close()
-        return "Host" # default host role name.
-
+        return "Host"  # default host role name.
 
 
 def has_host_role():
@@ -28,8 +34,8 @@ def has_host_role():
         # Check if the role is a name
         has_role = discord.utils.get(ctx.author.roles, name=role) is not None
         return has_role
-    return commands.check(predicate)
 
+    return commands.check(predicate)
 
 
 async def download_attachments(attachments, file_name=None) -> str:
@@ -39,13 +45,13 @@ async def download_attachments(attachments, file_name=None) -> str:
     for attachment in attachments:
         file_type = attachment.filename.split(".")[-1]
         file_path = f"download/{file_name}.{file_type}"
-        file = open(file_path, "w") # changed this from x to w, because as submitters, we can submit multiple times
+        file = open(file_path, "w")  # changed this from x to w, because as submitters, we can submit multiple times
         await attachment.save(fp=file_path)
         file.close()
     return file_name
 
 
-async def check_json_guild(file, guild_id):     # TODO: Normalise file handling, rename function
+async def check_json_guild(file, guild_id):  # TODO: Normalise file handling, rename function
     with open(file, "r") as f:
 
         data = json.loads(f.read())
@@ -65,7 +71,7 @@ def readable_to_float(time_str):
         total_seconds = minutes * 60 + seconds
         return total_seconds
     except ValueError:
-       print("Invalid time format. Expected 'MM:SS.mmm'.")
+        print("Invalid time format. Expected 'MM:SS.mmm'.")
 
 
 def float_to_readable(seconds):
@@ -97,9 +103,10 @@ def get_lap_time(rkg):
         lap_times.append(f"{min}:{sec:02}.{mil:03}")
     return lap_times
 
+
 def is_task_currently_running():
     """Check if a task is currently running"""
-    connection = sqlite3.connect("database/tasks.db")
+    connection = sqlite3.connect("./database/tasks.db")
     cursor = connection.cursor()
 
     # Is a task running?
@@ -110,7 +117,7 @@ def is_task_currently_running():
 
 
 def get_balance(username):
-    connection = sqlite3.connect("database/economy.db")
+    connection = sqlite3.connect("./database/economy.db")
     cursor = connection.cursor()
     cursor.execute("SELECT coins FROM slots WHERE username = ?", (username,))
     result = cursor.fetchone()
@@ -123,27 +130,32 @@ def get_balance(username):
     connection.close()
     return balance
 
+
 def update_balance(username, new_balance):
-    connection = sqlite3.connect("database/economy.db")
+    connection = sqlite3.connect("./database/economy.db")
     cursor = connection.cursor()
     cursor.execute("UPDATE slots SET coins = ? WHERE username = ?", (new_balance, username))
     connection.commit()
     connection.close()
+
 
 def add_balance(username, amount):
     current_balance = get_balance(username)
     new_balance = current_balance + amount
     update_balance(username, new_balance)
 
+
 def deduct_balance(username, amount):
     current_balance = get_balance(username)
     new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
     update_balance(username, new_balance)
 
+
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))
     winnings = constant * slot_number * (1 / probability)
     return int(winnings)
+
 
 def get_file_types(attachments):
     file_list = []
@@ -159,14 +171,12 @@ def get_file_types(attachments):
     return file_dict
 
 
-
-
-
-
-
-
-
-
-tracks = [ "Luigi Circuit", "Moo Moo Meadows", "Mushroom Gorge", "Toad's Factory", "Mario Circuit", "Coconut Mall", "DK Summit", "Wario's Gold Mine", "Daisy Circuit", "Koopa Cape", "Maple Treeway", "Grumble Volcano", "Dry Dry Ruins", "Moonview Highway", "Bowser's Castle", "Rainbow Road", "GCN Peach Beach", "DS Yoshi Falls", "SNES Ghost Valley 2", "N64 Mario Raceway", "N64 Sherbet Land", "GBA Shy Guy Beach", "DS Delfino Square", "GCN Waluigi Stadium", "DS Desert Hills", "GBA Bowser Castle 3", "N64 DK's Jungle Parkway", "GCN Mario Circuit", "SNES Mario Circuit 3", "DS Peach Gardens", "GCN DK Mountain", "N64 Bowser's Castle" ]
-tracks_abbreviated = [ 'LC', 'MMM', 'MG', 'TF', 'MC', 'CM', 'DKSC', 'WGM', 'DC', 'KC', 'MT', 'GV', 'DDR', 'MH', 'BC', 'RR', 'rPB', 'rYF', 'rGV2', 'rMR', 'rSL', 'rSGB', 'rDS', 'rWS', 'rDH', 'rBC3', 'rDKJP', 'rMC', 'rMC3', 'rPG', 'rDKM', 'rBC' ]
-
+tracks = ["Luigi Circuit", "Moo Moo Meadows", "Mushroom Gorge", "Toad's Factory", "Mario Circuit", "Coconut Mall",
+          "DK Summit", "Wario's Gold Mine", "Daisy Circuit", "Koopa Cape", "Maple Treeway", "Grumble Volcano",
+          "Dry Dry Ruins", "Moonview Highway", "Bowser's Castle", "Rainbow Road", "GCN Peach Beach", "DS Yoshi Falls",
+          "SNES Ghost Valley 2", "N64 Mario Raceway", "N64 Sherbet Land", "GBA Shy Guy Beach", "DS Delfino Square",
+          "GCN Waluigi Stadium", "DS Desert Hills", "GBA Bowser Castle 3", "N64 DK's Jungle Parkway",
+          "GCN Mario Circuit", "SNES Mario Circuit 3", "DS Peach Gardens", "GCN DK Mountain", "N64 Bowser's Castle"]
+tracks_abbreviated = ['LC', 'MMM', 'MG', 'TF', 'MC', 'CM', 'DKSC', 'WGM', 'DC', 'KC', 'MT', 'GV', 'DDR', 'MH', 'BC',
+                      'RR', 'rPB', 'rYF', 'rGV2', 'rMR', 'rSL', 'rSGB', 'rDS', 'rWS', 'rDH', 'rBC3', 'rDKJP', 'rMC',
+                      'rMC3', 'rPG', 'rDKM', 'rBC']

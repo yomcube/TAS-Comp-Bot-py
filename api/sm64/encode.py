@@ -1,5 +1,5 @@
 from discord.ext import commands
-from utils import download_attachments
+from api.utils import download_attachments
 
 
 class Encode(commands.Cog):

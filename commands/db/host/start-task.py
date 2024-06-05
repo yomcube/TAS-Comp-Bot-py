@@ -1,7 +1,7 @@
 from discord.ext import commands
 import sqlite3
 from datetime import date
-from utils import is_task_currently_running, has_host_role
+from api.utils import is_task_currently_running, has_host_role
 from api.submissions import get_submission_channel
 
 
@@ -11,7 +11,8 @@ class Start(commands.Cog):
 
     @commands.hybrid_command(name="start-task", description="Start a task", with_app_command=True)
     @has_host_role()
-    async def command(self, ctx, number: int, year: int=None, collab: int = 0, multiple_tracks: int = 0, speed_task: int = 0):
+    async def command(self, ctx, number: int, year: int = None, collab: int = 0, multiple_tracks: int = 0,
+                      speed_task: int = 0):
 
         if not year:
             year = date.today().year
@@ -41,8 +42,9 @@ class Start(commands.Cog):
                         break
 
             except AttributeError:
-                await ctx.send("Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")
-
+                await ctx.send(
+                    "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not "
+                    "have permission)")
 
             await ctx.send(f"Succesfully started **Task {number} - {year}**!")
 

@@ -1,29 +1,37 @@
+import os
+import sqlite3
+
 import discord
 from discord.ext import commands
-import sqlite3
+from dotenv import load_dotenv
+
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
+
 
 class Sethostrole(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="set-host-role", aliases=['shr'], description="Set the current host role", with_app_command=True)
+    @commands.hybrid_command(name="set-host-role", aliases=['shr'], description="Set the current host role",
+                             with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, role: discord.Role):
+    async def command(self, ctx, role: discord.Role, comp: str = DEFAULT):
         connection = sqlite3.connect("database/settings.db")
         cursor = connection.cursor()
-        
+
         name = role.name
         id = role.id
 
         try:
-            # Check if existing role already (there should only be 0 or 1)
-            cursor.execute("SELECT * FROM host_role")
+            # Check if existing role already
+            cursor.execute("SELECT * FROM host_role WHERE comp = ?", (comp,))
             existing = cursor.fetchone()
 
             if existing:
-                cursor.execute('UPDATE host_role SET name = ?,id = ? ', (name, id,))
+                cursor.execute('UPDATE host_role SET name = ?,id = ? WHERE comp = ?', (name, id, comp,))
             else:
-                cursor.execute('INSERT INTO host_role (name, id) VALUES (?, ?)', (name, id,))
+                cursor.execute('INSERT INTO host_role (comp, name, id) VALUES (?, ?, ?)', (comp, name, id,))
 
             # Commit whatever change
             connection.commit()
@@ -34,6 +42,7 @@ class Sethostrole(commands.Cog):
         except sqlite3.OperationalError as e:
             print(e)
             await ctx.send("An error occured.")
+
 
 async def setup(bot) -> None:
     await bot.add_cog(Sethostrole(bot))

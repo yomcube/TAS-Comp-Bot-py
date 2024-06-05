@@ -1,5 +1,5 @@
 from discord.ext import commands
-from utils import tracks, tracks_abbreviated
+from api.utils import tracks, tracks_abbreviated
 import random
 
 class Tracks(commands.Cog):

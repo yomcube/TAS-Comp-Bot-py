@@ -1,22 +1,21 @@
 import discord
 import sqlite3
 
-from utils import is_task_currently_running, download_attachments, get_lap_time, readable_to_float, float_to_readable, \
-    get_file_types
+from api.utils import get_file_types
 
 
-def get_submission_channel():
+def get_submission_channel(comp):
     connection = sqlite3.connect("database/settings.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM submission_channel LIMIT 1") # there should only be 1 entry per table anyway.
+    cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))  # there should only be 1 entry per table per competition
     result = cursor.fetchone()
 
     if result is not None:  # Check if result is not None before accessing index
-        channel_id = result[0]
+        channel_id = result[1]
         return channel_id
     else:
         # Handle case where no rows are found in the database
-        print(f"No submission channel found for competition.")
+        print(f"No submission channel found for competition '{comp}'.")
         return None
 
 
@@ -106,14 +105,13 @@ async def handle_submissions(message, self):
             # If the last message is not sent by the bot, send a new one
             await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
     else:
-        # There are no submissions (brand-new task); send a message on the first submission -> this is for blank channels
+        # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
+        # channels
         await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
 
 
 async def handle_dms(message, self):
     author = message.author
-    author_name = message.author.name
-    author_id = message.author.id
     author_dn = message.author.display_name
 
     if isinstance(message.channel, discord.DMChannel) and author != self.bot.user:
@@ -121,9 +119,6 @@ async def handle_dms(message, self):
         # this logs messages to a channel -> my private server for testing purposes
         channel = self.bot.get_channel(1243652270537707722)
         attachments = message.attachments
-        if len(attachments) > 0:
-            filename = attachments[0].filename
-            url = attachments[0].url
         if channel:
             await channel.send("Message from " + str(author_dn) + ": " + message.content + " "
                                .join([attachment.url for attachment in message.attachments if message.attachments]))
@@ -131,17 +126,9 @@ async def handle_dms(message, self):
         #########################
         # Recognizing submission
         #########################
+
         if len(attachments) > 0:
-
             file_dict = get_file_types(attachments)
-            connection = sqlite3.connect("database/tasks.db")
-            cursor = connection.cursor()
-
-            current_task = is_task_currently_running()
-
-            #################################
-            # recognition of file submission
-            #################################
             from api.mkwii.mkwii_file_handling import handle_mkwii_files  # TODO: use a class here?
 
             try:

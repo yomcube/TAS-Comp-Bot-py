@@ -1,7 +1,12 @@
+import os
+
 import discord
 from discord.ext import commands
 import sqlite3
+from dotenv import load_dotenv
 
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 class Setsubmissionchannel(commands.Cog):
     def __init__(self, bot) -> None:
@@ -10,7 +15,7 @@ class Setsubmissionchannel(commands.Cog):
     @commands.hybrid_command(name="set-submission-channel", aliases=['ssc'],
                              description="Set the public submission display channel", with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, channel: discord.TextChannel):
+    async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
         # TODO: detect which server you are in, so the comp argument is no longer needed
 
         connection = sqlite3.connect("database/settings.db")
@@ -20,14 +25,14 @@ class Setsubmissionchannel(commands.Cog):
 
         try:
             # Check if existing channel already
-            cursor.execute("SELECT * FROM submission_channel")
+            cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
             existing = cursor.fetchone()
 
             if existing:
-                cursor.execute('UPDATE submission_channel SET id = ?', (id,))
+                cursor.execute('UPDATE submission_channel SET comp = ?, id = ? WHERE comp = ?', (comp, id, comp))
 
             else:
-                cursor.execute('INSERT INTO submission_channel (id) VALUES (?)', (id,))
+                cursor.execute('INSERT INTO submission_channel (comp, id) VALUES (?, ?)', (comp, id,))
 
             # Commit whatever change
             connection.commit()

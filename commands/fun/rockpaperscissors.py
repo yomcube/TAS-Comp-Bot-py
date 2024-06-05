@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import ButtonStyle
 import random
-from utils import get_balance, add_balance, deduct_balance
+from api.utils import get_balance, add_balance, deduct_balance
 
 class ChallengeView(discord.ui.View):
     def __init__(self, ctx, opponent, bet_amount):

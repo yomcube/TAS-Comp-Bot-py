@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 from discord import ButtonStyle
 import random
-from utils import get_balance, add_balance, deduct_balance
+from api.utils import get_balance, add_balance, deduct_balance
+
 
 class ChallengeView(discord.ui.View):
     def __init__(self, ctx, opponent, bet_amount):
@@ -34,6 +35,7 @@ class ChallengeView(discord.ui.View):
         self.response = "declined"
         await interaction.response.send_message("Challenge declined!", ephemeral=True)
         self.stop()
+
 
 class CoinFlipView(discord.ui.View):
     def __init__(self, ctx, opponent=None, bet_amount=5):
@@ -75,11 +77,13 @@ class CoinFlipView(discord.ui.View):
     async def tails_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.button_callback(interaction, "tails")
 
+
 class CoinFlip(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"], with_app_command=True)
+    @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"],
+                             with_app_command=True)
     async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 5):
         username = ctx.author.name
         opponent_username = opponent.name if opponent else None
@@ -98,13 +102,16 @@ class CoinFlip(commands.Cog):
                 return
 
             challenge_view = ChallengeView(ctx, opponent, bet_amount)
-            challenge_message = await ctx.send(f"{opponent.mention}, you have been challenged to a game of Head or Tail by {ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?", view=challenge_view)
+            challenge_message = await ctx.send(
+                f"{opponent.mention}, you have been challenged to a game of Head or Tail by {ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?",
+                view=challenge_view)
             await challenge_view.wait()
 
             if challenge_view.response == "accepted":
                 await challenge_message.delete()
                 view = CoinFlipView(ctx, opponent, bet_amount)
-                message = await ctx.send(f"{ctx.author.mention} and {opponent.mention}, choose either Heads or Tails!", view=view)
+                message = await ctx.send(f"{ctx.author.mention} and {opponent.mention}, choose either Heads or Tails!",
+                                         view=view)
                 view.message = message
                 await view.wait()
 
@@ -155,6 +162,7 @@ class CoinFlip(commands.Cog):
 
             await ctx.send(msg)
             return
+
 
 async def setup(bot):
     await bot.add_cog(CoinFlip(bot))

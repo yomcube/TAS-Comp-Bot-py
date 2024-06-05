@@ -1,6 +1,6 @@
 from discord.ext import commands
 import sqlite3
-from utils import float_to_readable, has_host_role
+from api.utils import float_to_readable, has_host_role
 from api.submissions import get_display_name
 
 class Results(commands.Cog):

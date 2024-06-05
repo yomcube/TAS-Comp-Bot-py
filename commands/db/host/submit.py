@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 import sqlite3
-from utils import is_task_currently_running, get_lap_time, readable_to_float, has_host_role
+from api.utils import is_task_currently_running, get_lap_time, readable_to_float, has_host_role
 from api.submissions import first_time_submission
 
 
@@ -31,7 +31,8 @@ class Submit(commands.Cog):
                 lap_times = get_lap_time(rkg)
 
                 # float time to upload to db
-                time = readable_to_float(lap_times[0])  # For most (but not all) mkw single-track tasks, the first lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
+                time = readable_to_float(lap_times[0])  # For most (but not all) mkw single-track tasks, the first
+                # lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
             else:
                 time = 0
                 await ctx.reply("Invalid RKG file format")

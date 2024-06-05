@@ -1,6 +1,6 @@
 from discord.ext import commands
 import sqlite3
-from utils import has_host_role
+from api.utils import has_host_role
 
 class End(commands.Cog):
     def __init__(self, bot) -> None:

@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from utils import get_balance
+from api.utils import get_balance
 
 class Balance(commands.Cog):
     def __init__(self, bot) -> None:

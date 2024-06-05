@@ -1,6 +1,6 @@
 from discord.ext import commands
 import random
-from utils import get_balance, calculate_winnings, add_balance, deduct_balance
+from api.utils import get_balance, calculate_winnings, add_balance, deduct_balance
 
 class Slots(commands.Cog):
     def __init__(self, bot) -> None:
