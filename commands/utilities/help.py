@@ -15,10 +15,10 @@ List of commands\n
   **fun** -- Fun commands, such as slots
   **misc** -- Miscellaneous commands
   **host** -- Host-only commands, for handling tasks.
-  **admin** -- Other admin commands
+  **admin** -- Admin commands
       
 Write `$help <category>` to view help for a specific category.
-Note: Most commands are available using the prefix, aswell as using `/`.
+Note: Most commands are available using the prefix `$`, aswell as using `/`.
     """
 
         elif category == "fun":
@@ -26,6 +26,7 @@ Note: Most commands are available using the prefix, aswell as using `/`.
             help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
 Fun commands 👀\n
 **Commands**:
+  **8ball** -- Have a question? Ask the bot for his wisdom! Only 'yes/no' and 'when' questions are supported. 
   **balance** -- Prints your balance
   **coinflip** -- Bet on a coinflip against the bot, or another player. For now, only betting 5 coins is possible.
   **connect4** -- Play connect 4 against MKWTASCompBot in any of 3 modes: easy, normal and hard, or against another player.

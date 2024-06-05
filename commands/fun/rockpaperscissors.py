@@ -84,7 +84,15 @@ class RPS(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="rockpaperscissors", description="Play Rock Paper Scissors", aliases=["rps"], with_app_command=True)
-    async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 5):
+    async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
+
+        if opponent is None:
+            opponent = self.bot.user
+
+        if opponent == self.bot.user and bet_amount != 10: # You can only play for 10 coins when vs bot
+            await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted"
+                               " when playing against other people.")
+
         choices = ['rock', 'paper', 'scissors']
         username = ctx.author.name
         opponent_username = opponent.name if opponent else None
@@ -135,7 +143,7 @@ class RPS(commands.Cog):
             return
 
         else:
-            bet_amount = 5  # Force bet amount to 5 coins when playing against the bot
+            bet_amount = 10  # Force bet amount to 10 coins when playing against the bot
             if get_balance(username) < bet_amount:
                 await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
                 return
