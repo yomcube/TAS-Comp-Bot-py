@@ -23,8 +23,10 @@ class Errors(commands.Cog):
             return await ctx.send(f'Only the bot owner has permission to execute `{ctx.command}`.')
         elif isinstance(error, commands.CommandNotFound):
             return await ctx.send(f"{ctx.command} is not a valid command.")
+        elif isinstance(error, commands.MemberNotFound):
+            return await ctx.send("The member specified does not exist.")
         elif isinstance(error, commands.MissingRequiredArgument):
-            return await ctx.send(f'Missing fields in {ctx.command}.')
+            return await ctx.send(f'Missing arguments in {ctx.command}.')
         elif isinstance(error, commands.CheckFailure): # I use checks to verify for permissions (if someone has the correct role for X command)
             return await ctx.send("You may not use this command!")
         elif isinstance(error, commands.PrivateMessageOnly):
