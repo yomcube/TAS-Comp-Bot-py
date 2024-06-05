@@ -28,8 +28,10 @@ Fun commands 👀\n
 **Commands**:
   **8ball** -- Have a question? Ask the bot for his wisdom! Only 'yes/no' and 'when' questions are supported. 
   **balance** -- Prints your balance
+  **balancetop** -- View the balance leaderboard for this server.
   **coinflip** -- Bet on a coinflip against the bot, or another player. For now, only betting 5 coins is possible.
   **connect4** -- Play connect 4 against MKWTASCompBot in any of 3 modes: easy, normal and hard, or against another player.
+  **joke** -- Get a good ol' joke from the bot!
   **rps** -- Play rock paper scissors against the bot, or against another player. Coins are involved.
   **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
 """

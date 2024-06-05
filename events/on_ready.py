@@ -42,7 +42,7 @@ class Ready(commands.Cog):
         # Database for economy commands
         connection = sqlite3.connect("database/economy.db")
         cursor = connection.cursor()
-        cursor.execute("""CREATE TABLE IF NOT EXISTS slots (
+        cursor.execute("""CREATE TABLE IF NOT EXISTS money (
                                 username TEXT, 
                                 coins INTEGER
                                 )""")

@@ -119,10 +119,10 @@ def is_task_currently_running():
 def get_balance(username):
     connection = sqlite3.connect("./database/economy.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT coins FROM slots WHERE username = ?", (username,))
+    cursor.execute("SELECT coins FROM money WHERE username = ?", (username,))
     result = cursor.fetchone()
     if result is None:
-        cursor.execute("INSERT INTO slots (username, coins) VALUES (?, ?)", (username, 100))
+        cursor.execute("INSERT INTO money (username, coins) VALUES (?, ?)", (username, 100))
         connection.commit()
         balance = 100
     else:
@@ -134,7 +134,7 @@ def get_balance(username):
 def update_balance(username, new_balance):
     connection = sqlite3.connect("./database/economy.db")
     cursor = connection.cursor()
-    cursor.execute("UPDATE slots SET coins = ? WHERE username = ?", (new_balance, username))
+    cursor.execute("UPDATE money SET coins = ? WHERE username = ?", (new_balance, username))
     connection.commit()
     connection.close()
 
