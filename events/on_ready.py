@@ -54,15 +54,13 @@ class Ready(commands.Cog):
         connection = sqlite3.connect("database/settings.db")
         cursor = connection.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS submission_channel (
-                                        comp TEXT, 
                                         id INTEGER
                                         )""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS host_role (
-                                        comp TEXT,
                                         name TEXT,
                                         id INTEGER
                                         )""")
-                                        # comp refers to mkw, sm64, etc
+
 
         connection.commit()
         connection.close()

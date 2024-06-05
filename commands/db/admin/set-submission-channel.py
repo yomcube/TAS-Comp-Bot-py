@@ -10,7 +10,7 @@ class Setsubmissionchannel(commands.Cog):
     @commands.hybrid_command(name="set-submission-channel", aliases=['ssc'],
                              description="Set the public submission display channel", with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, channel: discord.TextChannel, comp: str = 'mkw'):
+    async def command(self, ctx, channel: discord.TextChannel):
         # TODO: detect which server you are in, so the comp argument is no longer needed
 
         connection = sqlite3.connect("database/settings.db")
@@ -20,14 +20,14 @@ class Setsubmissionchannel(commands.Cog):
 
         try:
             # Check if existing channel already
-            cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
+            cursor.execute("SELECT * FROM submission_channel")
             existing = cursor.fetchone()
 
             if existing:
-                cursor.execute('UPDATE submission_channel SET comp = ?, id = ? WHERE comp = ?', (comp, id, comp))
+                cursor.execute('UPDATE submission_channel SET id = ?', (id,))
 
             else:
-                cursor.execute('INSERT INTO submission_channel (comp, id) VALUES (?, ?)', (comp, id,))
+                cursor.execute('INSERT INTO submission_channel (id) VALUES (?)', (id,))
 
             # Commit whatever change
             connection.commit()

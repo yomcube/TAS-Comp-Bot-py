@@ -5,18 +5,18 @@ from utils import is_task_currently_running, download_attachments, get_lap_time,
     get_file_types
 
 
-def get_submission_channel(comp):
+def get_submission_channel():
     connection = sqlite3.connect("database/settings.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
+    cursor.execute("SELECT * FROM submission_channel LIMIT 1") # there should only be 1 entry per table anyway.
     result = cursor.fetchone()
 
     if result is not None:  # Check if result is not None before accessing index
-        channel_id = result[1]
+        channel_id = result[0]
         return channel_id
     else:
         # Handle case where no rows are found in the database
-        print(f"No submission channel found for competition '{comp}'.")
+        print(f"No submission channel found for competition.")
         return None
 
 
@@ -81,7 +81,7 @@ async def handle_submissions(message, self):
     ##################################################
     # Adding submission to submission list channel
     ##################################################
-    submission_channel = get_submission_channel("mkw")
+    submission_channel = get_submission_channel()
     channel = self.bot.get_channel(submission_channel)
 
     if not channel:

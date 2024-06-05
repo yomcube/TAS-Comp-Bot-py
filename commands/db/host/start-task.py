@@ -31,7 +31,7 @@ class Start(commands.Cog):
             connection.close()
 
             # Delete previous "Current submissions" message in submission channel
-            channel_id = get_submission_channel("mkw")
+            channel_id = get_submission_channel()
             channel = self.bot.get_channel(channel_id)
 
             try:

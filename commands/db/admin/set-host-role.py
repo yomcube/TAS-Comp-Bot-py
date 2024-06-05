@@ -8,7 +8,7 @@ class Sethostrole(commands.Cog):
 
     @commands.hybrid_command(name="set-host-role", aliases=['shr'], description="Set the current host role", with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, role: discord.Role, comp: str = 'mkw'):
+    async def command(self, ctx, role: discord.Role):
         connection = sqlite3.connect("database/settings.db")
         cursor = connection.cursor()
         
@@ -16,14 +16,14 @@ class Sethostrole(commands.Cog):
         id = role.id
 
         try:
-            # Check if existing role already
-            cursor.execute("SELECT * FROM host_role WHERE comp = ?", (comp,))
+            # Check if existing role already (there should only be 0 or 1)
+            cursor.execute("SELECT * FROM host_role")
             existing = cursor.fetchone()
 
             if existing:
-                cursor.execute('UPDATE host_role SET name = ?,id = ? WHERE comp = ?', (name, id, comp,))
+                cursor.execute('UPDATE host_role SET name = ?,id = ? ', (name, id,))
             else:
-                cursor.execute('INSERT INTO host_role (comp, name, id) VALUES (?, ?, ?)', (comp, name, id,))
+                cursor.execute('INSERT INTO host_role (name, id) VALUES (?, ?)', (name, id,))
 
             # Commit whatever change
             connection.commit()

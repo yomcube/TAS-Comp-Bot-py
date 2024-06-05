@@ -9,17 +9,17 @@ def get_host_role():
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
     connection = sqlite3.connect("database/settings.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM host_role WHERE comp = ?",
-                           ('mkw',))  # differentiate different comps later
+    cursor.execute("SELECT * FROM host_role")
     role = cursor.fetchone()
 
     if role:
-        host_role = role[1]
+        host_role = role[0]
         connection.close()
         return host_role
     else:
         connection.close()
         return "Host" # default host role name.
+
 
 
 def has_host_role():

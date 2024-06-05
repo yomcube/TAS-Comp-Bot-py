@@ -4,7 +4,7 @@ from api.submissions import get_submission_channel
 
 
 async def rename_in_submission_list(self, old_display_name, new_display_name):
-    submission_channel = get_submission_channel("mkw")
+    submission_channel = get_submission_channel()
     channel = self.bot.get_channel(submission_channel)
 
     async for message in channel.history(limit=3):
