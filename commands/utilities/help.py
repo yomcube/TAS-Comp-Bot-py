@@ -14,6 +14,7 @@ List of commands\n
   **help** -- this
   **fun** -- Fun commands, such as slots
   **misc** -- Miscellaneous commands
+  **voice** -- Voice chat commands
   **host** -- Host-only commands, for handling tasks.
   **admin** -- Admin commands
       
@@ -38,13 +39,25 @@ Fun commands 👀\n
 
         elif category == "misc":
             help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
-Miscellaenous commands\n
+Miscellaneous commands\n
   **info** -- Shows information about the status of your submission. (DM only)
   **setname** -- Changes your display name for the submission channel (Not your server name!)
   **tracks** -- Picks a random track from the game!
   **urban** -- Search urban dictionary for a word or expression!
   **weather** -- Get the weather of a city!
 """
+
+        elif category == "voice":
+            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+Voice chat commands :musical_note: \n
+  **joinvc** -- Invites the bot in your vc.
+  **leave** -- Kicks the bot off of your vc.
+  **play** -- Plays a youtube video (sound-only) inside the vc!
+  **stop** -- Stops the ongoing video.
+"""
+
+
+
 
         elif category == "host":
             help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd

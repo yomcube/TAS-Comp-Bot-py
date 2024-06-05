@@ -5,7 +5,8 @@ class Balancetop(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.command(name="balancetop")
+    @commands.hybrid_command(name="balancetop", aliases=["baltop"],
+                             description="Shows the leaderboard of the richest users on this server.", with_app_command=True)
     async def command(self, ctx):
         connection = sqlite3.connect("./database/economy.db")
         cursor = connection.cursor()
