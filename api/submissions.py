@@ -1,8 +1,12 @@
 import discord
 import sqlite3
+import os
+from dotenv import load_dotenv
 
 from api.utils import get_file_types
 
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')
 
 def get_submission_channel(comp):
     connection = sqlite3.connect("database/settings.db")
@@ -80,7 +84,7 @@ async def handle_submissions(message, self):
     ##################################################
     # Adding submission to submission list channel
     ##################################################
-    submission_channel = get_submission_channel()
+    submission_channel = get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
     if not channel:

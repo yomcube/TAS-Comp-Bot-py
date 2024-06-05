@@ -1,9 +1,13 @@
 from discord.ext import commands
 import sqlite3
+import os
+from dotenv import load_dotenv
 from datetime import date
 from api.utils import is_task_currently_running, has_host_role
 from api.submissions import get_submission_channel
 
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')
 
 class Start(commands.Cog):
     def __init__(self, bot) -> None:
@@ -32,7 +36,7 @@ class Start(commands.Cog):
             connection.close()
 
             # Delete previous "Current submissions" message in submission channel
-            channel_id = get_submission_channel()
+            channel_id = get_submission_channel(DEFAULT)
             channel = self.bot.get_channel(channel_id)
 
             try:
