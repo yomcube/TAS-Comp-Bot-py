@@ -204,7 +204,7 @@ class Connect4(commands.Cog):
         with_app_command=True
     )
     @app_commands.autocomplete(mode=command_autocompletion)
-    async def command(self, ctx: commands.Context, opponent: discord.Member = None, mode: str = "easy"):
+    async def command(self, ctx: commands.Context, opponent: discord.Member, mode: str = "easy"):
         self.reset_game()
         self.mode = mode.lower()
 

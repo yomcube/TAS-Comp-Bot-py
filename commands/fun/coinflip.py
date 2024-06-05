@@ -82,9 +82,12 @@ class CoinFlip(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
     @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"],
                              with_app_command=True)
-    async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 5):
+    async def command(self, ctx, opponent: discord.Member, bet_amount: int = 10):
+
+
         username = ctx.author.name
         opponent_username = opponent.name if opponent else None
 
@@ -141,7 +144,7 @@ class CoinFlip(commands.Cog):
                 await ctx.send(f"{opponent.mention} declined the challenge.")
             return
 
-        else:
+        else: # vs bot
             view = CoinFlipView(ctx)
             message = await ctx.reply(f"{ctx.author.mention}, choose either Heads or Tails!", view=view)
             view.message = message
@@ -154,11 +157,11 @@ class CoinFlip(commands.Cog):
             flip_result = random.choice(['heads', 'tails'])
 
             if user_choice == flip_result:
-                add_balance(username, 5)
-                msg = f"You win! The coin landed on {flip_result}.\nAdded 5 coins, {get_balance(username)} left in your account."
+                add_balance(username, 10)
+                msg = f"You win! The coin landed on {flip_result}.\nAdded 10 coins, {get_balance(username)} left in your account."
             else:
-                deduct_balance(username, 5)
-                msg = f"You lose! The coin landed on {flip_result}.\nDeducted 5 coins, {get_balance(username)} left in your account."
+                deduct_balance(username, 10)
+                msg = f"You lose! The coin landed on {flip_result}.\nDeducted 10 coins, {get_balance(username)} left in your account."
 
             await ctx.send(msg)
             return
