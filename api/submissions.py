@@ -118,7 +118,7 @@ async def handle_dms(message, self):
     author = message.author
     author_dn = message.author.display_name
 
-    if isinstance(message.channel, discord.DMChannel) and author != self.bot.user:
+    if isinstance(message.channel, discord.DMChannel):
 
         # this logs messages to a channel -> my private server for testing purposes
         channel = self.bot.get_channel(1243652270537707722)
