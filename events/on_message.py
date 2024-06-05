@@ -10,6 +10,9 @@ class Message(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
+        if message.author == self.bot.user:
+            return
+        
         await submissions.handle_dms(message, self)
 
         content = message.content
@@ -17,12 +20,12 @@ class Message(commands.Cog):
 
         msg_list = ["kierio", "crazy", "😃"]
 
-        if str(lower_content).startswith(msg_list[0]) and message.author != self.bot.user:
+        if str(lower_content).startswith(msg_list[0]):
             await message.reply("kiro*")
-        elif (str(lower_content).startswith(msg_list[1]) or str(lower_content).endswith(msg_list[1])) and message.author != self.bot.user:
+        elif (str(lower_content).startswith(msg_list[1]) or str(lower_content).endswith(msg_list[1])):
             await message.reply("Crazy?")
             await self.wait_crazy(message)
-        elif msg_list[2] in lower_content and message.author != self.bot.user:
+        elif msg_list[2] in lower_content:
             await message.add_reaction("✈️")
 
     async def wait_crazy(self, message):
