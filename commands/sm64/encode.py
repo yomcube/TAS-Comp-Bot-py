@@ -61,7 +61,24 @@ class Encode(commands.Cog):
             await ctx.send("Failed to encode the movie.")
             return
 
-        await ctx.send(file=discord.File(avi_path), content="{}, your encode is ready!".format(ctx.message.author.mention))
+        mp4_path = os.path.join(AVI_DIR, f"{filename}.mp4")
+
+        # Convert avi to mp4 via ffmpeg
+        ffmpeg_args = [
+            "ffmpeg",
+            "-i",
+            avi_path,
+            "-strict",
+            "-2",
+            mp4_path
+        ]
+        proc = subprocess.run(ffmpeg_args)
+        
+        if proc.returncode != 0 or not os.path.isfile(mp4_path):
+            await ctx.send("Failed to encode the movie.")
+            return
+        
+        await ctx.send(file=discord.File(mp4_path), content="{}, your encode is ready!".format(ctx.message.author.mention))
         
 
     # @encode.error
