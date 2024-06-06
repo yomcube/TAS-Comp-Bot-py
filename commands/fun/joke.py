@@ -25,7 +25,7 @@ class Joke(commands.Cog):
             response = requests.get("https://official-joke-api.appspot.com/random_joke")
             if response.status_code == 200:
                 joke_data = response.json()
-                return  await ctx.send(f"{joke_data.get("setup")}\n{joke_data.get("punchline")}")
+                return  await ctx.send(f'{joke_data.get("setup")}\n{joke_data.get("punchline")}')
             else:
                 return ctx.send("Error, please retry.")
 
