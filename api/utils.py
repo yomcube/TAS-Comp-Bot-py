@@ -112,6 +112,41 @@ def get_lap_time(rkg):
         lap_times.append(f"{min}:{sec:02}.{mil:03}")
     return lap_times
 
+def get_character(rkg):
+    """Retrieves the character ID from a given RKG file"""
+    # Check if compressed and remove potential CTGP data
+    if (rkg[12] & 0x08) == 0x08:
+        rkg_length = struct.unpack('>I', rkg[0x88:0x8C])[0] + 0x90
+        rkg = rkg[:rkg_length]
+        
+    return rkg[0x0D]
+
+def get_vehicle(rkg):
+    """Retrieves the vehicle ID from a given RKG file"""
+    # Check if compressed and remove potential CTGP data
+    if (rkg[12] & 0x08) == 0x08:
+        rkg_length = struct.unpack('>I', rkg[0x88:0x8C])[0] + 0x90
+        rkg = rkg[:rkg_length]
+        
+    return rkg[0x0E]
+
+def get_track(rkg):
+    """Retrieves the track ID from a given RKG file"""
+    # Check if compressed and remove potential CTGP data
+    if (rkg[12] & 0x08) == 0x08:
+        rkg_length = struct.unpack('>I', rkg[0x88:0x8C])[0] + 0x90
+        rkg = rkg[:rkg_length]
+        
+    return rkg[0x1A]
+
+def get_controller_type(rkg):
+    """Retrieves the controller type ID from a given RKG file"""
+    # Check if compressed and remove potential CTGP data
+    if (rkg[12] & 0x08) == 0x08:
+        rkg_length = struct.unpack('>I', rkg[0x88:0x8C])[0] + 0x90
+        rkg = rkg[:rkg_length]
+        
+    return rkg[0x19]
 
 def is_task_currently_running():
     """Check if a task is currently running"""

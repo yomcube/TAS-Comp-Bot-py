@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 import sqlite3
-from api.utils import float_to_readable
+from api.utils import float_to_readable, get_character, get_controller_type, get_track, get_vehicle
+from api.mkwii.mkwii_file_handling import rkg
 
 
 class Info(commands.Cog):
@@ -28,6 +29,7 @@ class Info(commands.Cog):
         task_num = submission[0]
         url = submission[3]
         time = float_to_readable(submission[4])
+        
         dq = bool(submission[5])
         dq_reason = submission[6]
 
