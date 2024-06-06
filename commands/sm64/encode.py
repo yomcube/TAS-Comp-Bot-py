@@ -11,10 +11,10 @@ class Encode(commands.Cog):
     async def encode(self, ctx, *args):
         attachments = ctx.message.attachments
         file_dict = get_file_types(attachments)
-
-        if len(file_dict) == 2:
-            filename = download_attachments(attachments)
-            await ctx.send("downloaded attachment")
+        if file_dict.get("m64") is not None:
+            print(file_dict.get("m64"))
+            await ctx.send("downloading m64...")
+            await download_attachments(attachments, *file_dict)
 
     @encode.error
     async def encode_error(self, ctx, error):

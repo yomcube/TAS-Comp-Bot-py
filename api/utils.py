@@ -38,8 +38,17 @@ def has_host_role():
     return commands.check(predicate)
 
 
-async def download_attachments(attachments, file_name=None) -> str:
+async def download_attachments(attachments, file_name=None, *file_dict) -> str:
     # TODO: Prematurely handle Directory missing error
+    if file_dict is not None:
+        for file_type, index in file_dict:
+            file_path = f"download/{file_name}.{file_type}"
+            file = open(file_path, "w")  # changed this from x to w, because as submitters, we can submit multiple times
+            await attachments[index].save(fp=file_path)
+            file.close()
+            print(f"Downloaded {file_name}.{file_type}")
+        return file_name
+    print("faf")
     if len(file_name) == 0:
         file_name = str(uuid.uuid4())
     for attachment in attachments:
@@ -160,8 +169,8 @@ def calculate_winnings(num_emojis, slot_number, constant=3):
 def get_file_types(attachments):
     file_list = []
     for file in attachments:
-        file_list.append(file.filename.partition(".")[-1])
-    file_tuples = enumerate(file_list, start=1)
+        file_list.append(file.filename.rpartition(".")[-1])
+    file_tuples = enumerate(file_list)
     # Check for uniqueness by assigning index to dictionary
     # Iterates over dictionary to find if an index has been assigned
     file_dict = {}

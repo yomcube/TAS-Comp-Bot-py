@@ -10,8 +10,8 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
     current_task = is_task_currently_running()
     filename = attachments[0].filename
 
-    if file_dict.get("rkg"):
-        index = file_dict.get("rkg") - 1
+    if file_dict.get("rkg") is not None:
+        index = file_dict.get("rkg")
 
         if current_task:
 
@@ -68,7 +68,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
     #################################
 
     elif file_dict.get("dat"):
-        index = file_dict.get("dat") - 1
+        index = file_dict.get("dat")
         if current_task:
 
             # handle submission
