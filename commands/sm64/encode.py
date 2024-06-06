@@ -42,7 +42,17 @@ class Encode(commands.Cog):
         filename, _ = os.path.splitext(movie_path)
     
         avi_path = os.path.join(AVI_DIR, f"{filename}.avi")
+        mp4_path = os.path.join(AVI_DIR, f"{filename}.mp4")
 
+        # NOTE: Before encoding, delete the avi file if it exists.
+        # If we don't we may leak data when a longer movie with the same name has been encoded previously
+        if os.path.isfile(avi_path):
+            os.remove(avi_path)
+
+        # In the case of the mp4 file, it avoids an overwrite prompt from ffmpeg which blocks the command sequence
+        if os.path.isfile(mp4_path):
+            os.remove(mp4_path)
+            
         # If there's no st, we also omit the argument
         st_args = [] if st_path is None else [ "--st", st_path]
         
@@ -60,8 +70,6 @@ class Encode(commands.Cog):
         if not os.path.isfile(avi_path):
             await ctx.send("Failed to encode the movie.")
             return
-
-        mp4_path = os.path.join(AVI_DIR, f"{filename}.mp4")
 
         # Convert avi to mp4 via ffmpeg
         ffmpeg_args = [
