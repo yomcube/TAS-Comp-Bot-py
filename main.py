@@ -46,7 +46,8 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.utilities.prefix',
                 'commands.utilities.track',
                 'commands.utilities.weather',
-                'commands.utilities.urban',]
+                'commands.utilities.urban',
+                'commands.sm64.encode',]
 events_ext = ['events.on_ready',
               'events.on_message',
               'events.errors',
