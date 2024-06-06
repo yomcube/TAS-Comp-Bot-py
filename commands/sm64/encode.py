@@ -46,7 +46,7 @@ class Encode(commands.Cog):
         
         args = [ 
             MUPEN_EXE,
-            "--movie",
+            "--rom",
             os.path.join(DOWNLOAD_DIR, f"{filename}.m64"),
             *st_args,
             "--avi",
