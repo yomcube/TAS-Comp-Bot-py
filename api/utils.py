@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
+DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
 
 def get_host_role():
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
@@ -38,26 +39,11 @@ def has_host_role():
     return commands.check(predicate)
 
 
-async def download_attachments(attachments, file_name=None, *file_dict) -> str:
-    # TODO: Prematurely handle Directory missing error
-    if file_dict is not None:
-        for file_type, index in file_dict:
-            file_path = f"download/{file_name}.{file_type}"
-            file = open(file_path, "w")  # changed this from x to w, because as submitters, we can submit multiple times
-            await attachments[index].save(fp=file_path)
-            file.close()
-            print(f"Downloaded {file_name}.{file_type}")
-        return file_name
-    print("faf")
-    if len(file_name) == 0:
-        file_name = str(uuid.uuid4())
-    for attachment in attachments:
-        file_type = attachment.filename.split(".")[-1]
-        file_path = f"download/{file_name}.{file_type}"
-        file = open(file_path, "w")  # changed this from x to w, because as submitters, we can submit multiple times
-        await attachment.save(fp=file_path)
-        file.close()
-    return file_name
+async def download_attachment(attachment) -> str:
+    filename, file_extension = os.path.splitext(attachment.filename)
+    file_path = f"{DOWNLOAD_DIR}/{filename}{file_extension}"
+    await attachment.save(fp=file_path)
+    return file_path
 
 
 async def check_json_guild(file, guild_id):  # TODO: Normalise file handling, rename function
