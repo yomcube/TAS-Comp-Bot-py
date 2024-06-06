@@ -63,6 +63,11 @@ class Ready(commands.Cog):
                                         id INTEGER
                                         )""")
 
+        cursor.execute("""CREATE TABLE IF NOT EXISTS logs_channel (
+                                                comp TEXT,
+                                                id INTEGER
+                                                )""")
+
 
         connection.commit()
         connection.close()

@@ -41,6 +41,7 @@ class Sethostrole(commands.Cog):
 
         except sqlite3.OperationalError as e:
             print(e)
+            connection.close()
             await ctx.send("An error occured.")
 
 

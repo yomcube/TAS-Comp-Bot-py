@@ -16,10 +16,30 @@ def get_submission_channel(comp):
 
     if result is not None:  # Check if result is not None before accessing index
         channel_id = result[1]
+        connection.close()
         return channel_id
     else:
         # Handle case where no rows are found in the database
+        connection.close()
         print(f"No submission channel found for competition '{comp}'.")
+        return None
+
+
+
+def get_logs_channel(comp):
+    connection = sqlite3.connect("database/settings.db")
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM logs_channel WHERE comp = ?", (comp,))  # there should only be 1 entry per table per competition
+    result = cursor.fetchone()
+
+    if result is not None:  # Check if result is not None before accessing index
+        channel_id = result[1]
+        connection.close()
+        return channel_id
+    else:
+        # Handle case where no rows are found in the database
+        connection.close()
+        print(f"No logs channel found for competition '{comp}'.")
         return None
 
 
@@ -120,8 +140,8 @@ async def handle_dms(message, self):
 
     if isinstance(message.channel, discord.DMChannel) and author != self.bot.user:
 
-        # this logs messages to a channel -> my private server for testing purposes
-        channel = self.bot.get_channel(1243652270537707722)
+        # log all DMs to a set channel
+        channel = self.bot.get_channel(get_logs_channel(DEFAULT))
         attachments = message.attachments
         if channel:
             await channel.send("Message from " + str(author_dn) + ": " + message.content + " "

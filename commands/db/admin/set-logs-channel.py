@@ -8,16 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
-class Setsubmissionchannel(commands.Cog):
+class Setlogschannel(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="set-submission-channel", aliases=['ssc'],
-                             description="Set the public submission display channel", with_app_command=True)
+    @commands.hybrid_command(name="set-logs-channel", aliases=['slc'],
+                             description="Set the channel where DMs with the bot are logged", with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
-        # TODO: detect which server you are in, so the comp argument is no longer needed
-
         connection = sqlite3.connect("database/settings.db")
         cursor = connection.cursor()
 
@@ -25,20 +23,20 @@ class Setsubmissionchannel(commands.Cog):
 
         try:
             # Check if existing channel already
-            cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
+            cursor.execute("SELECT * FROM logs_channel WHERE comp = ?", (comp,))
             existing = cursor.fetchone()
 
             if existing:
-                cursor.execute('UPDATE submission_channel SET comp = ?, id = ? WHERE comp = ?', (comp, id, comp))
+                cursor.execute('UPDATE logs_channel SET comp = ?, id = ? WHERE comp = ?', (comp, id, comp))
 
             else:
-                cursor.execute('INSERT INTO submission_channel (comp, id) VALUES (?, ?)', (comp, id,))
+                cursor.execute('INSERT INTO logs_channel (comp, id) VALUES (?, ?)', (comp, id,))
 
             # Commit whatever change
             connection.commit()
             connection.close()
 
-            await ctx.send(f"The public submission display channel has been set! {channel.mention}")
+            await ctx.send(f"The logging channel has been set! {channel.mention}")
 
         except sqlite3.OperationalError as e:
             print(e)
@@ -47,4 +45,4 @@ class Setsubmissionchannel(commands.Cog):
 
 
 async def setup(bot) -> None:
-    await bot.add_cog(Setsubmissionchannel(bot))
+    await bot.add_cog(Setlogschannel(bot))
