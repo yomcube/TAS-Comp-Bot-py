@@ -78,6 +78,8 @@ class Encode(commands.Cog):
             avi_path,
             "-strict",
             "-2",
+            "-pix_fmt",
+            "yuv420p",
             mp4_path
         ]
         proc = subprocess.run(ffmpeg_args)
