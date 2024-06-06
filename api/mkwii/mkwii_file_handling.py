@@ -1,5 +1,6 @@
 from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, get_lap_time, readable_to_float
+from api.utils import is_task_currently_running, readable_to_float
+from api.mkwii.mkwii_utils import get_lap_time
 import sqlite3
 
 

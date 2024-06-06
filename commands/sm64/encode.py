@@ -15,6 +15,7 @@ MUPEN_EXE = os.path.join(ENC_SM64_DIR, "mupen", "mupen64.exe")
 ROM_DIR = os.path.join(ENC_SM64_DIR, "roms")
 AVI_DIR = os.path.join(ENC_SM64_DIR, "avi")
 
+
 class Encode(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -31,15 +32,15 @@ class Encode(commands.Cog):
         movie_path = await download_attachment(attachments[file_dict.get("m64")])
     
         st_path = None
-    
         if file_dict.get("st") is not None:
             st_path = await download_attachment(attachments[file_dict.get("st")])
             
         if file_dict.get("savestate") is not None:
-            st_path = await download_attachment(attachments[file_dict.get("savestates")])
+            st_path = await download_attachment(attachments[file_dict.get("savestate")])
 
         # Stem of movie is also the stem of avi file
-        filename, _ = os.path.splitext(movie_path)
+        filename = os.path.split(movie_path)[1].rpartition(".")[0]
+        print(filename)
     
         avi_path = os.path.join(AVI_DIR, f"{filename}.avi")
         mp4_path = os.path.join(AVI_DIR, f"{filename}.mp4")

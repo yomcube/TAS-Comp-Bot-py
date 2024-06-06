@@ -1,6 +1,7 @@
 from discord.ext import commands
-from api.utils import tracks, tracks_abbreviated
+from api.mkwii.mkwii_utils import tracks, tracks_abbreviated
 import random
+
 
 class Tracks(commands.Cog):
     def __init__(self, bot) -> None:
