@@ -1,5 +1,7 @@
 import os
 import subprocess
+import sqlite3
+import discord
 from discord.ext import commands
 from api.utils import download_attachment
 from api.utils import get_file_types
@@ -16,7 +18,7 @@ AVI_DIR = os.path.join(ENC_SM64_DIR, "avi")
 class Encode(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
-
+    
     @commands.command(name="encode")
     async def encode(self, ctx, *args):
         attachments = ctx.message.attachments
@@ -54,6 +56,12 @@ class Encode(commands.Cog):
         
         print(args)
         subprocess.run(args)
+        
+        if not os.path.isfile(avi_path):
+            await ctx.send("Failed to encode the movie.")
+            return
+
+        await ctx.send(file=discord.File(avi_path), content="{}, your encode is ready!".format(ctx.message.author.mention))
         
 
     # @encode.error
