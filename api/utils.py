@@ -41,7 +41,7 @@ def has_host_role():
 
 async def download_attachment(attachment) -> str:
     filename, file_extension = os.path.splitext(attachment.filename)
-    file_path = f"{DOWNLOAD_DIR}/{filename}{file_extension}"
+    file_path = os.path.join(DOWNLOAD_DIR, f"{filename}{file_extension}");
     await attachment.save(fp=file_path)
     return file_path
 
