@@ -14,14 +14,13 @@ from api.utils import download_from_url, get_file_types
 from datetime import datetime,timezone,timedelta
 
 DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
-
-ENC_SM64_DIR = os.getenv("ENC_SM64_DIR")
+ENC_MUPEN_DIR = os.getenv("ENC_MUPEN_DIR")
+ENC_AVI_DIR = os.getenv("ENC_AVI_DIR")
 ENC_SM64_SCRIPTS = os.getenv("ENC_SM64_SCRIPTS")
 ENC_MAX_QUEUE = int(os.getenv("ENC_MAX_QUEUE"))
 
-MUPEN_EXE = os.path.join(ENC_SM64_DIR, "mupen", "mupen64.exe")
-ROM_DIR = os.path.join(ENC_SM64_DIR, "roms")
-AVI_DIR = os.path.join(ENC_SM64_DIR, "avi")
+MUPEN_EXE = os.path.join(ENC_MUPEN_DIR, "mupen64.exe")
+
 @dataclass
 class QueueEntry:
     # The entry's unique identifier
@@ -61,8 +60,8 @@ class Encode(commands.Cog):
         
         await ctx.reply(content="Your encode of {} has begun.".format(entry.filename))
     
-        avi_path = os.path.join(AVI_DIR, f"{entry.filename}.avi")
-        mp4_path = os.path.join(AVI_DIR, f"{entry.filename}.mp4")
+        avi_path = os.path.join(ENC_AVI_DIR, f"{entry.filename}.avi")
+        mp4_path = os.path.join(ENC_AVI_DIR, f"{entry.filename}.mp4")
 
         # NOTE: Before encoding, delete the avi file if it exists.
         # If we don't we may leak data when a longer movie with the same name has been encoded previously
