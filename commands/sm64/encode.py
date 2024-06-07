@@ -77,7 +77,8 @@ class Encode(commands.Cog):
             avi_path]
         
         print(args)
-        proc = subprocess.run(args)
+        proc = await asyncio.create_subprocess_exec(*args)
+        await proc.wait()
         
         if not os.path.isfile(avi_path):
             await ctx.send("Failed to encode {}.".format(entry.filename))
@@ -94,16 +95,17 @@ class Encode(commands.Cog):
             "yuv420p",
             mp4_path
         ]
-        proc = subprocess.run(ffmpeg_args)
-        
+        proc = await asyncio.create_subprocess_exec(*ffmpeg_args)
+        await proc.wait()
+      
         if proc.returncode != 0 or not os.path.isfile(mp4_path):
             await ctx.send("Failed to transcode {}.".format(entry.filename))
             return
+            
+        await ctx.send(file=discord.File(mp4_path), content="{}, your encode of {} is ready!".format(ctx.message.author.mention, entry.filename))
         
         # Remove the entry from the queue now that it's finished
         encode_queue.pop(0)
-        
-        await ctx.send(file=discord.File(mp4_path), content="{}, your encode of {} is ready!".format(ctx.message.author.mention, entry.filename))
         
     @commands.command(name="encode")
     async def encode(self, ctx, *args):
