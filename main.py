@@ -62,6 +62,7 @@ events_ext = ['events.on_ready',
 #     else:
 #         return "$"
 
+
 class Bot(commands.Bot):
     def __init__(self):
         super().__init__(
@@ -87,6 +88,7 @@ class Bot(commands.Bot):
             except Exception as e:
                 print(f'Failed to load {event}.', file=sys.stderr)
                 traceback.print_exc()
+
 
 bot = Bot()
 bot.remove_command("help")
