@@ -81,7 +81,9 @@ class Encode(commands.Cog):
         proc = await asyncio.create_subprocess_exec(*args)
         await proc.wait()
         
-        if not os.path.isfile(avi_path):
+        # Sometimes avi files get created, but have only the header due to a crash on the first frame
+        # We also check for that here
+        if not os.path.isfile(avi_path) or os.path.getsize(avi_path) < 32:
             await ctx.send("Failed to encode {}.".format(entry.filename))
             return
 
