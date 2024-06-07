@@ -1,6 +1,6 @@
 # Quickstart
 
-Install the required packages via `pip install python-dotenv discord.py requests ratelimit bs4 jokeapi`.
+Install the required packages via `pip install python-dotenv discord.py requests ratelimit bs4 jokeapi humanize`.
 
 Create a file named `.env` in the project's root directory, then provide the following keys:
 

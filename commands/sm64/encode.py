@@ -8,9 +8,10 @@ from typing import List
 import uuid
 import discord
 from discord.ext import commands
+import humanize
 from api.utils import download_attachment
 from api.utils import get_file_types
-from datetime import datetime,timezone
+from datetime import datetime,timezone,timedelta
 
 DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
 
@@ -106,9 +107,23 @@ class Encode(commands.Cog):
         
         # Remove the entry from the queue now that it's finished
         encode_queue.pop(0)
+    
+    # Sends the current encoding queue into the chat
+    async def send_queue(self, ctx):
+        str = f"The encoding queue currently contains {len(encode_queue)} movie(s).\n\n"
+        for i, entry in enumerate(encode_queue):
+            str += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
+        await ctx.send(content=str)
         
-    @commands.command(name="encode")
+        
+    @commands.command(name="encode", description = "Encodes a movie and an optional savestate into a video file")
     async def encode(self, ctx, *args):
+        
+        # $encode queue shows the current queue
+        if len(args) > 0 and args[0].lower() == "queue".lower():
+            await self.send_queue(ctx)
+            return
+            
         attachments = ctx.message.attachments
         file_dict = get_file_types(attachments)
         
