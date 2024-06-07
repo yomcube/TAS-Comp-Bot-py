@@ -80,6 +80,9 @@ class Encode(commands.Cog):
             "--avi",
             avi_path]
         
+        if len(ENC_SM64_SCRIPTS) > 0:
+            args += [ "--lua", ENC_SM64_SCRIPTS]
+        
         print(args)
         proc = await asyncio.create_subprocess_exec(*args)
         await proc.wait()
@@ -162,6 +165,7 @@ class Encode(commands.Cog):
         
     # Cancels the frontmost encode task
     async def cancel_encode(self, ctx):
+        # FIXME: Require role for this action
         if len(encode_queue) == 0:
             await ctx.reply("The queue is empty.")
             return
