@@ -105,8 +105,6 @@ class Encode(commands.Cog):
             
         await ctx.send(file=discord.File(mp4_path), content="{}, your encode of {} is ready!".format(ctx.message.author.mention, entry.filename))
         
-        # Remove the entry from the queue now that it's finished
-        encode_queue.pop(0)
     
     # Sends the current encoding queue into the chat
     async def send_queue(self, ctx):
@@ -153,9 +151,13 @@ class Encode(commands.Cog):
         
         await ctx.send(content="{}, your encode of {} has been added to the queue at position {}.".format(ctx.message.author.mention, filename, len(encode_queue)))
 
-        # FIXME: This still blocks...
-        asyncio.create_task(self.process_queue_front(ctx, entry))
+        def pop_queue(_):
+            print("Finished processing frontmost entry")
+            encode_queue.pop(0)
         
+        asyncio.create_task(self.process_queue_front(ctx, entry)).add_done_callback(pop_queue)
+        
+
 
     # @encode.error
     # async def encode_error(self, ctx, error):
