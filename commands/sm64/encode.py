@@ -1,6 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 import datetime
+import math
 import os
 import subprocess
 from threading import Thread
@@ -87,17 +88,59 @@ class Encode(commands.Cog):
             await ctx.reply("Failed to encode {}.".format(entry.filename))
             return
 
-        # Convert avi to mp4 via ffmpeg
+
+        # Clamping: Figure out the correct ffmpeg params to fit the mp4 into 25 MB
+        ffprobe_out = subprocess.check_output([
+            "ffprobe",
+            avi_path,
+            "-v",
+            "quiet",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1"
+        ])
+        
+        length = 1000 * int(float(ffprobe_out.decode("utf-8")))
+        filesize_limit = int(25e6);
+        cmd = f"-i encode.avi -c:v libx264 -c:a aac -vf fps=30 "
+        trate = 8 * filesize_limit / length
+
+        if trate < 128:
+            await ctx.reply("Your movie is too large.")
+            return
+
+        arate = min(16 * math.floor(trate / 128), 128)
+        vrate = (trate - arate) * 0.9
+        cmd += f"-maxrate ${vrate}k -bufsize ${vrate}k -b:a ${arate}k "
+        cmd += f"-pix_fmt yuv420p -fs ${filesize_limit * 0.9} {mp4_path}"
+        
         ffmpeg_args = [
             "ffmpeg",
             "-i",
             avi_path,
-            "-strict",
-            "-2",
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            "-vf",
+            "fps=30",
+            "-maxrate",
+            f"{vrate}k",
+            "-bufsize",
+            f"{vrate}k",
+            "-b:a",
+            f"{arate}k",
             "-pix_fmt",
             "yuv420p",
-            mp4_path
+            # "-fs",
+            # f"{filesize_limit * 0.9}",
+            f"{mp4_path}"
         ]
+        
+        print(cmd)
+        print(ffmpeg_args)
+        
         proc = await asyncio.create_subprocess_exec(*ffmpeg_args)
         await proc.wait()
       
