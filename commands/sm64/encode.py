@@ -36,6 +36,9 @@ class QueueEntry:
     
     # Timestamp at which the entry has entered the queue
     timestamp: datetime
+    
+    # The async task associated with the entry
+    task: asyncio.Task
 
 # Back-to-front vector of recent tasks
 encode_queue: List[QueueEntry] = []
@@ -157,6 +160,14 @@ class Encode(commands.Cog):
             str += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
         await ctx.reply(content=str)
         
+    # Cancels the frontmost encode task
+    async def cancel_encode(self, ctx):
+        if len(encode_queue) == 0:
+            await ctx.reply("The queue is empty.")
+            return
+
+        encode_queue[0].task.cancel()
+        await ctx.reply("Cancelled the current encode.")
         
     @commands.command(name="encode", description = "Encodes a movie and an optional savestate into a video file")
     async def encode(self, ctx, *args):
@@ -164,6 +175,10 @@ class Encode(commands.Cog):
         # $encode queue shows the current queue
         if len(args) > 0 and args[0].lower() == "queue".lower():
             await self.send_queue(ctx)
+            return
+        
+        if len(args) > 0 and args[0].lower() == "cancel".lower():
+            await self.cancel_encode(ctx)
             return
         
         if len(encode_queue) >= ENC_MAX_QUEUE:
@@ -210,7 +225,7 @@ class Encode(commands.Cog):
                 await ctx.reply("The provided savestate doesn't have the same name as the movie.")
                 return
             
-        entry = QueueEntry(uuid.uuid4(), filename, ctx.message.author, datetime.now(timezone.utc))
+        entry = QueueEntry(uuid.uuid4(), filename, ctx.message.author, datetime.now(timezone.utc), None)
         encode_queue.append(entry)
         
         await ctx.reply(content="Your encode of {} has been added to the queue at position {}.".format(filename, len(encode_queue)))
@@ -219,8 +234,8 @@ class Encode(commands.Cog):
             print("Finished processing frontmost entry")
             encode_queue.pop(0)
         
-        asyncio.create_task(self.process_queue_front(ctx, entry)).add_done_callback(pop_queue)
-        
+        entry.task = asyncio.create_task(self.process_queue_front(ctx, entry))
+        entry.task.add_done_callback(pop_queue)
 
 
     # @encode.error
