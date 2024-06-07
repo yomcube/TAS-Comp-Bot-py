@@ -138,16 +138,24 @@ class Encode(commands.Cog):
         attachments = ctx.message.attachments
         
         movie_path = await download_attachment(attachments[file_dict.get("m64")])
+        st_path = None
         
         if file_dict.get("st") is not None:
-            await download_attachment(attachments[file_dict.get("st")])
+            st_path = await download_attachment(attachments[file_dict.get("st")])
  
         if file_dict.get("savestate") is not None:
-            await download_attachment(attachments[file_dict.get("savestate")])
+            st_path = await download_attachment(attachments[file_dict.get("savestate")])
     
         # Stem of movie is also the stem of avi file
         filename = os.path.split(movie_path)[1].rpartition(".")[0]
 
+        # When an st is provided, its stem must match the movie's stem
+        if st_path is not None:
+            st_stem = os.path.split(st_path)[1].rpartition(".")[0]
+            if st_stem != filename:
+                await ctx.reply("The provided savestate doesn't have the same name as the movie.")
+                return
+            
         entry = QueueEntry(uuid.uuid4(), filename, ctx.message.author, datetime.now(timezone.utc))
         encode_queue.append(entry)
         
