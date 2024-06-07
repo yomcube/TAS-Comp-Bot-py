@@ -56,7 +56,7 @@ class Encode(commands.Cog):
             print(f"Waiting for {entry.filename} to reach front...")
             await asyncio.sleep(1)
         
-        await ctx.send(content="{}, your encode of {} has begun.".format(ctx.message.author.mention, entry.filename))
+        await ctx.reply(content="Your encode of {} has begun.".format(entry.filename))
     
         avi_path = os.path.join(AVI_DIR, f"{entry.filename}.avi")
         mp4_path = os.path.join(AVI_DIR, f"{entry.filename}.mp4")
@@ -84,7 +84,7 @@ class Encode(commands.Cog):
         # Sometimes avi files get created, but have only the header due to a crash on the first frame
         # We also check for that here
         if not os.path.isfile(avi_path) or os.path.getsize(avi_path) < 32:
-            await ctx.send("Failed to encode {}.".format(entry.filename))
+            await ctx.reply("Failed to encode {}.".format(entry.filename))
             return
 
         # Convert avi to mp4 via ffmpeg
@@ -102,10 +102,10 @@ class Encode(commands.Cog):
         await proc.wait()
       
         if proc.returncode != 0 or not os.path.isfile(mp4_path):
-            await ctx.send("Failed to transcode {}.".format(entry.filename))
+            await ctx.reply("Failed to transcode {}.".format(entry.filename))
             return
             
-        await ctx.send(file=discord.File(mp4_path), content="{}, your encode of {} is ready!".format(ctx.message.author.mention, entry.filename))
+        await ctx.reply(file=discord.File(mp4_path), content="Your encode of {} is ready!".format(entry.filename))
         
     
     # Sends the current encoding queue into the chat
@@ -113,7 +113,7 @@ class Encode(commands.Cog):
         str = f"The encoding queue currently contains {len(encode_queue)} movie(s).\n\n"
         for i, entry in enumerate(encode_queue):
             str += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
-        await ctx.send(content=str)
+        await ctx.reply(content=str)
         
         
     @commands.command(name="encode", description = "Encodes a movie and an optional savestate into a video file")
@@ -125,14 +125,14 @@ class Encode(commands.Cog):
             return
         
         if len(encode_queue) >= ENC_MAX_QUEUE:
-            await ctx.send(content="The encode queue is currently full. Please try again later.".format(len(encode_queue), ENC_MAX_QUEUE))
+            await ctx.reply(content="The encode queue is currently full. Please try again later.".format(len(encode_queue), ENC_MAX_QUEUE))
             return
 
         attachments = ctx.message.attachments
         file_dict = get_file_types(attachments)
         
         if file_dict.get("m64") is None:
-            await ctx.send("Please provide a movie to encode.")
+            await ctx.reply("Please provide a movie to encode.")
             return
 
         attachments = ctx.message.attachments
@@ -151,7 +151,7 @@ class Encode(commands.Cog):
         entry = QueueEntry(uuid.uuid4(), filename, ctx.message.author, datetime.now(timezone.utc))
         encode_queue.append(entry)
         
-        await ctx.send(content="{}, your encode of {} has been added to the queue at position {}.".format(ctx.message.author.mention, filename, len(encode_queue)))
+        await ctx.reply(content="Your encode of {} has been added to the queue at position {}.".format(filename, len(encode_queue)))
 
         def pop_queue(_):
             print("Finished processing frontmost entry")
