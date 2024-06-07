@@ -10,8 +10,7 @@ import uuid
 import discord
 from discord.ext import commands
 import humanize
-from api.utils import download_attachment
-from api.utils import get_file_types
+from api.utils import download_from_url, get_file_types
 from datetime import datetime,timezone,timedelta
 
 DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
@@ -172,23 +171,35 @@ class Encode(commands.Cog):
             return
 
         attachments = ctx.message.attachments
-        file_dict = get_file_types(attachments)
         
-        if file_dict.get("m64") is None:
-            await ctx.reply("Please provide a movie to encode.")
-            return
-
-        attachments = ctx.message.attachments
-        
-        movie_path = await download_attachment(attachments[file_dict.get("m64")])
+        movie_path = None
         st_path = None
         
-        if file_dict.get("st") is not None:
-            st_path = await download_attachment(attachments[file_dict.get("st")])
- 
-        if file_dict.get("savestate") is not None:
-            st_path = await download_attachment(attachments[file_dict.get("savestate")])
+        if len(args) > 0:
+            # Pull the urls from args
+            movie_path = await download_from_url(args[0])
+            if len(args) > 1:
+                st_path = await download_from_url(args[1])
+        else:
+            # Pull the urls from attachments
+            file_dict = get_file_types(attachments)
+            
+            if file_dict.get("m64") is None:
+                await ctx.reply("Please provide a movie to encode.")
+                return
     
+            movie_path = await download_from_url(attachments[file_dict.get("m64")].url)
+            
+            if file_dict.get("st") is not None:
+                st_path = await download_from_url(attachments[file_dict.get("st")].url)
+    
+            if file_dict.get("savestate") is not None:
+                st_path = await download_from_url(attachments[file_dict.get("savestate")].url)
+    
+        if movie_path is None:
+            await ctx.reply("Failed to download the resources.")
+            return
+        
         # Stem of movie is also the stem of avi file
         filename = os.path.split(movie_path)[1].rpartition(".")[0]
 

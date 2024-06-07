@@ -1,12 +1,16 @@
+import hashlib
 import os
 import struct
+import urllib.request
 import uuid
 import discord
 from discord.ext import commands
 import json
 import sqlite3
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -39,13 +43,20 @@ def has_host_role():
 
     return commands.check(predicate)
 
+async def download_from_url(url) -> str:
+    try:
+        url_parsed = urlparse(url)
+        filename, file_extension = os.path.splitext(os.path.basename(url_parsed.path))
+        file_path = os.path.join(DOWNLOAD_DIR, f"{filename}{file_extension}")
 
-async def download_attachment(attachment) -> str:
-    filename, file_extension = os.path.splitext(attachment.filename)
-    file_path = os.path.join(DOWNLOAD_DIR, f"{filename}{file_extension}");
-    await attachment.save(fp=file_path)
-    return file_path
+        file = requests.get(url)
+        if not file.ok:
+            return None
+        open(file_path, 'wb').write(file.content)
 
+        return file_path
+    except:
+        return None
 
 async def check_json_guild(file, guild_id):  # TODO: Normalise file handling, rename function
     with open(file, "r") as f:
@@ -149,4 +160,14 @@ def get_file_types(attachments):
     return file_dict
 
 
+def hash_file(filename: str):
+    """Hashes a file's contents
 
+    Args:
+        filename (str): Path to a file
+
+    Returns:
+        _Hash: The file contents' hash
+    """
+    with open(filename, 'rb', buffering=0) as f:
+        return hashlib.file_digest(f, 'sha256')
