@@ -17,11 +17,11 @@ DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
 
 ENC_SM64_DIR = os.getenv("ENC_SM64_DIR")
 ENC_SM64_SCRIPTS = os.getenv("ENC_SM64_SCRIPTS")
+ENC_MAX_QUEUE = int(os.getenv("ENC_MAX_QUEUE"))
 
 MUPEN_EXE = os.path.join(ENC_SM64_DIR, "mupen", "mupen64.exe")
 ROM_DIR = os.path.join(ENC_SM64_DIR, "roms")
 AVI_DIR = os.path.join(ENC_SM64_DIR, "avi")
-
 @dataclass
 class QueueEntry:
     # The entry's unique identifier
@@ -123,7 +123,11 @@ class Encode(commands.Cog):
         if len(args) > 0 and args[0].lower() == "queue".lower():
             await self.send_queue(ctx)
             return
-            
+        
+        if len(encode_queue) >= ENC_MAX_QUEUE:
+            await ctx.send(content="The encode queue is currently full. Please try again later.".format(len(encode_queue), ENC_MAX_QUEUE))
+            return
+
         attachments = ctx.message.attachments
         file_dict = get_file_types(attachments)
         
