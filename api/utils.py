@@ -1,24 +1,61 @@
 import hashlib
 import os
 import struct
-import urllib.request
 import uuid
+from urllib.parse import urlparse
+
 import discord
+import requests
 from discord.ext import commands
 import json
 import sqlite3
-from urllib.parse import urlparse
 
+from sqlalchemy import select, insert, update
+
+from api.db_classes import Money, Submissions, SubmissionChannel, Tasks, HostRole, Userbase, session
 from dotenv import load_dotenv
-import requests
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
+DB_DIR = os.getenv('DB_DIR')
+
+
+def get_balance(user_id):
+    money = session.scalars(select(Money).where(Money.user_id == user_id)).first()
+    if money is None:
+        balance = 100
+        stmt = (insert(Money).values(user_id=user_id, coins=balance))
+        session.execute(stmt)
+        session.commit()
+    else:
+        balance = money.coins
+    return balance
+
+
+def update_balance(user_id, new_balance):
+    stmt = (update(Money).values(user_id=user_id, coins=new_balance))
+    session.execute(stmt)
+    session.commit()
+
+
+def add_balance(user_id, amount):
+    current_balance = get_balance(user_id)
+    new_balance = current_balance + amount
+    update_balance(user_id, new_balance)
+
+
+def deduct_balance(username, amount):
+    current_balance = get_balance(username)
+    new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
+    update_balance(username, new_balance)
 
 
 def get_host_role():
+    default = DEFAULT
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
+    host_role = session.scalars(select(HostRole).where(HostRole.comp is default)).first()
+    print(host_role.comp)
     connection = sqlite3.connect("./database/settings.db")
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM host_role WHERE comp = ?",
@@ -43,7 +80,9 @@ def has_host_role():
 
     return commands.check(predicate)
 
+
 async def download_from_url(url) -> str:
+
     try:
         url_parsed = urlparse(url)
         filename, file_extension = os.path.splitext(os.path.basename(url_parsed.path))
@@ -55,8 +94,11 @@ async def download_from_url(url) -> str:
         open(file_path, 'wb').write(file.content)
 
         return file_path
+
     except:
+
         return None
+
 
 async def check_json_guild(file, guild_id):  # TODO: Normalise file handling, rename function
     with open(file, "r") as f:
@@ -105,41 +147,6 @@ def is_task_currently_running():
     return currently_running
 
 
-def get_balance(username):
-    connection = sqlite3.connect("./database/economy.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT coins FROM money WHERE username = ?", (username,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.execute("INSERT INTO money (username, coins) VALUES (?, ?)", (username, 100))
-        connection.commit()
-        balance = 100
-    else:
-        balance = result[0]
-    connection.close()
-    return balance
-
-
-def update_balance(username, new_balance):
-    connection = sqlite3.connect("./database/economy.db")
-    cursor = connection.cursor()
-    cursor.execute("UPDATE money SET coins = ? WHERE username = ?", (new_balance, username))
-    connection.commit()
-    connection.close()
-
-
-def add_balance(username, amount):
-    current_balance = get_balance(username)
-    new_balance = current_balance + amount
-    update_balance(username, new_balance)
-
-
-def deduct_balance(username, amount):
-    current_balance = get_balance(username)
-    new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
-    update_balance(username, new_balance)
-
-
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))
     winnings = constant * slot_number * (1 / probability)
@@ -171,3 +178,4 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
+
