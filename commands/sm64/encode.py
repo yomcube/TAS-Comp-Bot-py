@@ -9,11 +9,12 @@ from typing import List
 import uuid
 import discord
 from discord.ext import commands
+from video import FFmpegBuilder, ffprobe
 import humanize
 from api.utils import download_from_url, get_file_types
 from datetime import datetime,timezone,timedelta
 
-DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
+DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR")
 ENC_MUPEN_DIR = os.getenv("ENC_MUPEN_DIR")
 ENC_AVI_DIR = os.getenv("ENC_AVI_DIR")
 ENC_SM64_SCRIPTS = os.getenv("ENC_SM64_SCRIPTS")
@@ -46,7 +47,6 @@ encode_queue: List[QueueEntry] = []
 encode_thread = None
 
 class Encode(commands.Cog):
-     
     def __init__(self, bot) -> None:
         self.bot = bot
         
@@ -58,7 +58,7 @@ class Encode(commands.Cog):
             print(f"Waiting for {entry.filename} to reach front...")
             await asyncio.sleep(1)
         
-        await ctx.reply(content="Your encode of {} has begun.".format(entry.filename))
+        await ctx.reply(content=f"Your encode of {entry.filename} has begun.")
     
         avi_path = os.path.join(ENC_AVI_DIR, f"{entry.filename}.avi")
         mp4_path = os.path.join(ENC_AVI_DIR, f"{entry.filename}.mp4")
@@ -68,16 +68,13 @@ class Encode(commands.Cog):
         if os.path.isfile(avi_path):
             os.remove(avi_path)
 
-        # In the case of the mp4 file, it avoids an overwrite prompt from ffmpeg which blocks the command sequence
-        if os.path.isfile(mp4_path):
-            os.remove(mp4_path)
-
         args = [ 
             MUPEN_EXE,
             "--rom",
             os.path.join(DOWNLOAD_DIR, f"{entry.filename}.m64"),
             "--avi",
-            avi_path]
+            avi_path
+        ]
         
         if len(ENC_SM64_SCRIPTS) > 0:
             args += [ "--lua", ENC_SM64_SCRIPTS]
@@ -89,70 +86,46 @@ class Encode(commands.Cog):
         # Sometimes avi files get created, but have only the header due to a crash on the first frame
         # We also check for that here
         if not os.path.isfile(avi_path) or os.path.getsize(avi_path) < 32:
-            await ctx.reply("Failed to encode {}.".format(entry.filename))
+            await ctx.reply(f"Failed to encode {entry.filename}.")
             return
 
-
         # Clamping: Figure out the correct ffmpeg params to fit the mp4 into 25 MB
-        ffprobe_out = subprocess.check_output([
-            "ffprobe",
-            avi_path,
-            "-v",
-            "quiet",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1"
-        ])
+        length_sec = float(ffprobe(avi_path).format.duration)
+        filesize_limit = 8 * 25e6; # bits
         
-        length = 1000 * int(float(ffprobe_out.decode("utf-8")))
-        filesize_limit = int(25e6);
-        cmd = f"-i encode.avi -c:v libx264 -c:a aac -vf fps=30 "
-        trate = 8 * filesize_limit / length
+        # cmd = f"-i encode.avi -c:v libx264 -c:a aac -vf fps=30 "
+        total_bitrate = filesize_limit / length_sec
 
-        if trate < 128:
+        if total_bitrate < 128000:
             await ctx.reply("Your movie is too large.")
             return
 
-        arate = min(16 * math.floor(trate / 128), 128)
-        vrate = (trate - arate) * 0.9
-        cmd += f"-maxrate ${vrate}k -bufsize ${vrate}k -b:a ${arate}k "
-        cmd += f"-pix_fmt yuv420p -fs ${filesize_limit * 0.9} {mp4_path}"
+        audio_bitrate = min(16000 * math.floor(total_bitrate / 128000), 128000)
+        video_bitrate = int((total_bitrate - audio_bitrate) * 0.95)
+
+        ffmpeg_command = (
+            FFmpegBuilder()
+            .input(avi_path)
+            .vcodec("libx264")
+            .acodec("aac")
+            .vfilter("fps=60,fps=30") # prevents choppiness
+            .vbv(video_bitrate, video_bitrate)
+            .abr(audio_bitrate)
+            .pix_fmt("yuv420p")
+            .maxsize(int(filesize_limit * 0.95))
+            .output(mp4_path)
+        )
         
-        ffmpeg_args = [
-            "ffmpeg",
-            "-i",
-            avi_path,
-            "-c:v",
-            "libx264",
-            "-c:a",
-            "aac",
-            "-vf",
-            "fps=30",
-            "-maxrate",
-            f"{vrate}k",
-            "-bufsize",
-            f"{vrate}k",
-            "-b:a",
-            f"{arate}k",
-            "-pix_fmt",
-            "yuv420p",
-            # "-fs",
-            # f"{filesize_limit * 0.9}",
-            f"{mp4_path}"
-        ]
+        print(ffmpeg_command)
         
-        print(cmd)
-        print(ffmpeg_args)
-        
-        proc = await asyncio.create_subprocess_exec(*ffmpeg_args)
+        proc = await ffmpeg_command.run_async()
         await proc.wait()
       
         if proc.returncode != 0 or not os.path.isfile(mp4_path):
-            await ctx.reply("Failed to transcode {}.".format(entry.filename))
+            await ctx.reply(f"Failed to encode {entry.filename}.")
             return
             
-        await ctx.reply(file=discord.File(mp4_path), content="Your encode of {} is ready!".format(entry.filename))
+        await ctx.reply(file=discord.File(mp4_path), content=f"Your encode of {entry.filename} is ready!")
         
     
     # Sends the current encoding queue into the chat
@@ -231,7 +204,7 @@ class Encode(commands.Cog):
         entry = QueueEntry(uuid.uuid4(), filename, ctx.message.author, datetime.now(timezone.utc), None)
         encode_queue.append(entry)
         
-        await ctx.reply(content="Your encode of {} has been added to the queue at position {}.".format(filename, len(encode_queue)))
+        await ctx.reply(content=f"Your encode of {filename} has been added to the queue at position {len(encode_queue)}.")
 
         def pop_queue(_):
             print("Finished processing frontmost entry")

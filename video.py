@@ -1,3 +1,4 @@
+import asyncio
 import random
 import string
 import subprocess
@@ -18,7 +19,7 @@ class FFmpegBuilder:
         
         self._acodec = "aac"
         self._omit_abr = False
-        self._abr = 128 * 1000
+        self._abr = 128000
         self._afilter = ""
 
         self._maxsize = 0 
@@ -81,7 +82,11 @@ class FFmpegBuilder:
 
     def run(self):
         return subprocess.run(self.build())
-    
+
+    async def run_async(self):
+        proc = await asyncio.create_subprocess_exec(*self.build())
+        return proc
+
     def input(self, *inputs: str):
         self._inputs.extend(inputs)
         return self
@@ -115,7 +120,7 @@ class FFmpegBuilder:
         self._vbv_bufsize = bufsize
         return self
 
-    def vfilter(self, filter):
+    def vfilter(self, filter: str):
         self._vfilter = filter
         return self
 
