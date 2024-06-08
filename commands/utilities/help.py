@@ -1,5 +1,7 @@
 from discord.ext import commands
 
+AUTHOR_LINE = "**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95, shxd and Aurumaker72"
+
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -8,7 +10,7 @@ class Help(commands.Cog):
     async def help(self, ctx, category: str = ""):
         if category == "":
 
-            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+            help_menu = f"""{AUTHOR_LINE}
 List of commands\n
 **Commands**:
   **help** -- this
@@ -24,7 +26,7 @@ Note: Most commands are available using the prefix `$`, aswell as using `/`.
 
         elif category == "fun":
 
-            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+            help_menu = f"""{AUTHOR_LINE}
 Fun commands 👀\n
 **Commands**:
   **8ball** -- Have a question? Ask the bot for his wisdom! Only 'yes/no' and 'when' questions are supported. 
@@ -38,7 +40,7 @@ Fun commands 👀\n
 """
 
         elif category == "misc":
-            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+            help_menu = f"""{AUTHOR_LINE}
 Miscellaneous commands\n
   **info** -- Shows information about the status of your submission. (DM only)
   **setname** -- Changes your display name for the submission channel (Not your server name!)
@@ -48,7 +50,7 @@ Miscellaneous commands\n
 """
 
         elif category == "voice":
-            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+            help_menu = f"""{AUTHOR_LINE}
 Voice chat commands :musical_note: \n
   **joinvc** -- Invites the bot in your vc.
   **leave** -- Kicks the bot off of your vc.
@@ -60,7 +62,7 @@ Voice chat commands :musical_note: \n
 
 
         elif category == "host":
-            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+            help_menu = f"""{AUTHOR_LINE}
 Host commands :mishchievous:\n
   **/dm** -- Make the bot dm someone!
   **/edit-submission** -- Edits someone's submission status: time, dq (True/False), dq reason
@@ -72,7 +74,7 @@ Host commands :mishchievous:\n
 """
 
         elif category == "admin":
-            help_menu = """**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95 and shxd
+            help_menu = f"""{AUTHOR_LINE}
 Admin commands :cereal:\n
   **addcoins** -- Adds coins to someone's balance (or remove, if a negative number is specified).
   **say** -- Make the bot say something in a channel!
