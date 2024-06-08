@@ -68,6 +68,9 @@ class Encode(commands.Cog):
         if os.path.isfile(avi_path):
             os.remove(avi_path)
 
+        if os.path.isfile(mp4_path):
+            os.remove(mp4_path)
+            
         args = [ 
             MUPEN_EXE,
             "--rom",
@@ -90,7 +93,9 @@ class Encode(commands.Cog):
             return
 
         # Clamping: Figure out the correct ffmpeg params to fit the mp4 into 25 MB
-        length_sec = float(ffprobe(avi_path).format.duration)
+        ffprobe_result = await ffprobe(avi_path)
+        
+        length_sec = float(ffprobe_result["format"]["duration"])
         filesize_limit = 8 * 25e6; # bits
         
         # cmd = f"-i encode.avi -c:v libx264 -c:a aac -vf fps=30 "

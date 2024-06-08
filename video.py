@@ -165,7 +165,8 @@ class FFmpegBuilder:
         self._output = output
         return self
 
-def ffprobe(file: str):
-    process = subprocess.run(["ffprobe", file, "-v", "-8", "-show_entries", "format:stream", "-of", "json"], capture_output = True)
-    return json.loads(process.stdout)
+async def ffprobe(file: str):
+    proc = await asyncio.create_subprocess_exec(*["ffprobe", file, "-v", "-8", "-show_entries", "format:stream", "-of", "json"], stdout=subprocess.PIPE)
+    out, err = await proc.communicate()
+    return json.loads(out)
 
