@@ -15,6 +15,7 @@ List of commands\n
 **Commands**:
   **help** -- this
   **fun** -- Fun commands, such as slots
+  **util** -- Utility commands
   **misc** -- Miscellaneous commands
   **voice** -- Voice chat commands
   **host** -- Host-only commands, for handling tasks.
@@ -37,6 +38,12 @@ Fun commands 👀\n
   **joke** -- Get a good ol' joke from the bot!
   **rps** -- Play rock paper scissors against the bot, or against another player. Coins are involved.
   **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
+"""
+
+        elif category == "util":
+                    help_menu = f"""{AUTHOR_LINE}
+Utility commands\n
+  **encode** -- Encodes a Mupen64 movie into an mp4
 """
 
         elif category == "misc":
