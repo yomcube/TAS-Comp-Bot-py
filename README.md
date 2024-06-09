@@ -24,19 +24,6 @@ Ensure that the `ENC_MUPEN_DIR` environment variable has been set to a directory
 
 Perform the initial setup of the Mupen64 1.1.8 installation by selecting plugins and adding a rom directory.
 
-Choose your desired encoding mode, depending on the use-case.
-
-![grafik](https://github.com/crackhex/TAS-Comp-Bot-py/assets/48759429/63f25120-5fa5-407b-9b3e-c5a6b8ffe77d)
-
-`External capture` - Captures the game. Requires a capable graphics plugin, but works regardless of window visibility and is much faster.
-
-`Internal capture window` - Captures the game. Takes screenshots of the window, meaning it needs to be visible on-screen to be captured.
-
-`Internal capture desktop` - Captures the game alongside Lua graphics. Takes screenshots of the desktop, meaning foreign windows may be captured.
-
-> [!WARNING]  
-> The `Internal capture desktop` mode may leak sensitive information if windows overlap Mupen64.
-
 To prepare the avi preset, open a ROM and then start a video capture.
 
 When prompted for a codec, select x264vfw and enable "Fast Decode" and "Zero Latency" in the configuration dialog.
