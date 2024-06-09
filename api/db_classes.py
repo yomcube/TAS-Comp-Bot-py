@@ -1,7 +1,6 @@
 import os
-
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, Integer, String, QueuePool, Float, select, insert
+from sqlalchemy import create_engine, Column, Integer, String, QueuePool, Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 

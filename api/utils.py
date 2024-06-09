@@ -1,17 +1,13 @@
 import hashlib
 import os
-import struct
 import uuid
 from urllib.parse import urlparse
-
 import discord
 import requests
 from discord.ext import commands
 import json
 import sqlite3
-
 from sqlalchemy import select, insert, update
-
 from api.db_classes import Money, Submissions, SubmissionChannel, Tasks, HostRole, Userbase, session
 from dotenv import load_dotenv
 
@@ -56,18 +52,10 @@ def get_host_role():
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
     host_role = session.scalars(select(HostRole).where(HostRole.comp is default)).first()
     print(host_role.comp)
-    connection = sqlite3.connect("./database/settings.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM host_role WHERE comp = ?",
-                   (DEFAULT,))  # chooses default in dotenv
-    role = cursor.fetchone()
 
-    if role:
-        host_role = role[1]
-        connection.close()
-        return host_role
+    if host_role:
+        return host_role.name
     else:
-        connection.close()
         return "Host"  # default host role name.
 
 
@@ -82,7 +70,6 @@ def has_host_role():
 
 
 async def download_from_url(url) -> str:
-
     try:
         url_parsed = urlparse(url)
         filename, file_extension = os.path.splitext(os.path.basename(url_parsed.path))
@@ -178,4 +165,3 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
-
