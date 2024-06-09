@@ -3,8 +3,6 @@ from dataclasses import dataclass
 import datetime
 import math
 import os
-import subprocess
-from threading import Thread
 from typing import List
 import uuid
 import discord
@@ -12,7 +10,7 @@ from discord.ext import commands
 from video import FFmpegBuilder, ffprobe
 import humanize
 from api.utils import download_from_url, get_file_types
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR")
 ENC_MUPEN_DIR = os.getenv("ENC_MUPEN_DIR")
@@ -50,6 +48,7 @@ encode_thread = None
 
 
 async def cancel_encode(ctx):
+    # Cancels the frontmost encode task
     # FIXME: Require role for this action
     if len(encode_queue) == 0:
         await ctx.reply("The queue is empty.")
@@ -60,6 +59,7 @@ async def cancel_encode(ctx):
 
 
 async def send_queue(ctx):
+    # Sends the current encoding queue into the chat
     str = f"The encoding queue currently contains {len(encode_queue)} movie(s).\n\n"
     for i, entry in enumerate(encode_queue):
         str += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
@@ -112,7 +112,7 @@ async def process_queue_front(ctx, entry: QueueEntry):
     ffprobe_result = await ffprobe(avi_path)
 
     length_sec = float(ffprobe_result["format"]["duration"])
-    filesize_limit = 8 * 25e6;  # bits
+    filesize_limit = 8 * 25e6  # bits
 
     # cmd = f"-i encode.avi -c:v libx264 -c:a aac -vf fps=30 "
     total_bitrate = filesize_limit / length_sec
@@ -153,14 +153,11 @@ class Encode(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    # Sends the current encoding queue into the chat
-
-    # Cancels the frontmost encode task
-
     @commands.command(name="encode", description="Encodes a movie and an optional savestate into a video file")
     async def encode(self, ctx, *args):
 
         # $encode queue shows the current queue
+
         if len(args) > 0 and args[0].lower() == "queue".lower():
             await send_queue(ctx)
             return
@@ -176,7 +173,7 @@ class Encode(commands.Cog):
             return
 
         attachments = ctx.message.attachments
-
+        movie_bytes = 0
         movie_path = None
         st_path = None
 
@@ -196,7 +193,7 @@ class Encode(commands.Cog):
             m64_idx = file_dict.get("m64")
             movie_path = f"{DOWNLOAD_DIR}/{attachments[m64_idx].filename}"
             print(movie_path)
-            await attachments[m64_idx].save(movie_path)
+            movie_bytes = await attachments[m64_idx].save(movie_path)
 
             if file_dict.get("st") is not None:
                 st_idx = file_dict.get("st")
@@ -208,7 +205,7 @@ class Encode(commands.Cog):
                 st_path = f"{DOWNLOAD_DIR}/{attachments[st_idx].filename}"
                 await attachments[st_idx].save(st_path)
 
-        if movie_path is None:
+        if movie_bytes == 0:
             await ctx.reply("Failed to download the resources.")
             return
 

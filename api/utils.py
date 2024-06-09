@@ -2,7 +2,6 @@ import hashlib
 import os
 import uuid
 from urllib.parse import urlparse
-import discord
 import requests
 from discord.ext import commands
 import json
@@ -50,11 +49,11 @@ def deduct_balance(username, amount):
 def get_host_role():
     default = DEFAULT
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
-    host_role = session.scalars(select(HostRole).where(HostRole.comp is default)).first()
-    print(host_role.comp)
+    host_role = session.scalars(select(HostRole.role_id).where(HostRole.comp == default)).first()
 
     if host_role:
-        return host_role.name
+        print(host_role)
+        return host_role
     else:
         return "Host"  # default host role name.
 
@@ -63,7 +62,7 @@ def has_host_role():
     async def predicate(ctx):
         role = get_host_role()
         # Check if the role is a name
-        has_role = discord.utils.get(ctx.author.roles, name=role) is not None
+        has_role = ctx.author.get_role(role) is not None
         return has_role
 
     return commands.check(predicate)

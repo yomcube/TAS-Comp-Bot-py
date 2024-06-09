@@ -12,38 +12,36 @@ class Ready(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-
-
-        # Database for tasks and submissions
+        '''# Database for tasks and submissions
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS tasks (
-                                task INTEGER, 
-                                year INTEGER, 
+                                task INTEGER,
+                                year INTEGER,
                                 is_active INTEGER,
-                                collab INTEGER, 
+                                collab INTEGER,
                                 multiple_tracks INTEGER,
-                                speed_task INTEGER 
+                                speed_task INTEGER
                                 )""")  # the collab value should be interpreted as collab with X other player (1 would imply 2 people, 2 would imply 3 people)
                                         # multiple_tracks and speed_task are booleans: 0 or 1
         cursor.execute("""CREATE TABLE IF NOT EXISTS submissions (
                                 task INTEGER,
                                 name TEXT,
-                                id INTEGER, 
-                                url TEXT, 
+                                id INTEGER,
+                                url TEXT,
                                 time FLOAT,
                                 dq INTEGER,
                                 dq_reason TEXT
                                 )""") # dq is boolean: 0 or 1. Time is counted in SECONDS
         connection.commit()
         connection.close()
-        
-        
+
+
         # Database for economy commands
         connection = sqlite3.connect("database/economy.db")
         cursor = connection.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS money (
-                                username TEXT, 
+                                username TEXT,
                                 coins INTEGER
                                 )""")
         connection.commit()
@@ -76,7 +74,7 @@ class Ready(commands.Cog):
         connection = sqlite3.connect("database/users.db")
         cursor = connection.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS userbase (
-                                                user TEXT, 
+                                                user TEXT,
                                                 id INTEGER,
                                                 display_name TEXT
                                                 )""")
@@ -85,12 +83,9 @@ class Ready(commands.Cog):
 
         connection.commit()
         connection.close()
+        '''
 
         print('Bot is ready!')
-
-
-
-
 
 
 async def setup(bot):

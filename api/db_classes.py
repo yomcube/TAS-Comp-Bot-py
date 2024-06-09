@@ -8,7 +8,7 @@ load_dotenv()
 DB_DIR = os.getenv('DB_DIR')
 Base = declarative_base()
 
-engine_pool = create_engine(f"sqlite://{DB_DIR.partition('.')[-1]}/database.db", poolclass=QueuePool)
+engine_pool = create_engine(f"sqlite://{DB_DIR.partition('.')[-1]}/database.db")
 Base.metadata.create_all(engine_pool)
 Session = sessionmaker(bind=engine_pool)
 session = Session()
@@ -60,6 +60,7 @@ class SubmissionChannel(Base):
 class HostRole(Base):
     __tablename__ = "host_role"
     index = Column(Integer, primary_key=True)
-    role_id = Column('id', Integer)
+    role_id = Column('role_id', Integer)
     name = Column('name', String)
     comp = Column('comp', String)
+    # TODO: Add server column

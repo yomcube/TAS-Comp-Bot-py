@@ -18,24 +18,22 @@ class Sethostrole(commands.Cog):
                              with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, role: discord.Role, comp: str = DEFAULT):
-
-        host_role = session.scalars(select(HostRole).where(HostRole.comp is comp)).first()
-        #connection = sqlite3.connect("database/settings.db")
-        #cursor = connection.cursor()
-
+        host_role = session.scalars(select(HostRole.comp).where(HostRole.comp is comp)).first()
         name = role.name
-        id = role.id
-        if host_role is not None:
-            stmt = (insert(HostRole).values(role_id=id, name=name, comp=comp))
-            session.execute(stmt)
+        role_id = role.id
 
-        else:
+        # Check if host_role doesn't exist yet for the comp
+        if host_role is None:
             print(host_role)
-            stmt = (update(HostRole).values(role_id=id, name=name, comp=comp))
+            stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp))
+            session.execute(stmt)
+        else:
+
+            stmt = (update(HostRole).values(role_id=role_id, name=name, comp=comp))
             session.execute(stmt)
 
         session.commit()
-            # Check if existing role already
+
             #cursor.execute("SELECT * FROM host_role WHERE comp = ?", (comp,))
             #existing = cursor.fetchone()
 
