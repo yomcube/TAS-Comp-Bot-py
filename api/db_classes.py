@@ -16,9 +16,10 @@ session = Session()
 
 class Money(Base):
     __tablename__ = "money"
-    index = Column(Integer, primary_key=True, autoincrement=True)
+    index = Column('index', Integer, primary_key=True, autoincrement=True)
     user_id = Column('user_id', Integer)
     coins = Column('coins', Integer)
+    guild = Column('guild', Integer)
 
 
 class Tasks(Base):
@@ -44,8 +45,7 @@ class Submissions(Base):
 
 class Userbase(Base):
     __tablename__ = "userbase"
-    index = Column(Integer, primary_key=True)
-    user_id = Column('id', Integer)
+    user_id = Column('id', Integer, primary_key=True)
     user = Column('user', String)
     display_name = Column('display_name', String)
 
@@ -54,7 +54,8 @@ class SubmissionChannel(Base):
     __tablename__ = "submission_channel"
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
-    channel_id = Column('id', Integer)  # Not sure if this is correct
+    channel_id = Column('channel_id', Integer)
+    guild_id = Column('guild_id', Integer, unique=True)
 
 
 class HostRole(Base):
@@ -63,4 +64,4 @@ class HostRole(Base):
     role_id = Column('role_id', Integer)
     name = Column('name', String)
     comp = Column('comp', String)
-    # TODO: Add server column
+    guild_id = Column('guild_id', Integer)

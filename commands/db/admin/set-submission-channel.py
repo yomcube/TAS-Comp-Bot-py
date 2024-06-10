@@ -3,10 +3,13 @@ import os
 import discord
 from discord.ext import commands
 import sqlite3
+from api.db_classes import session, SubmissionChannel
+from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
+
 
 class Setsubmissionchannel(commands.Cog):
     def __init__(self, bot) -> None:
@@ -16,34 +19,21 @@ class Setsubmissionchannel(commands.Cog):
                              description="Set the public submission display channel", with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
+
         # TODO: detect which server you are in, so the comp argument is no longer needed
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
+        result = session.execute(query).first()
+        if result is None:
+            stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+            session.execute(stmt)
+        elif channel.id == result[0]:
+            pass
+        else:
+            stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+            session.execute(stmt)
 
-        connection = sqlite3.connect("database/settings.db")
-        cursor = connection.cursor()
-
-        id = channel.id
-
-        try:
-            # Check if existing channel already
-            cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))
-            existing = cursor.fetchone()
-
-            if existing:
-                cursor.execute('UPDATE submission_channel SET comp = ?, id = ? WHERE comp = ?', (comp, id, comp))
-
-            else:
-                cursor.execute('INSERT INTO submission_channel (comp, id) VALUES (?, ?)', (comp, id,))
-
-            # Commit whatever change
-            connection.commit()
-            connection.close()
-
-            await ctx.send(f"The public submission display channel has been set! {channel.mention}")
-
-        except sqlite3.OperationalError as e:
-            print(e)
-            connection.close()
-            await ctx.send("An error occured.")
+        session.commit()
+        await ctx.send(f"The public submission display channel has been set! {channel.mention}")
 
 
 async def setup(bot) -> None:

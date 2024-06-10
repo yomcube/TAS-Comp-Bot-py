@@ -2,14 +2,23 @@ import discord
 import sqlite3
 import os
 from dotenv import load_dotenv
-
+from api.db_classes import SubmissionChannel, session
+from sqlalchemy import insert, select, update
 from api.utils import get_file_types
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
 
+
 def get_submission_channel(comp):
-    connection = sqlite3.connect("database/settings.db")
+    query = select(SubmissionChannel.channel_id).where(
+        SubmissionChannel.comp == comp)
+    channel = session.execute(query).first()
+    if channel is None:
+        print(f"No submission channel found for competition '{comp}'.")
+        return None
+
+    '''connection = sqlite3.connect("database/settings.db")
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))  # there should only be 1 entry per table per competition
     result = cursor.fetchone()
@@ -22,14 +31,14 @@ def get_submission_channel(comp):
         # Handle case where no rows are found in the database
         connection.close()
         print(f"No submission channel found for competition '{comp}'.")
-        return None
-
-
+        return None'''
+    return channel
 
 def get_logs_channel(comp):
     connection = sqlite3.connect("database/settings.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM logs_channel WHERE comp = ?", (comp,))  # there should only be 1 entry per table per competition
+    cursor.execute("SELECT * FROM logs_channel WHERE comp = ?",
+                   (comp,))  # there should only be 1 entry per table per competition
     result = cursor.fetchone()
 
     if result is not None:  # Check if result is not None before accessing index

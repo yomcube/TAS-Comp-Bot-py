@@ -3,15 +3,13 @@ import sqlite3
 
 host_role_id = None
 
+
 class Ready(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
-
     @commands.Cog.listener()
     async def on_ready(self):
-
         '''# Database for tasks and submissions
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()

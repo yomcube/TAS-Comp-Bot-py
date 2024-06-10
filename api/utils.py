@@ -16,34 +16,35 @@ DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
 DB_DIR = os.getenv('DB_DIR')
 
 
-def get_balance(user_id):
-    money = session.scalars(select(Money).where(Money.user_id == user_id)).first()
+def get_balance(user_id, guild):
+    money = session.scalars(select(Money.coins).where(Money.user_id == user_id)).first()
     if money is None:
         balance = 100
-        stmt = (insert(Money).values(user_id=user_id, coins=balance))
+        print(guild)
+        stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
         session.execute(stmt)
         session.commit()
     else:
-        balance = money.coins
+        balance = money
     return balance
 
 
-def update_balance(user_id, new_balance):
-    stmt = (update(Money).values(user_id=user_id, coins=new_balance))
+def update_balance(user_id, guild, new_balance):
+    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance))
     session.execute(stmt)
     session.commit()
 
 
-def add_balance(user_id, amount):
-    current_balance = get_balance(user_id)
+def add_balance(user_id, server_id, amount):
+    current_balance = get_balance(user_id, server_id)
     new_balance = current_balance + amount
-    update_balance(user_id, new_balance)
+    update_balance(user_id, server_id, new_balance)
 
 
-def deduct_balance(username, amount):
-    current_balance = get_balance(username)
+def deduct_balance(username, guild, amount):
+    current_balance = get_balance(username, guild)
     new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
-    update_balance(username, new_balance)
+    update_balance(username, guild, new_balance)
 
 
 def get_host_role():
@@ -55,7 +56,7 @@ def get_host_role():
         print(host_role)
         return host_role
     else:
-        return "Host"  # default host role name.
+        return None # default host role name.
 
 
 def has_host_role():
@@ -84,17 +85,6 @@ async def download_from_url(url) -> str:
     except:
 
         return None
-
-
-async def check_json_guild(file, guild_id):  # TODO: Normalise file handling, rename function
-    with open(file, "r") as f:
-
-        data = json.loads(f.read())
-        for guild in data:
-            if guild == guild_id:
-                return True
-
-    return False
 
 
 def readable_to_float(time_str):
