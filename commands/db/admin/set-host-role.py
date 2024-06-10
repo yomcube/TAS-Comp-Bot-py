@@ -33,19 +33,6 @@ class Sethostrole(commands.Cog):
             session.execute(stmt)
 
         session.commit()
-
-            #cursor.execute("SELECT * FROM host_role WHERE comp = ?", (comp,))
-            #existing = cursor.fetchone()
-
-            #if existing:
-             #   cursor.execute('UPDATE host_role SET name = ?,id = ? WHERE comp = ?', (name, id, comp,))
-            #else:
-             #   cursor.execute('INSERT INTO host_role (comp, name, id) VALUES (?, ?, ?)', (comp, name, id,))
-
-            # Commit whatever change
-            #connection.commit()
-            #connection.close()
-
         await ctx.send(f"The current host role has been set! {role.mention}")
 
         #except sqlite3.OperationalError as e:

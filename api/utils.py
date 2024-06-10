@@ -113,14 +113,10 @@ def float_to_readable(seconds):
 
 def is_task_currently_running():
     """Check if a task is currently running"""
-    connection = sqlite3.connect("./database/tasks.db")
-    cursor = connection.cursor()
-
     # Is a task running?
-    cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-    currently_running = cursor.fetchone()
-    connection.close()
-    return currently_running
+    # Does this need to be a function even?
+    active = session.scalars(select(Tasks.is_active).where(Tasks.is_active == 1)).first()
+    return active
 
 
 def calculate_winnings(num_emojis, slot_number, constant=3):

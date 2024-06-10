@@ -21,7 +21,7 @@ class Start(commands.Cog):
         if not year:
             year = date.today().year
 
-        if not is_task_currently_running():
+        if is_task_currently_running() is None:
             connection = sqlite3.connect("database/tasks.db")
             cursor = connection.cursor()
 
