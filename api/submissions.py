@@ -2,7 +2,7 @@ import discord
 import sqlite3
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, session
+from api.db_classes import SubmissionChannel, Userbase, session
 from sqlalchemy import insert, select, update
 from api.utils import get_file_types
 
@@ -11,28 +11,22 @@ DEFAULT = os.getenv('DEFAULT')
 
 
 def get_submission_channel(comp):
-    query = select(SubmissionChannel.channel_id).where(
-        SubmissionChannel.comp == comp)
-    channel = session.execute(query).first()
+    query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
+    channel = session.execute(query).first()  # there should only be 1 entry per table per competition
+    # Handle case where no rows are found in the database
     if channel is None:
         print(f"No submission channel found for competition '{comp}'.")
         return None
-
-    '''connection = sqlite3.connect("database/settings.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM submission_channel WHERE comp = ?", (comp,))  # there should only be 1 entry per table per competition
-    result = cursor.fetchone()
-
-    if result is not None:  # Check if result is not None before accessing index
-        channel_id = result[1]
-        connection.close()
-        return channel_id
-    else:
-        # Handle case where no rows are found in the database
-        connection.close()
-        print(f"No submission channel found for competition '{comp}'.")
-        return None'''
     return channel
+
+
+def get_submission_channel_guild(channel_id):
+    query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
+    guild_id = session.execute(query).first()
+    if guild_id is None:
+        return None
+    return guild_id
+
 
 def get_logs_channel(comp):
     connection = sqlite3.connect("database/settings.db")
@@ -52,33 +46,29 @@ def get_logs_channel(comp):
         return None
 
 
-def first_time_submission(id):
+def first_time_submission(user_id):
     """Check if a certain user id has submitted to this competition already"""
     connection = sqlite3.connect("database/tasks.db")
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM submissions WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM submissions WHERE id = ?", (user_id,))
     result = cursor.fetchone()
     return not result
 
 
-def new_competitor(id):
+def new_competitor(user_id):
     """Checks if a competitor has EVER submitted (present and past tasks)."""
-    connection = sqlite3.connect("database/users.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM userbase WHERE id = ?", (id,))
-    result = cursor.fetchone()
-    connection.close()
+    query = select(Userbase.user_id).where(Userbase.user_id == user_id)
+    result = session.execute(query).first()
     return not result
 
 
-def get_display_name(id):
+def get_display_name(user_id, guild_id):
     """Returns the display name of a certain user ID."""
-    connection = sqlite3.connect("database/users.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM userbase WHERE id = ?", (id,))
-    result = cursor.fetchone()
-    connection.close()
-    return result[2]
+    query = select(Userbase.display_name).where(Userbase.guild_id == guild_id, Userbase.user_id == user_id)
+    result = session.execute(query).first()
+    if result is None:
+        return None
+    return result
 
 
 def count_submissions():
@@ -100,21 +90,19 @@ async def handle_submissions(message, self):
     author_id = message.author.id
     author_dn = message.author.display_name
 
-    # Checking if submitter has ever participated before
-    if new_competitor(author_id):
-        # adding him to the user database.
-        connection = sqlite3.connect("database/users.db")
-        cursor = connection.cursor()
-        cursor.execute("INSERT INTO userbase (user, id, display_name) VALUES (?, ?, ?)",
-                       (author_name, author_id, author_dn))
-        connection.commit()
-        connection.close()
-
     ##################################################
     # Adding submission to submission list channel
     ##################################################
     submission_channel = get_submission_channel(DEFAULT)
+    guild_id = get_submission_channel_guild(message.channel.id)
     channel = self.bot.get_channel(submission_channel)
+
+    # Checking if submitter has ever participated before
+    if new_competitor(author_id):
+        # adding him to the user database.
+        query = insert(Userbase).values(guild_id=guild_id, user_id=author_id, user=author_name, display_name=author_dn)
+        result = session.execute(query)
+        session.commit()
 
     if not channel:
         print("Could not find the channel.")
@@ -132,15 +120,17 @@ async def handle_submissions(message, self):
 
             # Add a new line only if it's a new user ID submitting
             if first_time_submission(author_id):
-                new_content = f"{last_message.content}\n{count_submissions()}. {get_display_name(author_id)} ||{author.mention}||"
+                new_content = f"{last_message.content}\n{count_submissions()}. {get_display_name(author_id, guild_id)} ||{author.mention}||"
                 await last_message.edit(content=new_content)
         else:
             # If the last message is not sent by the bot, send a new one
-            await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
+            await channel.send(
+                f"**__Current Submissions:__**\n1. {get_display_name(author_id, guild_id)} ||{author.mention}||")
     else:
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
-        await channel.send(f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
+        await channel.send(
+            f"**__Current Submissions:__**\n1. {get_display_name(author_id, guild_id)} ||{author.mention}||")
 
 
 async def handle_dms(message, self):

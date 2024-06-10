@@ -1,6 +1,9 @@
-import sqlite3
 from discord.ext import commands
+
+from api.db_classes import Userbase
 from api.submissions import get_submission_channel
+from api.utils import session
+from sqlalchemy import select, update
 import os
 from dotenv import load_dotenv
 
@@ -33,10 +36,16 @@ class Setname(commands.Cog):
 
     @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list", with_app_command=True)
     async def command(self, ctx, *, new_name):
-        connection = sqlite3.connect("database/users.db")
-        cursor = connection.cursor()
+        query = select(Userbase.display_name).where(Userbase.user_id == ctx.author.id, Userbase.guild_id == ctx.message.guild.id)
+        result = session.execute(query).first()
+        if result is None:
+            await ctx.send("Please submit, and retry again!")
+        else:
+            stmt = update(Userbase).values(user_id=ctx.author.id, display_name=new_name)
+            session.execute(stmt)
+            session.commit()
 
-        try:
+        '''try:
             # retrieve old name
             cursor.execute("SELECT * from userbase WHERE id = ?", (ctx.author.id,))
             result = cursor.fetchone()
@@ -45,7 +54,7 @@ class Setname(commands.Cog):
             # try to update
             cursor.execute("UPDATE userbase SET display_name = ? WHERE id = ?", (new_name, ctx.author.id))
 
-            # if the user doesn't exist in database, add him to database by encouraging to submit
+            # if the user doesn't exist in database, add user to database by encouraging to submit
             if cursor.rowcount == 0:  # Check if no rows were affected by the update
                 await ctx.send("Please submit, and retry again!")
 
@@ -58,7 +67,7 @@ class Setname(commands.Cog):
         except (sqlite3.OperationalError, TypeError): # another way of catching error
             await ctx.send("Error occured. Maybe try submitting, then retrying?")
         finally:
-            connection.close()
+            connection.close()'''
 
 
 async def setup(bot) -> None:

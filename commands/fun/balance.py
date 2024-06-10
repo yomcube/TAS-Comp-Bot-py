@@ -1,5 +1,3 @@
-import time
-
 from discord.ext import commands
 import discord
 from api.utils import get_balance
@@ -10,7 +8,7 @@ class Balance(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="balance", description="Check your balance.", with_app_command=True)
-    async def balance(self, ctx, user: discord.Member=None):
+    async def balance(self, ctx, user: discord.Member = None):
         if user:
             # TODO: probably search by ID
             user_handle = user.id

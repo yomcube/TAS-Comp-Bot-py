@@ -46,6 +46,7 @@ class Submissions(Base):
 class Userbase(Base):
     __tablename__ = "userbase"
     user_id = Column('id', Integer, primary_key=True)
+    guild_id = Column('guild_id', Integer)
     user = Column('user', String)
     display_name = Column('display_name', String)
 
@@ -54,6 +55,13 @@ class SubmissionChannel(Base):
     __tablename__ = "submission_channel"
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
+    channel_id = Column('channel_id', Integer)
+    guild_id = Column('guild_id', Integer, unique=True)
+
+
+class LogChannel(Base):
+    __tablename__ = "log_channel"
+    index = Column('index', Integer, primary_key=True)
     channel_id = Column('channel_id', Integer)
     guild_id = Column('guild_id', Integer, unique=True)
 
