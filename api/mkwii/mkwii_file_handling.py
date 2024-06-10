@@ -56,7 +56,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
             # If not first submission: replace old submission
             else:
-                cursor.execute("UPDATE submissions SET url=?, time=? WHERE id=?", (index, time, message.author.id))
+                cursor.execute("UPDATE submissions SET url=?, time=? WHERE id=?", (attachments[index].url, time, message.author.id))
                 connection.commit()
                 connection.close()
 

@@ -1,7 +1,5 @@
 from discord.ext import commands
 
-AUTHOR_LINE = "**MKWTASCompBot** - Comp bot by Crackhex, DashQC, Epik95, shxd and Aurumaker72"
-
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -10,24 +8,24 @@ class Help(commands.Cog):
     async def help(self, ctx, category: str = ""):
         if category == "":
 
-            help_menu = f"""{AUTHOR_LINE}
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 List of commands\n
 **Commands**:
   **help** -- this
   **fun** -- Fun commands, such as slots
-  **util** -- Utility commands
   **misc** -- Miscellaneous commands
   **voice** -- Voice chat commands
   **host** -- Host-only commands, for handling tasks.
   **admin** -- Admin commands
+  **credits** -- View more info about the bot and its creators
       
-Write `$help <category>` to view help for a specific category.
+Write `$help <category>` to view help for a specific category. (Except credits, it has its standalone command.)
 Note: Most commands are available using the prefix `$`, aswell as using `/`.
     """
 
         elif category == "fun":
 
-            help_menu = f"""{AUTHOR_LINE}
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Fun commands 👀\n
 **Commands**:
   **8ball** -- Have a question? Ask the bot for his wisdom! Only 'yes/no' and 'when' questions are supported. 
@@ -40,14 +38,8 @@ Fun commands 👀\n
   **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
 """
 
-        elif category == "util":
-                    help_menu = f"""{AUTHOR_LINE}
-Utility commands\n
-  **encode** -- Encodes a Mupen64 movie into an mp4
-"""
-
         elif category == "misc":
-            help_menu = f"""{AUTHOR_LINE}
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Miscellaneous commands\n
   **info** -- Shows information about the status of your submission. (DM only)
   **setname** -- Changes your display name for the submission channel (Not your server name!)
@@ -57,7 +49,7 @@ Miscellaneous commands\n
 """
 
         elif category == "voice":
-            help_menu = f"""{AUTHOR_LINE}
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Voice chat commands :musical_note: \n
   **joinvc** -- Invites the bot in your vc.
   **leave** -- Kicks the bot off of your vc.
@@ -69,7 +61,7 @@ Voice chat commands :musical_note: \n
 
 
         elif category == "host":
-            help_menu = f"""{AUTHOR_LINE}
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Host commands :mishchievous:\n
   **/dm** -- Make the bot dm someone!
   **/edit-submission** -- Edits someone's submission status: time, dq (True/False), dq reason
@@ -81,11 +73,12 @@ Host commands :mishchievous:\n
 """
 
         elif category == "admin":
-            help_menu = f"""{AUTHOR_LINE}
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Admin commands :cereal:\n
   **addcoins** -- Adds coins to someone's balance (or remove, if a negative number is specified).
   **say** -- Make the bot say something in a channel!
-  **set-host-role -- Sets the host role that can use all the Host commands. Default role is a role called 'Host'. 
+  **set-host-role -- Sets the host role that can use all the Host commands. Default role is a role called 'Host'.
+  **set-logs-channel -- Sets the dm logging channel 
   **set-submission-channel** -- Set the submission channel where the 'Current submissions' message is.
   """
 
