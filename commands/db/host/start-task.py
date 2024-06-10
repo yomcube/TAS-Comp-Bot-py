@@ -3,11 +3,14 @@ import sqlite3
 import os
 from dotenv import load_dotenv
 from datetime import date
-from api.utils import is_task_currently_running, has_host_role
+from api.utils import is_task_currently_running, has_host_role, session
 from api.submissions import get_submission_channel
+from api.db_classes import Tasks, Submissions
+from sqlalchemy import insert, delete
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
 
 class Start(commands.Cog):
     def __init__(self, bot) -> None:
@@ -22,18 +25,15 @@ class Start(commands.Cog):
             year = date.today().year
 
         if is_task_currently_running() is None:
-            connection = sqlite3.connect("database/tasks.db")
-            cursor = connection.cursor()
 
             # Mark task as ongoing
-            cursor.execute(f"INSERT INTO tasks VALUES ({number}, {year}, 1, {collab}, {multiple_tracks}, {speed_task})")
+            session.execute(insert(Tasks).values(number=number, year=year, is_active=1, collab=collab,
+                                                 multiple_tracks=multiple_tracks, speed_task=speed_task))
 
             # Clear submissions from previous task
-            cursor.execute("DELETE FROM submissions")
-
+            session.execute(delete(Submissions))
             # Commit changes to both tables affected
-            connection.commit()
-            connection.close()
+            session.commit()
 
             # Delete previous "Current submissions" message in submission channel
             channel_id = get_submission_channel(DEFAULT)
