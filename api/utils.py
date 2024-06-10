@@ -47,10 +47,10 @@ def deduct_balance(username, guild, amount):
     update_balance(username, guild, new_balance)
 
 
-def get_host_role():
+def get_host_role(guild_id):
     default = DEFAULT
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
-    host_role = session.scalars(select(HostRole.role_id).where(HostRole.comp == default)).first()
+    host_role = session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id)).first()
 
     if host_role:
         print(host_role)
@@ -61,7 +61,7 @@ def get_host_role():
 
 def has_host_role():
     async def predicate(ctx):
-        role = get_host_role()
+        role = get_host_role(ctx.message.guild.id)
         # Check if the role is a name
         has_role = ctx.author.get_role(role) is not None
         return has_role

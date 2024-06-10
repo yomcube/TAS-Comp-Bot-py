@@ -34,9 +34,9 @@ class Tasks(Base):
 
 class Submissions(Base):
     __tablename__ = "submissions"
-    task = Column('task', Integer, primary_key=True)
+    user_id = Column('id', Integer, primary_key=True)
+    task = Column('task', Integer)
     name = Column('name', String)
-    sub_id = Column('id', Integer)
     url = Column('url', String)
     time = Column('time', Float)
     dq = Column('dq', Integer)
@@ -45,7 +45,8 @@ class Submissions(Base):
 
 class Userbase(Base):
     __tablename__ = "userbase"
-    user_id = Column('id', Integer, primary_key=True)
+    index = Column('index', Integer, primary_key=True, autoincrement=True)
+    user_id = Column('user_id', Integer)
     guild_id = Column('guild_id', Integer)
     user = Column('user', String)
     display_name = Column('display_name', String)
@@ -56,14 +57,14 @@ class SubmissionChannel(Base):
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
     channel_id = Column('channel_id', Integer)
-    guild_id = Column('guild_id', Integer, unique=True)
+    guild_id = Column('guild_id', Integer)
 
 
 class LogChannel(Base):
     __tablename__ = "log_channel"
     index = Column('index', Integer, primary_key=True)
     channel_id = Column('channel_id', Integer)
-    guild_id = Column('guild_id', Integer, unique=True)
+    guild_id = Column('guild_id', Integer)
 
 
 class HostRole(Base):

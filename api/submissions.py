@@ -2,7 +2,7 @@ import discord
 import sqlite3
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, session
+from api.db_classes import SubmissionChannel, Userbase, session, Submissions
 from sqlalchemy import insert, select, update
 from api.utils import get_file_types
 
@@ -48,10 +48,9 @@ def get_logs_channel(comp):
 
 def first_time_submission(user_id):
     """Check if a certain user id has submitted to this competition already"""
-    connection = sqlite3.connect("database/tasks.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM submissions WHERE id = ?", (user_id,))
-    result = cursor.fetchone()
+    query = select(Submissions.user_id).where(Submissions.user_id == user_id)
+    result = session.execute(query).first()
+
     return not result
 
 
@@ -66,20 +65,14 @@ def get_display_name(user_id, guild_id):
     """Returns the display name of a certain user ID."""
     query = select(Userbase.display_name).where(Userbase.guild_id == guild_id, Userbase.user_id == user_id)
     result = session.execute(query).first()
-    if result is None:
-        return None
     return result
 
 
 def count_submissions():
     """Counts the number of submissions in the current task."""
-    connection = sqlite3.connect("database/tasks.db")
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT * FROM submissions")
-    result = cursor.fetchall()
-    connection.close()
-
+    query = select(Submissions)
+    result = session.scalars(query).fetchall()
+    print(result)
     return len(result)
 
 
