@@ -1,7 +1,7 @@
 from discord.ext import commands
 from api.submissions import get_display_name
-from api.utils import has_host_role, float_to_readable, session
-from api.db_classes import Submissions
+from api.utils import has_host_role, float_to_readable
+from api.db_classes import Submissions, session
 from sqlalchemy import select
 
 

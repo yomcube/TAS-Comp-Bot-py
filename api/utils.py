@@ -30,7 +30,7 @@ def get_balance(user_id, guild):
 
 
 def update_balance(user_id, guild, new_balance):
-    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance))
+    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
     session.execute(stmt)
     session.commit()
 
@@ -41,10 +41,10 @@ def add_balance(user_id, server_id, amount):
     update_balance(user_id, server_id, new_balance)
 
 
-def deduct_balance(username, guild, amount):
-    current_balance = get_balance(username, guild)
+def deduct_balance(user_id, guild, amount):
+    current_balance = get_balance(user_id, guild)
     new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
-    update_balance(username, guild, new_balance)
+    update_balance(user_id, guild, new_balance)
 
 
 def get_host_role(guild_id):

@@ -3,9 +3,9 @@ import sqlite3
 import os
 from dotenv import load_dotenv
 from datetime import date
-from api.utils import is_task_currently_running, has_host_role, session
+from api.utils import is_task_currently_running, has_host_role
 from api.submissions import get_submission_channel
-from api.db_classes import Tasks, Submissions
+from api.db_classes import Tasks, Submissions, session
 from sqlalchemy import insert, delete
 
 load_dotenv()
