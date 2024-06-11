@@ -1,9 +1,9 @@
 from discord.ext import commands
-import sqlite3
 from api.utils import float_to_readable, has_host_role, session
 from api.submissions import get_display_name
 from api.db_classes import Submissions
 from sqlalchemy import select
+
 
 class Results(commands.Cog):
     def __init__(self, bot) -> None:
@@ -13,11 +13,6 @@ class Results(commands.Cog):
     @has_host_role()
     async def command(self, ctx):
         active_task = session.scalars(select(Submissions.task)).first()
-        connection = sqlite3.connect("database/tasks.db")
-        cursor = connection.cursor()
-        
-        # Get current task
-        cursor.execute("SELECT * FROM submissions LIMIT 1")
         # Get all submissions ordered by time
         submissions = session.scalars(select(Submissions).where(Submissions.task == active_task,
                                                     Submissions.dq == 0).order_by(Submissions.time.asc())).fetchall()
@@ -26,7 +21,6 @@ class Results(commands.Cog):
         DQs = session.scalars(select(Submissions).where(Submissions.task == active_task,
                                                     Submissions.dq == 1).order_by(Submissions.time.asc())).fetchall()
 
-        connection.close()
         
         content = f"**__Task {active_task} Results__**:\n\n"
 

@@ -1,8 +1,6 @@
-import sqlite3
-
 from discord.ext import commands
 from api.db_classes import Money, session
-from sqlalchemy import insert, select
+from sqlalchemy import select
 
 
 class Balancetop(commands.Cog):

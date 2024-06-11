@@ -1,5 +1,4 @@
 from discord.ext import commands
-import sqlite3
 import os
 from dotenv import load_dotenv
 from datetime import date
@@ -31,7 +30,7 @@ class Start(commands.Cog):
                                                  multiple_tracks=multiple_tracks, speed_task=speed_task))
 
             # Clear submissions from previous task
-            session.execute(delete(Submissions))
+            session.execute(delete(Submissions)) # UNTESTED
             # Commit changes to both tables affected
             session.commit()
 

@@ -14,7 +14,8 @@ class Info(commands.Cog):
     async def info(self, ctx):
 
         # Get submissions from current task
-        submission = session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq, Submissions.dq_reason).where(Submissions.user_id == ctx.author.id)).fetchall()
+        submission = session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
+                                            Submissions.dq_reason).where(Submissions.user_id == ctx.author.id)).fetchall()
 
         if not submission:
             await ctx.reply("Either there is no ongoing task, or you have not submitted.")
