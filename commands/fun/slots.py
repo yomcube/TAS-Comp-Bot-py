@@ -8,6 +8,10 @@ class Slots(commands.Cog):
 
     @commands.hybrid_command(name="slots", description="Slots through server emojis", with_app_command=True)
     async def command(self, ctx, number: int = 3):
+
+        if number > 20:
+            return await ctx.send(f"Please use a smaller number! It's not like you would win slots {number} anywway...")
+
         username = ctx.author.name
         cost_per_play = 5
 
