@@ -1,7 +1,9 @@
 from discord.ext import commands
 import sqlite3
-from api.utils import float_to_readable, has_host_role
+from api.utils import float_to_readable, has_host_role, session
 from api.submissions import get_display_name
+from api.db_classes import Submissions
+from sqlalchemy import select
 
 class Results(commands.Cog):
     def __init__(self, bot) -> None:
@@ -10,28 +12,26 @@ class Results(commands.Cog):
     @commands.hybrid_command(name="get-results", description="Get the ordered results", with_app_command=True)
     @has_host_role()
     async def command(self, ctx):
+        active_task = session.scalars(select(Submissions.task)).first()
         connection = sqlite3.connect("database/tasks.db")
         cursor = connection.cursor()
         
         # Get current task
         cursor.execute("SELECT * FROM submissions LIMIT 1")
-        result = cursor.fetchone()
-        active_task = result[0]
-        
         # Get all submissions ordered by time
-        cursor.execute("SELECT * FROM submissions WHERE task = ? AND dq = 0 ORDER BY time ASC", (active_task,))
-        submissions = cursor.fetchall()
+        submissions = session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                    Submissions.dq == 0).order_by(Submissions.time.asc())).fetchall()
 
         # Get all DQs ordered by time
-        cursor.execute("SELECT * FROM submissions WHERE task = ? AND dq = 1 ORDER BY time ASC", (active_task,))
-        DQs = cursor.fetchall()
-
+        DQs = session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                    Submissions.dq == 1).order_by(Submissions.time.asc())).fetchall()
 
         connection.close()
         
         content = f"**__Task {active_task} Results__**:\n\n"
 
         try:
+            #TODO: Fix this
             # Rank valid submissions in order
             for (n, submission) in enumerate(submissions, start=1):
                 display_name = get_display_name(submission[2])
