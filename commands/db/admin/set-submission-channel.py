@@ -1,8 +1,6 @@
 import os
-
 import discord
 from discord.ext import commands
-import sqlite3
 from api.db_classes import session, SubmissionChannel
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv

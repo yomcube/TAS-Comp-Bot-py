@@ -4,10 +4,8 @@ import uuid
 from urllib.parse import urlparse
 import requests
 from discord.ext import commands
-import json
-import sqlite3
 from sqlalchemy import select, insert, update
-from api.db_classes import Money, Submissions, SubmissionChannel, Tasks, HostRole, Userbase, session
+from api.db_classes import Money, Tasks, HostRole, session
 from dotenv import load_dotenv
 
 load_dotenv()
