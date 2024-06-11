@@ -14,8 +14,14 @@ class ChallengeView(discord.ui.View):
 
     async def on_timeout(self):
         if self.response is None:
+            await self.disable_btns()
             await self.ctx.send(f"{self.opponent.mention} did not respond in time. Challenge cancelled.")
             self.stop()
+
+    async def disable_btns(self):
+        for item in self.children:
+            item.disabled = True
+        await self.message.edit(view=self)
 
     @discord.ui.button(label="Accept", style=ButtonStyle.success)
     async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -50,13 +56,19 @@ class GameView(discord.ui.View):
         if not self.interaction_event:
             await self.disable_btns()
             await self.ctx.send("Time's up! No response was received from one or both players within 10 seconds.")
+            self.stop()
 
     async def disable_btns(self):
         for item in self.children:
             item.disabled = True
-        await self.message.edit(view=self)
+        if hasattr(self, 'message'):
+            await self.message.edit(view=self)
 
     async def button_callback(self, interaction: discord.Interaction, choice: str):
+        if interaction.user.id not in self.choices:
+            await interaction.response.send_message("You are not part of this game.", ephemeral=True)
+            return
+
         self.choices[interaction.user.id] = choice
         self.interaction_event = True
         await interaction.response.defer()
@@ -90,8 +102,7 @@ class RPS(commands.Cog):
             opponent = self.bot.user
 
         if opponent == self.bot.user and bet_amount != 10: # You can only play for 10 coins when vs bot
-            await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted"
-                               " when playing against other people.")
+            await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted when playing against other people.")
 
         choices = ['rock', 'paper', 'scissors']
         username = ctx.author.name
@@ -116,6 +127,7 @@ class RPS(commands.Cog):
 
             challenge_view = ChallengeView(ctx, opponent, bet_amount)
             challenge_message = await ctx.send(f"{opponent.mention}, you have been challenged to a game of Rock Paper Scissors by {ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?", view=challenge_view)
+            challenge_view.message = challenge_message
             await challenge_view.wait()
 
             if challenge_view.response == "accepted":
@@ -133,17 +145,19 @@ class RPS(commands.Cog):
                 if (user_choice == 'rock' and opponent_choice == 'scissors') or (user_choice == 'paper' and opponent_choice == 'rock') or (user_choice == 'scissors' and opponent_choice == 'paper'):
                     add_balance(username, bet_amount)
                     deduct_balance(opponent_username, bet_amount)
-                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded {bet_amount} coins to {ctx.author.mention}, {get_balance(username)} left in their account.\nDeducted {bet_amount} coins from {opponent.mention}, {get_balance(opponent_username)} left in their account."
+                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats {opponent.mention}'s {opponent_choice}.\nAdded {bet_amount} coins to {ctx.author.mention}, {get_balance(username)} left in their account.\nDeducted {bet_amount} coins from {opponent.mention}, {get_balance(opponent_username)} left in their account."
                 elif (user_choice == 'rock' and opponent_choice == 'paper') or (user_choice == 'paper' and opponent_choice == 'scissors') or (user_choice == 'scissors' and opponent_choice == 'rock'):
                     deduct_balance(username, bet_amount)
                     add_balance(opponent_username, bet_amount)
-                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded {bet_amount} coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\nDeducted {bet_amount} coins from {ctx.author.mention}, {get_balance(username)} left in their account."
+                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats {ctx.author.mention}'s {user_choice}.\nAdded {bet_amount} coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\nDeducted {bet_amount} coins from {ctx.author.mention}, {get_balance(username)} left in their account."
                 else:
                     msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added."
 
                 await ctx.send(msg)
-            else:
+            elif challenge_view.response == "declined":
                 await ctx.send(f"{opponent.mention} declined the challenge.")
+            else:
+                await ctx.send("Timeout. Challenge cancelled.")
             return
 
         else:

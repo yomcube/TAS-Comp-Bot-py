@@ -7,6 +7,7 @@ class Say(commands.Cog):
 
     @commands.hybrid_command(name="say", description="Say everything you say", with_app_command=True)
     @commands.has_permissions(administrator=True)
+    @commands.has_role("Developer")
     async def command(self, ctx, channel: discord.TextChannel, *, message: str):
         # Send the message to the specified channel
         await channel.send(message)

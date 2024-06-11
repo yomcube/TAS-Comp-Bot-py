@@ -1,8 +1,36 @@
 # Quickstart
 
-Navigate to the cloned project and install the required packages via `pip install -r requirements.txt`.
+First, just in case you dont have python, download the latest version [here](https://www.python.org/downloads/) and set it up.
 
-Edit the `.env` file in the project root and include the required fields.
+Then navigate to the cloned project and install the required packages via `pip install -r requirements.txt`.
+
+Create a `.env` file in the project root and paste this:
+```py
+# The bot's token
+TOKEN = ""
+
+# (optional) API key for OpenWeatherMap (as integer) (for a weather command)
+WEATHER_API_KEY = 
+
+# The competition type. Valid values: mkw, sm64
+DEFAULT = "mkw"
+
+# The directory which the bot downloads files to
+DOWNLOAD_DIR = ""
+
+# The mupen directory containing mupen64.exe 
+ENC_MUPEN_DIR = ""
+
+# The output directory for encoded movies
+ENC_AVI_DIR = ""
+
+# Semicolon-separated list of lua scripts to run when encoding
+ENC_SM64_SCRIPTS = ""
+
+# The maximum length of the encoding queue
+ENC_MAX_QUEUE = "5"
+```
+Fill the fields with what you need
 
 Then, run the main script via `python main.py`.
 

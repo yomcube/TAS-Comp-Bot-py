@@ -1,5 +1,4 @@
 from discord.ext import commands
-import asyncio
 import requests
 import random
 from jokeapi import Jokes
