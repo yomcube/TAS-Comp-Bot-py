@@ -36,6 +36,9 @@ class Setname(commands.Cog):
         connection = sqlite3.connect("database/users.db")
         cursor = connection.cursor()
 
+        if '@' in new_name:
+            return await ctx.reply("You may not use @ in your name.")
+
         try:
             # retrieve old name
             cursor.execute("SELECT * from userbase WHERE id = ?", (ctx.author.id,))
