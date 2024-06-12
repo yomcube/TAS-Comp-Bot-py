@@ -26,7 +26,7 @@ class Start(commands.Cog):
         if is_task_currently_running() is None:
 
             # Mark task as ongoing
-            session.execute(insert(Tasks).values(number=number, year=year, is_active=1, collab=collab,
+            session.execute(insert(Tasks).values(task=number, year=year, is_active=1, collab=collab,
                                                  multiple_tracks=multiple_tracks, speed_task=speed_task))
 
             # Clear submissions from previous task
@@ -44,7 +44,8 @@ class Start(commands.Cog):
                         await message.delete()
                         break
 
-            except AttributeError:
+            except AttributeError as e:
+                print(e)
                 await ctx.send(
                     "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not "
                     "have permission)")

@@ -2,7 +2,7 @@ import discord
 import sqlite3
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, session, Submissions
+from api.db_classes import SubmissionChannel, Userbase, session, Submissions, LogChannel
 from sqlalchemy import insert, select, update
 from api.utils import get_file_types
 
@@ -14,10 +14,10 @@ def get_submission_channel(comp):
     query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
     channel = session.execute(query).first()  # there should only be 1 entry per table per competition
     # Handle case where no rows are found in the database
-    if channel is None:
+    if channel[0] is None:
         print(f"No submission channel found for competition '{comp}'.")
         return None
-    return channel
+    return channel[0]
 
 
 def get_submission_channel_guild(channel_id):
@@ -29,21 +29,13 @@ def get_submission_channel_guild(channel_id):
 
 
 def get_logs_channel(comp):
-    connection = sqlite3.connect("database/settings.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM logs_channel WHERE comp = ?",
-                   (comp,))  # there should only be 1 entry per table per competition
-    result = cursor.fetchone()
-
-    if result is not None:  # Check if result is not None before accessing index
-        channel_id = result[1]
-        connection.close()
-        return channel_id
-    else:
-        # Handle case where no rows are found in the database
-        connection.close()
-        print(f"No logs channel found for competition '{comp}'.")
+    query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
+    channel = session.execute(query).first()  # there should only be 1 entry per table per competition
+    # Handle case where no rows are found in the database
+    if channel[0] is None:
+        print(f"No logging channel found for '{comp}'.")
         return None
+    return channel[0]
 
 
 def first_time_submission(user_id):
@@ -63,8 +55,7 @@ def new_competitor(user_id):
 
 def get_display_name(user_id, guild_id):
     """Returns the display name of a certain user ID."""
-    query = select(Userbase.display_name).where(Userbase.guild_id == guild_id, Userbase.user_id == user_id)
-    result = session.execute(query).first()
+    result = session.scalars(select(Userbase.display_name).where(Userbase.guild_id == guild_id, Userbase.user_id == user_id)).first()
     return result
 
 
@@ -72,7 +63,6 @@ def count_submissions():
     """Counts the number of submissions in the current task."""
     query = select(Submissions)
     result = session.scalars(query).fetchall()
-    print(result)
     return len(result)
 
 

@@ -19,11 +19,18 @@ async def rename_in_submission_list(self, old_display_name, new_display_name):
         # Check if the message was sent by the bot
         if message.author == self.bot.user:
             lines = message.content.split('\n')
-            new_lines = []
-            for line in lines:
+            new_lines = [lines[0]]  # Preserve the first line as is ("Current submissions")
+
+            # Check if the new display name is already in use in the rest of the lines
+            for line in lines[1:]:
+                if new_display_name in line:
+                    return
+
+            for line in lines[1:]:
                 if old_display_name in line:
                     line = line.replace(old_display_name, new_display_name)
                 new_lines.append(line)
+
             new_content = '\n'.join(new_lines)
             if new_content != message.content:
                 await message.edit(content=new_content)
@@ -36,14 +43,25 @@ class Setname(commands.Cog):
 
     @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list", with_app_command=True)
     async def command(self, ctx, *, new_name):
-        query = select(Userbase.display_name).where(Userbase.user_id == ctx.author.id, Userbase.guild_id == ctx.message.guild.id)
-        result = session.execute(query).first()
-        if result is None:
+
+        if '@' in new_name:
+            return await ctx.reply("You may not use @ in your name.")
+
+        if len(new_name) > 120:
+            return await ctx.reply("Your name is too long!")
+
+        old_display_name = session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id)).first()
+        print(old_display_name)
+        if old_display_name is None:
             await ctx.send("Please submit, and retry again!")
         else:
             stmt = update(Userbase).values(user_id=ctx.author.id, display_name=new_name)
             session.execute(stmt)
             session.commit()
+
+            await ctx.send(f"Name successfully set to **{new_name}**.")
+
+            await rename_in_submission_list(self, old_display_name, new_name)
 
         '''try:
             # retrieve old name

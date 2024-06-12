@@ -64,6 +64,7 @@ class LogChannel(Base):
     __tablename__ = "log_channel"
     index = Column('index', Integer, primary_key=True)
     channel_id = Column('channel_id', Integer)
+    comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
 
 
@@ -74,3 +75,6 @@ class HostRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
+
+Base.metadata.create_all(engine_pool)
+

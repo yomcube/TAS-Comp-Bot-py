@@ -13,20 +13,20 @@ class Info(commands.Cog):
     @commands.dm_only()
     async def info(self, ctx):
 
-        # Get submissions from current task
+        # Get submission
         submission = session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
-                                            Submissions.dq_reason).where(Submissions.user_id == ctx.author.id)).fetchall()
+                                            Submissions.dq_reason).where(Submissions.user_id == ctx.author.id)).fetchone()
 
         if not submission:
             await ctx.reply("Either there is no ongoing task, or you have not submitted.")
             return
 
         # variables for all the columns
-        task_num = submission.task
-        url = submission.url
-        time = float_to_readable(submission.time)
-        dq = bool(submission.dq)
-        dq_reason = submission.dq_reason
+        task_num = submission[0]
+        url = submission[1]
+        time = float_to_readable(submission[2])
+        dq = bool(submission[3])
+        dq_reason = submission[4]
 
         embed = discord.Embed(title=f"Task {task_num} submission", color=discord.Color.from_rgb(0, 235, 0))
 

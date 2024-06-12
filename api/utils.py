@@ -1,5 +1,6 @@
 import hashlib
 import os
+import discord
 import uuid
 from urllib.parse import urlparse
 import requests
@@ -51,17 +52,16 @@ def get_host_role(guild_id):
     host_role = session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id)).first()
 
     if host_role:
-        print(host_role)
         return host_role
     else:
-        return None # default host role name.
+        return None
 
 
 def has_host_role():
     async def predicate(ctx):
         role = get_host_role(ctx.message.guild.id)
         # Check if the role is a name
-        has_role = ctx.author.get_role(role) is not None
+        has_role = discord.utils.get(ctx.author.roles, id=role) is not None
         return has_role
 
     return commands.check(predicate)
@@ -99,6 +99,9 @@ def readable_to_float(time_str):
 
 def float_to_readable(seconds):
     """Convert seconds (float) to a time string 'M:SS.mmm'."""
+
+    seconds = float(seconds)
+
     if seconds < 0:
         print("Seconds cannot be negative.")
         return
@@ -113,7 +116,7 @@ def is_task_currently_running():
     """Check if a task is currently running"""
     # Is a task running?
     # Does this need to be a function even?
-    active = session.scalars(select(Tasks.is_active).where(Tasks.is_active == 1)).first()
+    active = session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1)).first()
     return active
 
 

@@ -4,6 +4,8 @@ import discord
 from discord.ext import commands
 import sqlite3
 from dotenv import load_dotenv
+from api.db_classes import session, LogChannel
+from sqlalchemy import select, insert, update
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -16,32 +18,20 @@ class Setlogschannel(commands.Cog):
                              description="Set the channel where DMs with the bot are logged", with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
-        connection = sqlite3.connect("database/settings.db")
-        cursor = connection.cursor()
+        query = select(LogChannel.channel_id).where(LogChannel.guild_id == ctx.guild.id)
+        result = session.execute(query).first()
 
-        id = channel.id
+        if result is None:
+            stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,comp=comp)
+            session.execute(stmt)
+        elif channel.id == result[0]:
+            pass
+        else:
+            stmt = update(LogChannel).values( guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+            session.execute(stmt)
 
-        try:
-            # Check if existing channel already
-            cursor.execute("SELECT * FROM logs_channel WHERE comp = ?", (comp,))
-            existing = cursor.fetchone()
-
-            if existing:
-                cursor.execute('UPDATE logs_channel SET comp = ?, id = ? WHERE comp = ?', (comp, id, comp))
-
-            else:
-                cursor.execute('INSERT INTO logs_channel (comp, id) VALUES (?, ?)', (comp, id,))
-
-            # Commit whatever change
-            connection.commit()
-            connection.close()
-
-            await ctx.send(f"The logging channel has been set! {channel.mention}")
-
-        except sqlite3.OperationalError as e:
-            print(e)
-            connection.close()
-            await ctx.send("An error occured.")
+        session.commit()
+        await ctx.send(f"The log channel has been set! {channel.mention}")
 
 
 async def setup(bot) -> None:

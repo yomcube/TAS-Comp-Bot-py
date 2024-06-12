@@ -22,7 +22,6 @@ class Sethostrole(commands.Cog):
 
         # Check if host_role doesn't exist yet for the comp
         if host_role is None:
-            print(host_role)
             stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
             session.execute(stmt)
         else:
