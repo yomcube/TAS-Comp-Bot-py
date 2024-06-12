@@ -21,7 +21,8 @@ class ChallengeView(discord.ui.View):
     async def disable_btns(self):
         for item in self.children:
             item.disabled = True
-        await self.message.edit(view=self)
+        if hasattr(self, 'message'):
+            await self.message.edit(view=self)
 
     @discord.ui.button(label="Accept", style=ButtonStyle.success)
     async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -29,6 +30,7 @@ class ChallengeView(discord.ui.View):
             await interaction.response.send_message("You are not the challenged user.", ephemeral=True)
             return
         self.response = "accepted"
+        await self.disable_btns()
         await interaction.response.send_message("Challenge accepted!", ephemeral=True)
         self.stop()
 
@@ -38,6 +40,7 @@ class ChallengeView(discord.ui.View):
             await interaction.response.send_message("You are not the challenged user.", ephemeral=True)
             return
         self.response = "declined"
+        await self.disable_btns()
         await interaction.response.send_message("Challenge declined!", ephemeral=True)
         self.stop()
 
@@ -53,12 +56,13 @@ class GameView(discord.ui.View):
         self.interaction_event = False
 
     async def on_timeout(self):
-        if not self.interaction_event:
-            await self.disable_btns()
-            await self.ctx.send("Time's up! No response was received from one or both players within 10 seconds.")
-            self.stop()
+        print("Timeout triggered")
+        await self.disable_btns()
+        await self.ctx.send("Time's up! No response was received from one or both players within 10 seconds.")
+        self.stop()
 
     async def disable_btns(self):
+        print("Disabling buttons")
         for item in self.children:
             item.disabled = True
         if hasattr(self, 'message'):
@@ -73,6 +77,7 @@ class GameView(discord.ui.View):
         self.interaction_event = True
         await interaction.response.defer()
         if all(self.choices.values()):
+            print("All choices made")
             await self.disable_btns()
             await self.ctx.send("Both players have made their choices. Calculating the result...")
             self.stop()
