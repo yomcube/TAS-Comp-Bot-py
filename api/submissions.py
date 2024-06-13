@@ -53,9 +53,9 @@ def new_competitor(user_id):
     return not result
 
 
-def get_display_name(user_id, guild_id):
+def get_display_name(user_id):
     """Returns the display name of a certain user ID."""
-    result = session.scalars(select(Userbase.display_name).where(Userbase.guild_id == guild_id, Userbase.user_id == user_id)).first()
+    result = session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id)).first()
     return result
 
 
@@ -77,14 +77,12 @@ async def handle_submissions(message, self):
     # Adding submission to submission list channel
     ##################################################
     submission_channel = get_submission_channel(DEFAULT)
-    guild_id = get_submission_channel_guild(message.channel.id)
     channel = self.bot.get_channel(submission_channel)
 
     # Checking if submitter has ever participated before
     if new_competitor(author_id):
         # adding him to the user database.
-        query = insert(Userbase).values(guild_id=guild_id, user_id=author_id, user=author_name, display_name=author_dn)
-        result = session.execute(query)
+        session.execute(insert(Userbase).values(user_id=author_id, user=author_name, display_name=author_dn))
         session.commit()
 
     if not channel:
@@ -103,17 +101,17 @@ async def handle_submissions(message, self):
 
             # Add a new line only if it's a new user ID submitting
             if first_time_submission(author_id):
-                new_content = f"{last_message.content}\n{count_submissions()}. {get_display_name(author_id, guild_id)} ||{author.mention}||"
+                new_content = f"{last_message.content}\n{count_submissions()}. {get_display_name(author_id)} ||{author.mention}||"
                 await last_message.edit(content=new_content)
         else:
             # If the last message is not sent by the bot, send a new one
             await channel.send(
-                f"**__Current Submissions:__**\n1. {get_display_name(author_id, guild_id)} ||{author.mention}||")
+                f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
     else:
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
         await channel.send(
-            f"**__Current Submissions:__**\n1. {get_display_name(author_id, guild_id)} ||{author.mention}||")
+            f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
 
 
 async def handle_dms(message, self):

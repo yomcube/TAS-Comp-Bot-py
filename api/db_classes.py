@@ -47,7 +47,6 @@ class Userbase(Base):
     __tablename__ = "userbase"
     index = Column('index', Integer, primary_key=True, autoincrement=True)
     user_id = Column('user_id', Integer)
-    guild_id = Column('guild_id', Integer)
     user = Column('user', String)
     display_name = Column('display_name', String)
 

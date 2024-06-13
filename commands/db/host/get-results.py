@@ -23,31 +23,30 @@ class Results(commands.Cog):
 
         
         content = f"**__Task {active_task} Results__**:\n\n"
-
-        try:
-            #TODO: Fix this
+        #try:
+        #TODO: Fix this
             # Rank valid submissions in order
-            for (n, submission) in enumerate(submissions, start=1):
-                display_name = get_display_name(submission[2])
-                readable_time = float_to_readable(submission[4])
-                content += f'{n}. {display_name} — {readable_time}\n'
+        for (n, submission) in enumerate(submissions, start=1):
+            display_name = get_display_name(submission.user_id)
+            readable_time = float_to_readable(submission.time)
+            content += f'{n}. {display_name} — {readable_time}\n'
 
-            # add return incase of DQs.
-            content += '\n'
+        # add return incase of DQs.
+        content += '\n'
 
 
-            # Rank DQs in order
-            for run in DQs:
-                display_name = get_display_name(run[2])
-                readable_time = float_to_readable(run[4])
-                dq_reason = run[6]
-                content += f'DQ. {display_name} — {readable_time} [{dq_reason}]\n'
+        # Rank DQs in order
+        for run in DQs:
+            display_name = get_display_name(run.user_id)
+            readable_time = float_to_readable(run.time)
+            dq_reason = run.dq_reason
+            content += f'DQ. {display_name} — {readable_time} [{dq_reason}]\n'
 
-            await ctx.send(content)
+        await ctx.send(content)
 
-        except TypeError: # can happen if get_display_name throws an error; an id is not found in user.db
+        #except TypeError: # can happen if get_display_name throws an error; an id is not found in user.db
             # Happens, for example, if an admin /submit for someone who is not in the user.db
-            await ctx.send("Someone's result could not be retrieved.")
+            #await ctx.send("Someone's result could not be retrieved.")
 
 
 

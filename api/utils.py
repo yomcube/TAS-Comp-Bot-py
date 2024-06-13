@@ -18,8 +18,7 @@ DB_DIR = os.getenv('DB_DIR')
 def get_balance(user_id, guild):
     money = session.scalars(select(Money.coins).where(Money.user_id == user_id)).first()
     if money is None:
-        balance = 100
-        print(guild)
+        balance = 500
         stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
         session.execute(stmt)
         session.commit()

@@ -50,12 +50,18 @@ class Setname(commands.Cog):
         if len(new_name) > 120:
             return await ctx.reply("Your name is too long!")
 
+        # Gets his old display_name
         old_display_name = session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id)).first()
-        print(old_display_name)
+
         if old_display_name is None:
             await ctx.send("Please submit, and retry again!")
+
         else:
-            stmt = update(Userbase).values(user_id=ctx.author.id, display_name=new_name)
+            # Detect illegal name change (2 identical names)
+            if session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name)).first():
+                return await ctx.reply("The name is already in use by another user.")
+
+            stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == ctx.author.id)
             session.execute(stmt)
             session.commit()
 
@@ -63,29 +69,6 @@ class Setname(commands.Cog):
 
             await rename_in_submission_list(self, old_display_name, new_name)
 
-        '''try:
-            # retrieve old name
-            cursor.execute("SELECT * from userbase WHERE id = ?", (ctx.author.id,))
-            result = cursor.fetchone()
-            old_display_name = result[2]
-
-            # try to update
-            cursor.execute("UPDATE userbase SET display_name = ? WHERE id = ?", (new_name, ctx.author.id))
-
-            # if the user doesn't exist in database, add user to database by encouraging to submit
-            if cursor.rowcount == 0:  # Check if no rows were affected by the update
-                await ctx.send("Please submit, and retry again!")
-
-            else: # if name is found in the userbase
-                connection.commit()
-                await ctx.send(f"Name successfully set to **{new_name}**.")
-
-                await rename_in_submission_list(self, old_display_name, new_name)
-
-        except (sqlite3.OperationalError, TypeError): # another way of catching error
-            await ctx.send("Error occured. Maybe try submitting, then retrying?")
-        finally:
-            connection.close()'''
 
 
 async def setup(bot) -> None:

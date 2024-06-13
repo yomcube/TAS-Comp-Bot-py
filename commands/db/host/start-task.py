@@ -30,7 +30,7 @@ class Start(commands.Cog):
                                                  multiple_tracks=multiple_tracks, speed_task=speed_task))
 
             # Clear submissions from previous task
-            session.execute(delete(Submissions)) # UNTESTED
+            session.execute(delete(Submissions))
             # Commit changes to both tables affected
             session.commit()
 
@@ -44,8 +44,7 @@ class Start(commands.Cog):
                         await message.delete()
                         break
 
-            except AttributeError as e:
-                print(e)
+            except AttributeError:
                 await ctx.send(
                     "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not "
                     "have permission)")

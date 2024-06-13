@@ -22,6 +22,7 @@ class Get(commands.Cog):
 
         # Get submissions from current task
 
+
         submissions = session.scalars(select(Submissions).where(Submissions.task == active_task)).fetchall()
         total_submissions = len(submissions)
         # Count submissions from current task
@@ -31,7 +32,7 @@ class Get(commands.Cog):
         # Add many lines depending on the number of submissions
         try:
             for submission in submissions:
-                content += (f"{get_display_name(submission.user_id, ctx.message.guild.id)} : {submission.url}"
+                content += (f"{get_display_name(submission.user_id)} : {submission.url}"
                             f" | Fetched time: ||{float_to_readable(submission.time)}||\n")
 
             await ctx.reply(content=content)

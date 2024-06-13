@@ -15,9 +15,13 @@ class Balancetop(commands.Cog):
         query = select(Money.user_id, Money.coins).where(Money.guild == ctx.guild.id).order_by(Money.coins.desc())
         result = session.execute(query).fetchall()
 
-        for i in range(0, len(result) if 5 >= len(result) else 5):
-            name = ctx.guild.get_member(result[i].user_id).display_name
-            leaderboard += f"{i+1}: {name}. {result[i].coins}\n"
+        for i in range(0, min(5, len(result))):
+            member = ctx.guild.get_member(result[i].user_id)
+            if member:
+                name = member.display_name
+            else:
+                name = f"User with ID {result[i].user_id} (left the server)"
+            leaderboard += f"{i + 1}: {name}. {result[i].coins}\n"
 
         await ctx.send(leaderboard)
 

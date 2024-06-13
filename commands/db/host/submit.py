@@ -44,7 +44,7 @@ class Submit(commands.Cog):
             await ctx.reply("Nice blank rkg there")
             return
 
-        if first_time_submission(id):
+        if first_time_submission(user.id):
             query = insert(Submissions).values(task=current_task[0], name=user.name, user_id=user.id, url=url, time=time, dq=0, dq_reason='')
             session.execute(query)
             session.commit()
