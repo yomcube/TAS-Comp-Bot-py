@@ -97,7 +97,6 @@ class CoinFlip(commands.Cog):
         username = ctx.author.name
         user_id = ctx.author.id
         opponent_id = opponent.id if opponent else None
-        opponent_id = opponent.name if opponent else None
 
         if bet_amount <= 0:
             await ctx.send("Nice try! Please enter a positive bet amount.")
