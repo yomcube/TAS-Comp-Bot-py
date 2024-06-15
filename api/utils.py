@@ -1,9 +1,10 @@
 import hashlib
 import os
+
+import aiohttp
 import discord
 import uuid
 from urllib.parse import urlparse
-import requests
 from discord.ext import commands
 from sqlalchemy import select, insert, update
 from api.db_classes import Money, Tasks, HostRole, session
@@ -72,12 +73,12 @@ async def download_from_url(url) -> str:
         filename, file_extension = os.path.splitext(os.path.basename(url_parsed.path))
         file_path = os.path.join(DOWNLOAD_DIR, f"{filename}{file_extension}")
 
-        file = requests.get(url)
-        if not file.ok:
-            return None
-        open(file_path, 'wb').write(file.content)
+        async with aiohttp.get(url) as file:
+            if not file.ok:
+                return None
+            open(file_path, 'wb').write(file.content)
 
-        return file_path
+            return file_path
 
     except:
 

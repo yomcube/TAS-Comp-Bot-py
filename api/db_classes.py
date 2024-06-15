@@ -5,10 +5,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 load_dotenv()
-DB_DIR = os.getenv('DB_DIR')
+DB_DIR = os.getenv('DB_DIR').partition('.')[-1]  # slice off period at start for relative paths
 Base = declarative_base()
 
-engine_pool = create_engine(f"sqlite://{DB_DIR.partition('.')[-1]}/database.db")
+engine_pool = create_engine(f"sqlite://{DB_DIR}/database.db")
 Base.metadata.create_all(engine_pool)
 Session = sessionmaker(bind=engine_pool)
 session = Session()
