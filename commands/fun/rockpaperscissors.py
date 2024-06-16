@@ -98,20 +98,20 @@ class RPS(commands.Cog):
                            " when playing against other people.")
 
         choices = ['rock', 'paper', 'scissors']
-        username = ctx.author.name
+        user_id = ctx.author.id
         guild_id = ctx.message.guild.id
-        opponent_username = opponent.name if opponent else None
+        opponent_id = opponent.id if opponent else None
 
         if opponent != self.bot.user:
             if bet_amount <= 0:
                 await ctx.send("Nice try! Please enter a positive bet amount.")
                 return
 
-            if get_balance(username, guild_id) < bet_amount:
+            if get_balance(user_id, guild_id) < bet_amount:
                 await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
                 return
 
-            if get_balance(opponent_username, guild_id) < bet_amount:
+            if get_balance(opponent_id, guild_id) < bet_amount:
                 await ctx.send(f"{opponent.mention} does not have enough coins to place this bet.")
                 return
 
@@ -141,15 +141,15 @@ class RPS(commands.Cog):
                 if (user_choice == 'rock' and opponent_choice == 'scissors') or (
                         user_choice == 'paper' and opponent_choice == 'rock') or (
                         user_choice == 'scissors' and opponent_choice == 'paper'):
-                    add_balance(username, guild_id, bet_amount)
-                    deduct_balance(opponent_username, guild_id, bet_amount)
-                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded {bet_amount} coins to {ctx.author.mention}, {get_balance(username, guild_id)} left in their account.\nDeducted {bet_amount} coins from {opponent.mention}, {get_balance(opponent_username, guild_id)} left in their account."
+                    add_balance(user_id, guild_id, bet_amount)
+                    deduct_balance(opponent_id, guild_id, bet_amount)
+                    msg = f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded {bet_amount} coins to {ctx.author.mention}, {get_balance(user_id, guild_id)} left in their account.\nDeducted {bet_amount} coins from {opponent.mention}, {get_balance(opponent_id, guild_id)} left in their account."
                 elif (user_choice == 'rock' and opponent_choice == 'paper') or (
                         user_choice == 'paper' and opponent_choice == 'scissors') or (
                         user_choice == 'scissors' and opponent_choice == 'rock'):
-                    deduct_balance(username, guild_id, bet_amount)
-                    add_balance(opponent_username, guild_id, bet_amount)
-                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded {bet_amount} coins to {opponent.mention}, {get_balance(opponent_username, guild_id)} left in their account.\nDeducted {bet_amount} coins from {ctx.author.mention}, {get_balance(username, guild_id)} left in their account."
+                    deduct_balance(user_id, guild_id, bet_amount)
+                    add_balance(opponent_id, guild_id, bet_amount)
+                    msg = f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded {bet_amount} coins to {opponent.mention}, {get_balance(opponent_id, guild_id)} left in their account.\nDeducted {bet_amount} coins from {ctx.author.mention}, {get_balance(user_id, guild_id)} left in their account."
                 else:
                     msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added."
 
@@ -160,7 +160,7 @@ class RPS(commands.Cog):
 
         else:
             bet_amount = 10  # Force bet amount to 10 coins when playing against the bot
-            if get_balance(username, guild_id) < bet_amount:
+            if get_balance(user_id, guild_id) < bet_amount:
                 await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
                 return
 
@@ -178,14 +178,14 @@ class RPS(commands.Cog):
             if (user_choice == 'rock' and bot_choice == 'scissors') or (
                     user_choice == 'paper' and bot_choice == 'rock') or (
                     user_choice == 'scissors' and bot_choice == 'paper'):
-                add_balance(username, guild_id, bet_amount)
-                msg = f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded {bet_amount} coins, {get_balance(username, guild_id)} left in your account."
+                add_balance(user_id, guild_id, bet_amount)
+                msg = f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded {bet_amount} coins, {get_balance(user_id, guild_id)} left in your account."
             elif ((user_choice == 'rock' and bot_choice == 'paper') or (
                     user_choice == 'paper' and bot_choice == 'scissors') or (
                           user_choice == 'scissors' and bot_choice == 'rock')):
-                deduct_balance(username, guild_id, bet_amount)
+                deduct_balance(user_id, guild_id, bet_amount)
                 msg = (f"You lose! Bot's {bot_choice} beats your {user_choice}.\nDeducted {bet_amount} coins, "
-                       f"{get_balance(username, guild_id)} left in your account.")
+                       f"{get_balance(user_id, guild_id)} left in your account.")
             else:
                 msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added or deducted."
 
