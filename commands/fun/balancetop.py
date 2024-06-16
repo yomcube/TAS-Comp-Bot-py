@@ -13,7 +13,7 @@ class Balancetop(commands.Cog):
     async def command(self, ctx):
         leaderboard = "**__Balance leaderboard__**:\n"
         query = select(Money.user_id, Money.coins).where(Money.guild == ctx.guild.id).order_by(Money.coins.desc())
-        result = session.execute(query).fetchall()
+        result = (await session.execute(query)).fetchall()
 
         for i in range(0, min(5, len(result))):
             member = ctx.guild.get_member(result[i].user_id)

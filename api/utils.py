@@ -1,6 +1,5 @@
 import hashlib
 import os
-
 import aiohttp
 import discord
 import uuid
@@ -16,40 +15,41 @@ DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
 DB_DIR = os.getenv('DB_DIR')
 
 
-def get_balance(user_id, guild):
-    money = session.scalars(select(Money.coins).where(Money.user_id == user_id)).first()
+async def get_balance(user_id, guild):
+    money = (await session.scalars(select(Money.coins).where(Money.user_id == user_id))).first()
     if money is None:
         balance = 500
         stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
-        session.execute(stmt)
-        session.commit()
+        await session.execute(stmt)
+        await session.commit()
+
     else:
         balance = money
     return balance
 
 
-def update_balance(user_id, guild, new_balance):
+async def update_balance(user_id, guild, new_balance):
     stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
-    session.execute(stmt)
-    session.commit()
+    await session.execute(stmt)
+    await session.commit()
 
 
-def add_balance(user_id, server_id, amount):
-    current_balance = get_balance(user_id, server_id)
+async def add_balance(user_id, server_id, amount):
+    current_balance = await get_balance(user_id, server_id)
     new_balance = current_balance + amount
-    update_balance(user_id, server_id, new_balance)
+    await update_balance(user_id, server_id, new_balance)
 
 
-def deduct_balance(user_id, guild, amount):
-    current_balance = get_balance(user_id, guild)
+async def deduct_balance(user_id, guild, amount):
+    current_balance = await get_balance(user_id, guild)
     new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
-    update_balance(user_id, guild, new_balance)
+    await update_balance(user_id, guild, new_balance)
 
 
-def get_host_role(guild_id):
+async def get_host_role(guild_id):
     default = DEFAULT
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
-    host_role = session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id)).first()
+    host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
 
     if host_role:
         return host_role
@@ -59,7 +59,7 @@ def get_host_role(guild_id):
 
 def has_host_role():
     async def predicate(ctx):
-        role = get_host_role(ctx.message.guild.id)
+        role = await get_host_role(ctx.message.guild.id)
         # Check if the role is a name
         has_role = discord.utils.get(ctx.author.roles, id=role) is not None
         return has_role
@@ -112,11 +112,11 @@ def float_to_readable(seconds):
     return time_str
 
 
-def is_task_currently_running():
+async def is_task_currently_running():
     """Check if a task is currently running"""
     # Is a task running?
     # Does this need to be a function even?
-    active = session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1)).first()
+    active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1))).first()
     return active
 
 

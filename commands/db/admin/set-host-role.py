@@ -16,20 +16,20 @@ class Sethostrole(commands.Cog):
                              with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, role: discord.Role, comp: str = DEFAULT):
-        host_role = session.scalars(select(HostRole.comp).where(HostRole.comp == comp)).first()
+        host_role = (await session.scalars(select(HostRole.comp).where(HostRole.comp == comp))).first()
         name = role.name
         role_id = role.id
 
         # Check if host_role doesn't exist yet for the comp
         if host_role is None:
             stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
-            session.execute(stmt)
+            await session.execute(stmt)
         else:
 
             stmt = (update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp))
-            session.execute(stmt)
+            await session.execute(stmt)
 
-        session.commit()
+        await session.commit()
         await ctx.send(f"The current host role has been set! {role.mention}")
 
         #except sqlite3.OperationalError as e:

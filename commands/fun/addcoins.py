@@ -11,8 +11,8 @@ class Addcoins(commands.Cog):
                              with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def addcoins(self, ctx, user: discord.Member, amount: int):
-        username = user.name
-        add_balance(username, ctx.guild.id, amount)
+        user_id = user.id
+        await add_balance(user_id, ctx.guild.id, amount)
         await ctx.reply(f"Added {amount} coins to {user.display_name}'s balance.")
 
 

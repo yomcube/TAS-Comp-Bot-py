@@ -1,12 +1,12 @@
 from api.submissions import handle_submissions, first_time_submission
 from api.utils import is_task_currently_running, readable_to_float
 from api.mkwii.mkwii_utils import get_lap_time
-from api.db_classes import Tasks, session, Submissions
+from api.db_classes import session, Submissions
 from sqlalchemy import insert, update
 
 
 async def handle_mkwii_files(message, attachments, file_dict, self):
-    current_task = is_task_currently_running()
+    current_task = await is_task_currently_running()
 
     if file_dict.get("rkg") is not None:
         index = file_dict.get("rkg")
@@ -42,16 +42,19 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 await message.channel.send("Nice blank rkg there")
 
             # Add first-time submission
-            if first_time_submission(message.author.id): # seems odd to check in function, queries db twice
+            if first_time_submission(message.author.id):  # seems odd to check in function, queries db twice
                 # Assuming the table `submissions` has columns: task, name, id, url, time, dq, dq_reason
-                session.execute(insert(Submissions).values(task=current_task[0], name=message.author.name, user_id=message.author.id,
-                                                           url=attachments[index].url, time=time, dq=0, dq_reason=''))
-                session.commit()
+                await session.execute(insert(Submissions).values(task=current_task[0], name=message.author.name,
+                                                                 user_id=message.author.id,
+                                                                 url=attachments[index].url, time=time, dq=0,
+                                                                 dq_reason=''))
+                await session.commit()
 
             # If not first submission: replace old submission
             else:
-                session.execute(update(Submissions).values(url=attachments[index].url, time=time).where(Submissions.user_id == message.author.id))
-                session.commit()
+                await session.execute(update(Submissions).values(url=attachments[index].url, time=time).where(
+                    Submissions.user_id == message.author.id))
+                await session.commit()
         # No ongoing task
         else:
             await message.channel.send("There is no active task yet.")
@@ -69,16 +72,17 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
             # Add first-time submission
             if first_time_submission(message.author.id):
-                session.execute(insert(Submissions).values(task=current_task[0], name=message.author.name,
-                                                           user_id=message.author.id,
-                                                           url=attachments[index].url, time=0, dq=0, dq_reason=''))
+                await session.execute(insert(Submissions).values(task=current_task[0], name=message.author.name,
+                                                                 user_id=message.author.id,
+                                                                 url=attachments[index].url, time=0, dq=0,
+                                                                 dq_reason=''))
 
             # If not first submission: replace old submission
             else:
-                session.execute(update(Submissions).values(url=attachments[index].url)
-                                .where(Submissions.user_id == message.author.id))
+                await session.execute(update(Submissions).values(url=attachments[index].url)
+                                      .where(Submissions.user_id == message.author.id))
 
-            session.commit()
+            await session.commit()
             # Tell the user the submission has been received
             print(f"File received!\nBy: {message.author}\nMessage sent: {message.content}")
             await message.channel.send(

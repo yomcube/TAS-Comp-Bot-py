@@ -1,3 +1,4 @@
+import asyncio
 import os
 import traceback
 import sys
@@ -5,11 +6,13 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 
+from api.db_classes import async_database
+
 # load environmental variables
 load_dotenv()
 token = os.getenv('TOKEN')
 
-if not os.path.exists("database"): 
+if not os.path.exists("database"):
     os.makedirs("database")
 
 activity = discord.Game(name="Dolphin Emulator")
@@ -48,11 +51,12 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.utilities.track',
                 'commands.utilities.weather',
                 'commands.utilities.urban',
-                'commands.sm64.encode',]
+                'commands.sm64.encode', ]
 events_ext = ['events.on_ready',
               'events.on_message',
               'events.errors',
-              'events.command_completion',]
+              'events.command_completion', ]
+
 
 # def get_prefix(bot, message):
 #     #TODO:  code to get prefix
@@ -90,8 +94,12 @@ class Bot(commands.Bot):
                 traceback.print_exc()
 
 
-bot = Bot()
-bot.remove_command("help")
+def main():
+    bot = Bot()
+    bot.remove_command("help")
+    bot.run(token)
+    session = asyncio.run(async_database())
+
 
 if __name__ == '__main__':
-    bot.run(token)
+    main()

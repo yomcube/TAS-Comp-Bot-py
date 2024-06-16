@@ -6,7 +6,8 @@ python-dotenv==1.0.1
 ratelimit==2.2.1
 Requests==2.32.3
 yt_dlp==2024.5.27
-
 discord~=2.3.2
 SQLAlchemy~=2.0.30
 bs4~=0.0.2
+aiohttp~=3.9.5
+aiosqlite~=0.20.0

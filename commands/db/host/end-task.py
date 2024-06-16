@@ -12,14 +12,14 @@ class End(commands.Cog):
     @has_host_role()
     async def command(self, ctx):
 
-        currently_running = session.execute(select(Tasks.task, Tasks.year).where(Tasks.is_active == 1)).first()
+        currently_running = (await session.execute(select(Tasks.task, Tasks.year).where(Tasks.is_active == 1))).first()
         # Is a task running?
 
         if currently_running:
             number = currently_running.task
             year = currently_running.year
-            session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
-            session.commit()
+            await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
+            await session.commit()
 
             await ctx.send(f"Successfully ended **Task {number} - {year}**!")
         else:

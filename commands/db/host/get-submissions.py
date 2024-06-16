@@ -14,7 +14,7 @@ class Get(commands.Cog):
     @has_host_role()
     async def command(self, ctx):
         # Get current task by taking random submission, and extracting task number
-        active_task = session.scalars(select(Submissions.task).limit(1)).first()
+        active_task = (await session.scalars(select(Submissions.task).limit(1))).first()
 
         if active_task is None:
             await ctx.send("There were no submissions.")
@@ -23,7 +23,7 @@ class Get(commands.Cog):
         # Get submissions from current task
 
 
-        submissions = session.scalars(select(Submissions).where(Submissions.task == active_task)).fetchall()
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
         total_submissions = len(submissions)
         # Count submissions from current task
 

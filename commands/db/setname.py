@@ -1,5 +1,4 @@
 from discord.ext import commands
-
 from api.db_classes import Userbase
 from api.submissions import get_submission_channel
 from api.utils import session
@@ -12,7 +11,7 @@ DEFAULT = os.getenv('DEFAULT')
 
 
 async def rename_in_submission_list(self, old_display_name, new_display_name):
-    submission_channel = get_submission_channel(DEFAULT)
+    submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
     async for message in channel.history(limit=3):
@@ -51,19 +50,19 @@ class Setname(commands.Cog):
             return await ctx.reply("Your name is too long!")
 
         # Gets his old display_name
-        old_display_name = session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id)).first()
+        old_display_name = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id))).first()
 
         if old_display_name is None:
             await ctx.send("Please submit, and retry again!")
 
         else:
             # Detect illegal name change (2 identical names)
-            if session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name)).first():
+            if (await session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
                 return await ctx.reply("The name is already in use by another user.")
 
             stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == ctx.author.id)
-            session.execute(stmt)
-            session.commit()
+            await session.execute(stmt)
+            await session.commit()
 
             await ctx.send(f"Name successfully set to **{new_name}**.")
 

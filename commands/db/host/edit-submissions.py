@@ -9,12 +9,12 @@ from sqlalchemy import select, update
 class Edit(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
-        
+
     @commands.hybrid_command(name="edit-submissions", description="Edit submissions", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, user: discord.Member, time: float, dq: bool, dq_reason: str = ''):
 
-        data = session.scalars(select(Submissions).where(Submissions.user_id == user.id)).first()
+        data = (await session.scalars(select(Submissions).where(Submissions.user_id == user.id))).first()
 
         if data is None:
             return await ctx.reply(f"{user} has no submission.")
@@ -25,30 +25,22 @@ class Edit(commands.Cog):
         elif data.dq == 1:
             data_dq = True
 
-
         readable_time = float_to_readable(time)
         server_text = f"Succesfully edited {user}'s submission with:\nTime: from {data.time} to {time}\nDQ: from {data_dq} to {dq}"
         dm_text = f"Your submission has been edited:\nTime: from {float_to_readable(data.time)} to {readable_time}\nDQ: from {data_dq} to {dq}"
 
-        if dq == True:
+        if dq:
             server_text += f" ({dq_reason})"
             dm_text += f" ({dq_reason})"
 
-
-
         # Update submission to db
-        session.execute(update(Submissions).values(time=time, dq=dq, dq_reason=dq_reason).where(Submissions.user_id == user.id))
-        session.commit()
+        await session.execute(
+            update(Submissions).values(time=time, dq=dq, dq_reason=dq_reason).where(Submissions.user_id == user.id))
+        await session.commit()
 
         await ctx.reply(server_text)
         channel = await user.create_dm()
         await channel.send(dm_text)
-
-
-
-
-
-
 
         # # Find data to edit
         # cursor.execute("SELECT * FROM submissions WHERE id = ?", (user.id,))

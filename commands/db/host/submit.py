@@ -18,7 +18,7 @@ class Submit(commands.Cog):
         if not user:
             user = ctx.author
 
-        current_task = is_task_currently_running()
+        current_task = await is_task_currently_running()
         url = file.url
 
         # retrieving lap time, to estimate submission time
@@ -46,12 +46,12 @@ class Submit(commands.Cog):
 
         if first_time_submission(user.id):
             query = insert(Submissions).values(task=current_task[0], name=user.name, user_id=user.id, url=url, time=time, dq=0, dq_reason='')
-            session.execute(query)
-            session.commit()
+            await session.execute(query)
+            await session.commit()
         else:
             query = update(Submissions).values(url=url, time=time).where(Submissions.user_id == user.id)
-            session.execute(query)
-            session.commit()
+            await session.execute(query)
+            await session.commit()
 
         await ctx.reply(f"A submission has been added for {user.name}!")
 

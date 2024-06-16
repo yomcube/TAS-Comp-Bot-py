@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+
 class Rig(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot

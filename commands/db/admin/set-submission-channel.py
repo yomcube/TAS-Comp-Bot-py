@@ -23,14 +23,14 @@ class Setsubmissionchannel(commands.Cog):
         result = session.execute(query).first()
         if result is None:
             stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-            session.execute(stmt)
+            await session.execute(stmt)
         elif channel.id == result[0]:
             pass
         else:
             stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-            session.execute(stmt)
+            await session.execute(stmt)
 
-        session.commit()
+        await session.commit()
         await ctx.send(f"The public submission display channel has been set! {channel.mention}")
 
 

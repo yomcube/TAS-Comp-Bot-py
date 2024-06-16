@@ -12,20 +12,21 @@ class Results(commands.Cog):
     @commands.hybrid_command(name="get-results", description="Get the ordered results", with_app_command=True)
     @has_host_role()
     async def command(self, ctx):
-        active_task = session.scalars(select(Submissions.task)).first()
+        active_task = (await session.scalars(select(Submissions.task))).first()
         # Get all submissions ordered by time
-        submissions = session.scalars(select(Submissions).where(Submissions.task == active_task,
-                                                    Submissions.dq == 0).order_by(Submissions.time.asc())).fetchall()
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                                       Submissions.dq == 0).order_by(
+            Submissions.time.asc()))).fetchall()
 
         # Get all DQs ordered by time
-        DQs = session.scalars(select(Submissions).where(Submissions.task == active_task,
-                                                    Submissions.dq == 1).order_by(Submissions.time.asc())).fetchall()
+        DQs = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                               Submissions.dq == 1).order_by(
+            Submissions.time.asc()))).fetchall()
 
-        
         content = f"**__Task {active_task} Results__**:\n\n"
         #try:
         #TODO: Fix this
-            # Rank valid submissions in order
+        # Rank valid submissions in order
         for (n, submission) in enumerate(submissions, start=1):
             display_name = get_display_name(submission.user_id)
             readable_time = float_to_readable(submission.time)
@@ -33,7 +34,6 @@ class Results(commands.Cog):
 
         # add return incase of DQs.
         content += '\n'
-
 
         # Rank DQs in order
         for run in DQs:
@@ -45,9 +45,8 @@ class Results(commands.Cog):
         await ctx.send(content)
 
         #except TypeError: # can happen if get_display_name throws an error; an id is not found in user.db
-            # Happens, for example, if an admin /submit for someone who is not in the user.db
-            #await ctx.send("Someone's result could not be retrieved.")
-
+        # Happens, for example, if an admin /submit for someone who is not in the user.db
+        #await ctx.send("Someone's result could not be retrieved.")
 
 
 async def setup(bot) -> None:

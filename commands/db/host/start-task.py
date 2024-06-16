@@ -23,16 +23,16 @@ class Start(commands.Cog):
         if not year:
             year = date.today().year
 
-        if is_task_currently_running() is None:
+        if await is_task_currently_running() is None:
 
             # Mark task as ongoing
-            session.execute(insert(Tasks).values(task=number, year=year, is_active=1, collab=collab,
-                                                 multiple_tracks=multiple_tracks, speed_task=speed_task))
+            await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, collab=collab,
+                                                       multiple_tracks=multiple_tracks, speed_task=speed_task))
 
             # Clear submissions from previous task
-            session.execute(delete(Submissions))
+            await session.execute(delete(Submissions))
             # Commit changes to both tables affected
-            session.commit()
+            await session.commit()
 
             # Delete previous "Current submissions" message in submission channel
             channel_id = get_submission_channel(DEFAULT)
