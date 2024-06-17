@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 
-from api.db_classes import async_database
+from api.db_classes import db_connect
 
 # load environmental variables
 load_dotenv()
@@ -91,7 +91,8 @@ def main():
     bot = Bot()
     bot.remove_command("help")
     bot.run(token)
-    session = asyncio.run(async_database())
+
+    asyncio.run(db_connect())
 
 
 if __name__ == '__main__':

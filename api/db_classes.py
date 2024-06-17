@@ -2,25 +2,17 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import Column, Integer, String, Float, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, declarative_base
+
+Base = declarative_base()
+
 
 load_dotenv()
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 engine = create_async_engine(f"sqlite+aiosqlite:///{DB_DIR}/database.db")
 meta = MetaData()
-Session = async_sessionmaker(bind=engine)
+Session = async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False,class_=AsyncSession)
 session = Session()
-
-
-async def async_database() -> AsyncSession:
-    async with engine.begin() as conn:
-        await conn.run_sync(meta.drop_all)
-        await conn.run_sync(meta.create_all)
-    return session
-
-
-class Base(AsyncAttrs, DeclarativeBase):
-    pass
 
 
 class Money(Base):
@@ -83,3 +75,13 @@ class HostRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
+
+
+async def db_connect():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+
+
+
+
