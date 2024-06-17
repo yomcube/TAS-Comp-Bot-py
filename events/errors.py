@@ -24,8 +24,9 @@ class Errors(commands.Cog):
                 print("not owner\n")
                 return await ctx.send(f'Only the bot owner has permission to execute `{ctx.command}`.')
             case _ if isinstance(error, commands.CommandNotFound):
+                command = ctx.message.content.partition(' ')[0].replace('@', '')
                 # separate out everything before the first occurrence of a space, which is the command itself
-                return await ctx.send(f"{ctx.message.content.partition(' ')[0]} is not a valid command.")
+                return await ctx.send(f"{command} is not a valid command.")
 
             case _ if isinstance(error, commands.MemberNotFound):
                 return await ctx.send("The member specified does not exist.")

@@ -36,6 +36,7 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.fun.coinflip',
                 'commands.fun.connect4',
                 'commands.fun.dashsupersecretcommand',
+                'commands.fun.giveqm',
                 'commands.fun.joke',
                 'commands.fun.freeiso',
                 'commands.fun.rockpaperscissors',
@@ -44,9 +45,10 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.utilities.host.dm',
                 'commands.utilities.admin.say',
                 'commands.utilities.admin.sync',
+                'commands.utilities.credits',
+                'commands.utilities.help',
                 'commands.utilities.manage_messages.clear',
                 'commands.utilities.music',
-                'commands.utilities.help',
                 'commands.utilities.prefix',
                 'commands.utilities.track',
                 'commands.utilities.weather',
@@ -56,15 +58,6 @@ events_ext = ['events.on_ready',
               'events.on_message',
               'events.errors',
               'events.command_completion', ]
-
-
-# def get_prefix(bot, message):
-#     #TODO:  code to get prefix
-#     guild = message.guild
-#     if guild is None:
-#         return "" # returns no prefix if messaged in DMs; avoids on_message handling directly.
-#     else:
-#         return "$"
 
 
 class Bot(commands.Bot):

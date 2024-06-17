@@ -40,7 +40,8 @@ class Setname(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list", with_app_command=True)
+    @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list",
+                             with_app_command=True)
     async def command(self, ctx, *, new_name):
 
         if '@' in new_name:
@@ -50,7 +51,8 @@ class Setname(commands.Cog):
             return await ctx.reply("Your name is too long!")
 
         # Gets his old display_name
-        old_display_name = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id))).first()
+        old_display_name = (
+            await session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id))).first()
 
         if old_display_name is None:
             await ctx.send("Please submit, and retry again!")
@@ -67,7 +69,6 @@ class Setname(commands.Cog):
             await ctx.send(f"Name successfully set to **{new_name}**.")
 
             await rename_in_submission_list(self, old_display_name, new_name)
-
 
 
 async def setup(bot) -> None:
