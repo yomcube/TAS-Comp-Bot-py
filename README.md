@@ -29,6 +29,9 @@ ENC_SM64_SCRIPTS = ""
 
 # The maximum length of the encoding queue
 ENC_MAX_QUEUE = "5"
+
+# The directory which contains the bot database files
+DB_DIR="database/"
 ```
 Fill the fields with what you need
 
