@@ -20,7 +20,7 @@ class Setsubmissionchannel(commands.Cog):
 
         # TODO: detect which server you are in, so the comp argument is no longer needed
         query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
-        result = session.execute(query).first()
+        result = (await session.execute(query)).first()
         if result is None:
             stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
             await session.execute(stmt)

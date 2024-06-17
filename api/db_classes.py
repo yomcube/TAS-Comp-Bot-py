@@ -38,12 +38,12 @@ class Tasks(Base):
     is_active = Column('is_active', Integer)
     collab = Column('collab', Integer)
     multiple_tracks = Column('multiple_tracks', Integer)
-    speed_tasks = Column('speed_task', Integer)
+    speed_task = Column('speed_task', Integer)
 
 
 class Submissions(Base):
     __tablename__ = "submissions"
-    user_id = Column('id', Integer, primary_key=True)
+    user_id = Column('user_id', Integer, primary_key=True)
     task = Column('task', Integer)
     name = Column('name', String)
     url = Column('url', String)

@@ -40,7 +40,7 @@ async def get_logs_channel(comp):
 async def first_time_submission(user_id):
     """Check if a certain user id has submitted to this competition already"""
     query = select(Submissions.user_id).where(Submissions.user_id == user_id)
-    result = session.execute(query).first()
+    result = (await session.execute(query)).first()
 
     return not result
 
@@ -75,11 +75,11 @@ async def handle_submissions(message, self):
     ##################################################
     # Adding submission to submission list channel
     ##################################################
-    submission_channel = get_submission_channel(DEFAULT)
+    submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
     # Checking if submitter has ever participated before
-    if new_competitor(author_id):
+    if await new_competitor(author_id):
         # adding him to the user database.
         await session.execute(insert(Userbase).values(user_id=author_id, user=author_name, display_name=author_dn))
         await session.commit()
@@ -99,18 +99,19 @@ async def handle_submissions(message, self):
         if last_message.author == self.bot.user:
 
             # Add a new line only if it's a new user ID submitting
-            if first_time_submission(author_id):
-                new_content = f"{last_message.content}\n{count_submissions()}. {get_display_name(author_id)} ||{author.mention}||"
+            if await first_time_submission(author_id):
+                new_content = (f"{last_message.content}\n{await count_submissions()}. {await get_display_name(author_id)}"
+                               f" ||{author.mention}||")
                 await last_message.edit(content=new_content)
         else:
             # If the last message is not sent by the bot, send a new one
             await channel.send(
-                f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
+                f"**__Current Submissions:__**\n1. {await get_display_name(author_id)} ||{author.mention}||")
     else:
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
         await channel.send(
-            f"**__Current Submissions:__**\n1. {get_display_name(author_id)} ||{author.mention}||")
+            f"**__Current Submissions:__**\n1. {await get_display_name(author_id)} ||{author.mention}||")
 
 
 async def handle_dms(message, self):
@@ -120,7 +121,7 @@ async def handle_dms(message, self):
     if isinstance(message.channel, discord.DMChannel) and author != self.bot.user:
 
         # log all DMs to a set channel
-        channel = self.bot.get_channel(get_logs_channel(DEFAULT))
+        channel = self.bot.get_channel(await get_logs_channel(DEFAULT))
         attachments = message.attachments
         if channel:
             await channel.send("Message from " + str(author_dn) + ": " + message.content + " "

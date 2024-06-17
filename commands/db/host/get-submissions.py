@@ -32,7 +32,7 @@ class Get(commands.Cog):
         # Add many lines depending on the number of submissions
         try:
             for submission in submissions:
-                content += (f"{get_display_name(submission.user_id)} : {submission.url}"
+                content += (f"{await get_display_name(submission.user_id)} : {submission.url}"
                             f" | Fetched time: ||{float_to_readable(submission.time)}||\n")
 
             await ctx.reply(content=content)

@@ -42,7 +42,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 await message.channel.send("Nice blank rkg there")
 
             # Add first-time submission
-            if first_time_submission(message.author.id):  # seems odd to check in function, queries db twice
+            if await first_time_submission(message.author.id):  # seems odd to check in function, queries db twice
                 # Assuming the table `submissions` has columns: task, name, id, url, time, dq, dq_reason
                 await session.execute(insert(Submissions).values(task=current_task[0], name=message.author.name,
                                                                  user_id=message.author.id,
