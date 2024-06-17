@@ -12,10 +12,10 @@ import humanize
 from api.utils import download_from_url, get_file_types
 from datetime import datetime, timezone
 
-DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR")
-ENC_MUPEN_DIR = os.getenv("ENC_MUPEN_DIR")
-ENC_AVI_DIR = os.getenv("ENC_AVI_DIR")
-ENC_SM64_SCRIPTS = os.getenv("ENC_SM64_SCRIPTS")
+DOWNLOAD_DIR = os.path.abspath(os.getenv("DOWNLOAD_DIR"))
+ENC_MUPEN_DIR = os.path.abspath(os.getenv("ENC_MUPEN_DIR"))
+ENC_AVI_DIR = os.path.abspath(os.getenv("ENC_AVI_DIR"))
+ENC_SM64_SCRIPTS = os.path.abspath(os.getenv("ENC_SM64_SCRIPTS"))
 ENC_MAX_QUEUE = int(os.getenv("ENC_MAX_QUEUE"))
 
 MUPEN_EXE = os.path.join(ENC_MUPEN_DIR, "mupen64.exe")

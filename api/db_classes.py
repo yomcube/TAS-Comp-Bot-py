@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 
 load_dotenv()
-DB_DIR = os.getenv('DB_DIR').partition('.')[-1]  # slice off period at start for relative paths
-engine = create_async_engine(f"sqlite+aiosqlite://{DB_DIR}/database.db")
+DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
+engine = create_async_engine(f"sqlite+aiosqlite:///{DB_DIR}/database.db")
 meta = MetaData()
 Session = async_sessionmaker(bind=engine)
 session = Session()
@@ -16,7 +16,6 @@ async def async_database() -> AsyncSession:
     async with engine.begin() as conn:
         await conn.run_sync(meta.drop_all)
         await conn.run_sync(meta.create_all)
-
     return session
 
 
