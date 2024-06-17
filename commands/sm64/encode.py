@@ -210,10 +210,12 @@ class Encode(commands.Cog):
             return
 
         # Stem of movie is also the stem of avi file
-        filename = os.path.split(movie_path)[1].rpartition(".")[0]
+        # This is suspicious, but uses partition to grab the name before the first dot so the dot trick works
+        filename = os.path.split(movie_path)[1].partition(".")[0]
 
         # When an st is provided, its stem must match the movie's stem
         if st_path is not None:
+            # STs shouldn't have dots as well, so this is fine most likely. could be changed to first occurrence though
             st_stem = os.path.split(st_path)[1].rpartition(".")[0]
             if st_stem != filename:
                 await ctx.reply("The provided savestate doesn't have the same name as the movie.")
