@@ -10,10 +10,13 @@ from api.db_classes import db_connect
 
 # load environmental variables
 load_dotenv()
-token = os.getenv('TOKEN')
-
-if not os.path.exists("database"):
-    os.makedirs("database")
+TOKEN = os.getenv('TOKEN')
+DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
+    
+if not os.path.exists(DB_DIR):
+    os.makedirs(DB_DIR)
+    db_file = open(f"{DB_DIR}/database.db", 'w')
+    db_file.close
 
 activity = discord.Game(name="Dolphin Emulator")
 
@@ -90,9 +93,8 @@ class Bot(commands.Bot):
 def main():
     bot = Bot()
     bot.remove_command("help")
-    bot.run(token)
-
     asyncio.run(db_connect())
+    bot.run(TOKEN)
 
 
 if __name__ == '__main__':
