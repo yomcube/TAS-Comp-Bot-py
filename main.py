@@ -1,3 +1,4 @@
+import asyncio
 import os
 import traceback
 import sys
@@ -5,12 +6,17 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 
+from api.db_classes import db_connect
+
 # load environmental variables
 load_dotenv()
-token = os.getenv('TOKEN')
-
-if not os.path.exists("database"): 
-    os.makedirs("database")
+TOKEN = os.getenv('TOKEN')
+DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
+    
+if not os.path.exists(DB_DIR):
+    os.makedirs(DB_DIR)
+    db_file = open(f"{DB_DIR}/database.db", 'w')
+    db_file.close
 
 activity = discord.Game(name="Dolphin Emulator")
 
@@ -50,19 +56,11 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.utilities.track',
                 'commands.utilities.weather',
                 'commands.utilities.urban',
-                'commands.sm64.encode',]
+                'commands.sm64.encode', ]
 events_ext = ['events.on_ready',
               'events.on_message',
               'events.errors',
-              'events.command_completion',]
-
-# def get_prefix(bot, message):
-#     #TODO:  code to get prefix
-#     guild = message.guild
-#     if guild is None:
-#         return "" # returns no prefix if messaged in DMs; avoids on_message handling directly.
-#     else:
-#         return "$"
+              'events.command_completion', ]
 
 
 class Bot(commands.Bot):
@@ -92,8 +90,12 @@ class Bot(commands.Bot):
                 traceback.print_exc()
 
 
-bot = Bot()
-bot.remove_command("help")
+def main():
+    bot = Bot()
+    bot.remove_command("help")
+    asyncio.run(db_connect())
+    bot.run(TOKEN)
+
 
 if __name__ == '__main__':
-    bot.run(token)
+    main()

@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-import sqlite3
-from api.utils import float_to_readable
+from api.utils import float_to_readable, session
+from api.db_classes import Submissions
+from sqlalchemy import select
 
 
 class Info(commands.Cog):
@@ -11,14 +12,10 @@ class Info(commands.Cog):
     @commands.command(name="info", aliases=['status'])
     @commands.dm_only()
     async def info(self, ctx):
-        user_id = ctx.author.id
-        connection = sqlite3.connect("database/tasks.db")
-        cursor = connection.cursor()
 
-        # Get submissions from current task
-        cursor.execute("SELECT * FROM submissions WHERE id= ?", (user_id,))
-        submission = cursor.fetchone()  # Fetch all rows
-        connection.close()
+        # Get submission
+        submission = session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
+                                            Submissions.dq_reason).where(Submissions.user_id == ctx.author.id)).fetchone()
 
         if not submission:
             await ctx.reply("Either there is no ongoing task, or you have not submitted.")
@@ -26,10 +23,10 @@ class Info(commands.Cog):
 
         # variables for all the columns
         task_num = submission[0]
-        url = submission[3]
-        time = float_to_readable(submission[4])
-        dq = bool(submission[5])
-        dq_reason = submission[6]
+        url = submission[1]
+        time = float_to_readable(submission[2])
+        dq = bool(submission[3])
+        dq_reason = submission[4]
 
         embed = discord.Embed(title=f"Task {task_num} submission", color=discord.Color.from_rgb(0, 235, 0))
 

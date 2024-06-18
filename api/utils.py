@@ -1,47 +1,71 @@
 import hashlib
 import os
-import struct
-import urllib.request
-import uuid
+import aiohttp
 import discord
-from discord.ext import commands
-import json
-import sqlite3
+import uuid
 from urllib.parse import urlparse
-
+from discord.ext import commands
+from sqlalchemy import select, insert, update
+from api.db_classes import Money, Tasks, HostRole, session
 from dotenv import load_dotenv
-import requests
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 DOWNLOAD_DIR = os.getenv('DOWNLOAD_DIR')
+DB_DIR = os.getenv('DB_DIR')
 
 
-def get_host_role():
+async def get_balance(user_id, guild):
+    money = (await session.scalars(select(Money.coins).where(Money.user_id == user_id))).first()
+    if money is None:
+        balance = 500
+        stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
+        await session.execute(stmt)
+        await session.commit()
+
+    else:
+        balance = money
+    return balance
+
+
+async def update_balance(user_id, guild, new_balance):
+    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
+    await session.execute(stmt)
+    await session.commit()
+
+
+async def add_balance(user_id, server_id, amount):
+    current_balance = await get_balance(user_id, server_id)
+    new_balance = current_balance + amount
+    await update_balance(user_id, server_id, new_balance)
+
+
+async def deduct_balance(user_id, guild, amount):
+    current_balance = await get_balance(user_id, guild)
+    new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
+    await update_balance(user_id, guild, new_balance)
+
+
+async def get_host_role(guild_id):
+    default = DEFAULT
     """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
-    connection = sqlite3.connect("./database/settings.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM host_role WHERE comp = ?",
-                   (DEFAULT,))  # chooses default in dotenv
-    role = cursor.fetchone()
+    host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
 
-    if role:
-        host_role = role[1]
-        connection.close()
+    if host_role:
         return host_role
     else:
-        connection.close()
-        return "Host"  # default host role name.
+        return None
 
 
 def has_host_role():
     async def predicate(ctx):
-        role = get_host_role()
+        role = await get_host_role(ctx.message.guild.id)
         # Check if the role is a name
-        has_role = discord.utils.get(ctx.author.roles, name=role) is not None
+        has_role = discord.utils.get(ctx.author.roles, id=role) is not None
         return has_role
 
     return commands.check(predicate)
+
 
 async def download_from_url(url) -> str:
     try:
@@ -49,24 +73,16 @@ async def download_from_url(url) -> str:
         filename, file_extension = os.path.splitext(os.path.basename(url_parsed.path))
         file_path = os.path.join(DOWNLOAD_DIR, f"{filename}{file_extension}")
 
-        file = requests.get(url)
-        if not file.ok:
-            return None
-        open(file_path, 'wb').write(file.content)
+        async with aiohttp.get(url) as file:
+            if not file.ok:
+                return None
+            open(file_path, 'wb').write(file.content)
 
-        return file_path
+            return file_path
+
     except:
+
         return None
-
-async def check_json_guild(file, guild_id):  # TODO: Normalise file handling, rename function
-    with open(file, "r") as f:
-
-        data = json.loads(f.read())
-        for guild in data:
-            if guild == guild_id:
-                return True
-
-    return False
 
 
 def readable_to_float(time_str):
@@ -83,6 +99,9 @@ def readable_to_float(time_str):
 
 def float_to_readable(seconds):
     """Convert seconds (float) to a time string 'M:SS.mmm'."""
+
+    seconds = float(seconds)
+
     if seconds < 0:
         print("Seconds cannot be negative.")
         return
@@ -93,51 +112,12 @@ def float_to_readable(seconds):
     return time_str
 
 
-def is_task_currently_running():
+async def is_task_currently_running():
     """Check if a task is currently running"""
-    connection = sqlite3.connect("./database/tasks.db")
-    cursor = connection.cursor()
-
     # Is a task running?
-    cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-    currently_running = cursor.fetchone()
-    connection.close()
-    return currently_running
-
-
-def get_balance(username):
-    connection = sqlite3.connect("./database/economy.db")
-    cursor = connection.cursor()
-    cursor.execute("SELECT coins FROM money WHERE username = ?", (username,))
-    result = cursor.fetchone()
-    if result is None:
-        cursor.execute("INSERT INTO money (username, coins) VALUES (?, ?)", (username, 100))
-        connection.commit()
-        balance = 100
-    else:
-        balance = result[0]
-    connection.close()
-    return balance
-
-
-def update_balance(username, new_balance):
-    connection = sqlite3.connect("./database/economy.db")
-    cursor = connection.cursor()
-    cursor.execute("UPDATE money SET coins = ? WHERE username = ?", (new_balance, username))
-    connection.commit()
-    connection.close()
-
-
-def add_balance(username, amount):
-    current_balance = get_balance(username)
-    new_balance = current_balance + amount
-    update_balance(username, new_balance)
-
-
-def deduct_balance(username, amount):
-    current_balance = get_balance(username)
-    new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
-    update_balance(username, new_balance)
+    # Does this need to be a function even?
+    active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1))).first()
+    return active
 
 
 def calculate_winnings(num_emojis, slot_number, constant=3):

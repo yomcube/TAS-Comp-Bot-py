@@ -1,6 +1,8 @@
-import sqlite3
 from discord.ext import commands
+from api.db_classes import Userbase
 from api.submissions import get_submission_channel
+from api.utils import session
+from sqlalchemy import select, update
 import os
 from dotenv import load_dotenv
 
@@ -9,7 +11,7 @@ DEFAULT = os.getenv('DEFAULT')
 
 
 async def rename_in_submission_list(self, old_display_name, new_display_name):
-    submission_channel = get_submission_channel(DEFAULT)
+    submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
     async for message in channel.history(limit=3):
@@ -33,14 +35,14 @@ async def rename_in_submission_list(self, old_display_name, new_display_name):
                 await message.edit(content=new_content)
             break  # Stop after finding the last bot message
 
+
 class Setname(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list", with_app_command=True)
+    @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list",
+                             with_app_command=True)
     async def command(self, ctx, *, new_name):
-        connection = sqlite3.connect("database/users.db")
-        cursor = connection.cursor()
 
         if '@' in new_name:
             return await ctx.reply("You may not use @ in your name.")
@@ -48,34 +50,26 @@ class Setname(commands.Cog):
         if len(new_name) > 120:
             return await ctx.reply("Your name is too long!")
 
-        try:
-            # retrieve old name
-            cursor.execute("SELECT * from userbase WHERE id = ?", (ctx.author.id,))
-            result = cursor.fetchone()
-            old_display_name = result[2]
+        # Gets his old display_name
+        old_display_name = (
+            await session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id))).first()
 
-            # Check if the new name is already in use in the database
-            cursor.execute("SELECT * from userbase WHERE display_name = ?", (new_name,))
-            if cursor.fetchone():
+        if old_display_name is None:
+            await ctx.send("Please submit, and retry again!")
+
+        else:
+            # Detect illegal name change (2 identical names)
+            if (await session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
                 return await ctx.reply("The name is already in use by another user.")
 
-            # try to update
-            cursor.execute("UPDATE userbase SET display_name = ? WHERE id = ?", (new_name, ctx.author.id))
+            stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == ctx.author.id)
+            await session.execute(stmt)
+            await session.commit()
 
-            # if the user doesn't exist in database, add him to database by encouraging to submit
-            if cursor.rowcount == 0:  # Check if no rows were affected by the update
-                await ctx.send("Please submit, and retry again!")
+            await ctx.send(f"Name successfully set to **{new_name}**.")
 
-            else: # if name is found in the userbase
-                connection.commit()
-                await ctx.send(f"Name successfully set to **{new_name}**.")
+            await rename_in_submission_list(self, old_display_name, new_name)
 
-                await rename_in_submission_list(self, old_display_name, new_name)
-
-        except (sqlite3.OperationalError, TypeError): # another way of catching error
-            await ctx.send("Error occured. Maybe try submitting, then retrying?")
-        finally:
-            connection.close()
 
 async def setup(bot) -> None:
     await bot.add_cog(Setname(bot))

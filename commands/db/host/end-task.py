@@ -1,6 +1,8 @@
 from discord.ext import commands
-import sqlite3
-from api.utils import has_host_role
+from api.utils import has_host_role, session
+from api.db_classes import Tasks
+from sqlalchemy import select, update
+
 
 class End(commands.Cog):
     def __init__(self, bot) -> None:
@@ -9,23 +11,16 @@ class End(commands.Cog):
     @commands.hybrid_command(name="end-task", description="End current task", with_app_command=True)
     @has_host_role()
     async def command(self, ctx):
-        connection = sqlite3.connect("database/tasks.db")
-        cursor = connection.cursor()
 
+        currently_running = (await session.execute(select(Tasks.task, Tasks.year).where(Tasks.is_active == 1))).first()
         # Is a task running?
-        cursor.execute("SELECT * FROM tasks WHERE is_active = 1")
-        currently_running = cursor.fetchone()
-
 
         if currently_running:
-            number = currently_running[0]
-            year = currently_running[1]
+            number = currently_running.task
+            year = currently_running.year
+            await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
+            await session.commit()
 
-            cursor.execute("UPDATE tasks SET is_active = 0 WHERE is_active = 1")
-
-            connection.commit()  # actually update the database
-            connection.close()
-            
             await ctx.send(f"Successfully ended **Task {number} - {year}**!")
         else:
             await ctx.send(f"There is already no ongoing task!")

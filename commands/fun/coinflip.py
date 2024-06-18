@@ -82,7 +82,6 @@ class CoinFlip(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
     @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"],
                              with_app_command=True)
     async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
@@ -94,20 +93,21 @@ class CoinFlip(commands.Cog):
             await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted"
                            " when playing against other people.")
 
-
-        username = ctx.author.name
-        opponent_username = opponent.name if opponent else None
-
+        guild = ctx.message.guild.id
+        user_id = ctx.author.id
+        opponent_id = opponent.id if opponent else None
+        user_bal = await get_balance(user_id, guild)
+        opponent_bal = await get_balance(opponent_id, guild)
         if bet_amount <= 0:
             await ctx.send("Nice try! Please enter a positive bet amount.")
             return
 
-        if get_balance(username) < bet_amount:
+        if user_bal < bet_amount:
             await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
             return
 
         if opponent != self.bot.user:
-            if get_balance(opponent_username) < bet_amount:
+            if opponent_bal < bet_amount:
                 await ctx.send(f"{opponent.mention} does not have enough coins to place this bet.")
                 return
 
@@ -136,17 +136,17 @@ class CoinFlip(commands.Cog):
 
                 flip_result = random.choice(['heads', 'tails'])
                 if user_choice == flip_result and opponent_choice != flip_result:
-                    add_balance(username, bet_amount)
-                    deduct_balance(opponent_username, bet_amount)
+                    await add_balance(user_id, guild, bet_amount)
+                    await deduct_balance(opponent_id, guild, bet_amount)
                     msg = (f"{ctx.author.mention} wins! The coin landed on {flip_result}.\n"
-                           f"Added {bet_amount} coins to {ctx.author.mention}, {get_balance(username)} left in their account.\n"
-                           f"Deducted {bet_amount} coins from {opponent.mention}, {get_balance(opponent_username)} left in their account.")
+                           f"Added {bet_amount} coins to {ctx.author.mention}, {user_bal + bet_amount} left in their account.\n"
+                           f"Deducted {bet_amount} coins from {opponent.mention}, {opponent_bal - bet_amount} left in their account.")
                 elif opponent_choice == flip_result and user_choice != flip_result:
-                    deduct_balance(username, bet_amount)
-                    add_balance(opponent_username, bet_amount)
+                    await deduct_balance(user_id, guild, bet_amount)
+                    await add_balance(opponent_id, guild, bet_amount)
                     msg = (f"{opponent.mention} wins! The coin landed on {flip_result}.\n"
-                           f"Added {bet_amount} coins to {opponent.mention}, {get_balance(opponent_username)} left in their account.\n"
-                           f"Deducted {bet_amount} coins from {ctx.author.mention}, {get_balance(username)} left in their account.")
+                           f"Added {bet_amount} coins to {opponent.mention}, {opponent_bal + bet_amount} left in their account.\n"
+                           f"Deducted {bet_amount} coins from {ctx.author.mention}, {opponent_bal - bet_amount} left in their account.")
                 else:
                     msg = f"It's a tie! The coin landed on {flip_result}.\nNo coins added."
 
@@ -155,24 +155,24 @@ class CoinFlip(commands.Cog):
                 await ctx.send(f"{opponent.mention} declined the challenge.")
             return
 
-        else: # vs bot
+        else:  # vs bot
             view = CoinFlipView(ctx)
             message = await ctx.reply(f"{ctx.author.mention}, choose either Heads or Tails!", view=view)
             view.message = message
             await view.wait()
 
-            user_choice = view.choices[ctx.author.id]
+            user_choice = view.choices[user_id]
             if user_choice is None:
                 return
 
             flip_result = random.choice(['heads', 'tails'])
 
             if user_choice == flip_result:
-                add_balance(username, 10)
-                msg = f"You win! The coin landed on {flip_result}.\nAdded 10 coins, {get_balance(username)} left in your account."
+                await add_balance(user_id, guild, 10)
+                msg = f"You win! The coin landed on {flip_result}.\nAdded 10 coins, {user_bal + 10} left in your account."
             else:
-                deduct_balance(username, 10)
-                msg = f"You lose! The coin landed on {flip_result}.\nDeducted 10 coins, {get_balance(username)} left in your account."
+                await deduct_balance(user_id, guild, 10)
+                msg = f"You lose! The coin landed on {flip_result}.\nDeducted 10 coins, {user_bal - 10} left in your account."
 
             await ctx.send(msg)
             return
