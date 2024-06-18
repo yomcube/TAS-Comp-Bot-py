@@ -21,7 +21,7 @@ class Balancetop(commands.Cog):
                 name = member.display_name
             else:
                 name = f"User with ID {result[i].user_id} (left the server)"
-            leaderboard += f"{i + 1}: {name}. {result[i].coins}\n"
+            leaderboard += f"{i + 1}: {name} - {result[i].coins}\n"
 
         await ctx.send(leaderboard)
 

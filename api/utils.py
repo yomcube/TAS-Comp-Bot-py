@@ -2,7 +2,6 @@ import hashlib
 import os
 import aiohttp
 import discord
-import uuid
 from urllib.parse import urlparse
 from discord.ext import commands
 from sqlalchemy import select, insert, update
@@ -19,7 +18,7 @@ async def get_balance(user_id, guild):
     money = (await session.scalars(select(Money.coins).where(Money.user_id == user_id))).first()
     if money is None:
         balance = 500
-        stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
+        stmt = (insert(Money).values(guild=guild, username=commands.Bot.get_user(user_id).name, user_id=user_id, coins=balance))
         await session.execute(stmt)
         await session.commit()
 
@@ -29,7 +28,7 @@ async def get_balance(user_id, guild):
 
 
 async def update_balance(user_id, guild, new_balance):
-    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
+    stmt = (update(Money).values(guild=guild, username=commands.Bot.get_user(user_id).name, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
     await session.execute(stmt)
     await session.commit()
 
@@ -48,7 +47,7 @@ async def deduct_balance(user_id, guild, amount):
 
 async def get_host_role(guild_id):
     default = DEFAULT
-    """Retrieves the host role. By default, on the server, the default host role is 'Host'."""
+    # Retrieves the host role. By default, on the server, the default host role is 'Host'.
     host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
 
     if host_role:

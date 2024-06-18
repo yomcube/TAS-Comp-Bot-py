@@ -10,9 +10,8 @@ class Slots(commands.Cog):
     @commands.hybrid_command(name="slots", description="Slots through server emojis", with_app_command=True)
     async def command(self, ctx, number: int = 3):
         if number > 20:
-            return await ctx.send(f"Please use a smaller number! It's not like you would win slots {number} anywway...")
-        elif number < 2:
-            return await ctx.send(f"At least two slots are required to play!")
+            return await ctx.send(f"Please use a smaller number! It's not like you would win slots {number} anyway...")
+        
         user_id = ctx.author.id
         guild_id = ctx.message.guild.id
         cost_per_play = 5
@@ -39,21 +38,21 @@ class Slots(commands.Cog):
         if number <= 0:
             await ctx.reply("What did you think would happen uh?")
             return
-
-        elif number == 1:
-            await ctx.send("You won! wait...") # what's this for?
-        if all(emoji == random_emojis[0] for emoji in random_emojis):
+        else:
+            await ctx.reply(result)
+        
+        if number == 1:
+            await ctx.send("You won! wait...")
+        elif all(emoji == random_emojis[0] for emoji in random_emojis):
             probability = 1 / (len(emojis_list) ** (number - 1))
             percentage = probability * 100
             winnings = calculate_winnings(len(emojis_list), number)
             result_text = (f"You won! The probability of winning was {percentage:.2f}% (1 in {int(1 / probability)}).\n{winnings} "
                            f"coins were added to your balance. {user_balance + winnings} coins left in your account.")
             await add_balance(user_id, guild_id, winnings)
-
         else:
             result_text = play_again_text
-
-        await ctx.send(result)
+        
         await ctx.send(result_text)
 
 
