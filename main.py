@@ -5,6 +5,7 @@ import sys
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
+
 from api.db_classes import db_connect
 
 # load environmental variables

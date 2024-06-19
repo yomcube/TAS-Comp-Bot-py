@@ -1,6 +1,6 @@
 from api.submissions import handle_submissions, first_time_submission
 from api.utils import is_task_currently_running, readable_to_float
-from api.mkwii.mkwii_utils import get_lap_time
+from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.db_classes import session, Submissions
 from sqlalchemy import insert, update
 
@@ -36,9 +36,14 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 # For most (but not all) mkw single-track tasks, the first lap time is usually the
                 # time of the submission, given the task is on lap 1 and not backwards.
 
+                character = get_character(rkg)
+                vehicle = get_vehicle(rkg)
+
             except UnboundLocalError:
                 # This exception catches blank rkg files
                 time = 0
+                character = None
+                vehicle = None
                 await message.channel.send("Nice blank rkg there")
 
             # Add first-time submission
@@ -47,14 +52,18 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 await session.execute(insert(Submissions).values(task=current_task[0], name=message.author.name,
                                                                  user_id=message.author.id,
                                                                  url=attachments[index].url, time=time, dq=0,
-                                                                 dq_reason=''))
+                                                                 dq_reason='', character=character,
+                                                                 vehicle=vehicle))
                 await session.commit()
 
             # If not first submission: replace old submission
             else:
-                await session.execute(update(Submissions).values(url=attachments[index].url, time=time).where(
-                    Submissions.user_id == message.author.id))
+                await session.execute(update(Submissions).values(url=attachments[index].url, time=time,
+                                                                 character=character,
+                                                                 vehicle=vehicle)
+                                      .where(Submissions.user_id == message.author.id))
                 await session.commit()
+
         # No ongoing task
         else:
             await message.channel.send("There is no active task yet.")

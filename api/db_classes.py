@@ -42,7 +42,8 @@ class Submissions(Base):
     time = Column('time', Float)
     dq = Column('dq', Integer)
     dq_reason = Column('dq_reason', String)
-
+    character = Column('character', String)
+    vehicle = Column('vehicle', String)
 
 class Userbase(Base):
     __tablename__ = "userbase"
