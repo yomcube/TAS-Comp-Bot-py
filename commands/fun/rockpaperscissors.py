@@ -115,11 +115,11 @@ class RPS(commands.Cog):
                            " when playing against other people.")
 
         choices = ['rock', 'paper', 'scissors']
-        username = ctx.author.name
+        user_id = ctx.author.id
         guild_id = ctx.message.guild.id
-        opponent_username = opponent.name if opponent else None
-        user_bal = await get_balance(username, guild_id)
-        opponent_bal = await get_balance(opponent.name, guild_id)
+        opponent_id = opponent.id if opponent else None
+        user_bal = await get_balance(user_id, guild_id)
+        opponent_bal = await get_balance(opponent_id, guild_id)
         if opponent != self.bot.user:
             if bet_amount <= 0:
                 await ctx.send("Nice try! Please enter a positive bet amount.")
@@ -159,16 +159,16 @@ class RPS(commands.Cog):
                 if (user_choice == 'rock' and opponent_choice == 'scissors') or (
                         user_choice == 'paper' and opponent_choice == 'rock') or (
                         user_choice == 'scissors' and opponent_choice == 'paper'):
-                    await add_balance(username, guild_id, bet_amount)
-                    await deduct_balance(opponent_username, guild_id, bet_amount)
+                    await add_balance(user_id, guild_id, bet_amount)
+                    await deduct_balance(opponent_id, guild_id, bet_amount)
                     msg = (f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded "
                            f"{bet_amount} coins to {ctx.author.mention}, {user_bal + bet_amount} left in their account."
                            f"\nDeducted {bet_amount} coins from {opponent.mention}, {opponent_bal - bet_amount} left in their account.")
                 elif (user_choice == 'rock' and opponent_choice == 'paper') or (
                         user_choice == 'paper' and opponent_choice == 'scissors') or (
                         user_choice == 'scissors' and opponent_choice == 'rock'):
-                    await deduct_balance(username, guild_id, bet_amount)
-                    await add_balance(opponent_username, guild_id, bet_amount)
+                    await deduct_balance(user_id, guild_id, bet_amount)
+                    await add_balance(opponent_id, guild_id, bet_amount)
                     msg = (
                         f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded {bet_amount} "
                         f"coins to {opponent.mention}, {opponent_bal + bet_amount} left in their account.\nDeducted "
@@ -201,13 +201,13 @@ class RPS(commands.Cog):
             if (user_choice == 'rock' and bot_choice == 'scissors') or (
                     user_choice == 'paper' and bot_choice == 'rock') or (
                     user_choice == 'scissors' and bot_choice == 'paper'):
-                await add_balance(username, guild_id, bet_amount)
+                await add_balance(user_id, guild_id, bet_amount)
                 msg = (f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded {bet_amount} coins, "
                        f"{user_bal + bet_amount} left in your account.")
             elif ((user_choice == 'rock' and bot_choice == 'paper') or (
                     user_choice == 'paper' and bot_choice == 'scissors') or (
                           user_choice == 'scissors' and bot_choice == 'rock')):
-                await deduct_balance(username, guild_id, bet_amount)
+                await deduct_balance(user_id, guild_id, bet_amount)
                 msg = (f"You lose! Bot's {bot_choice} beats your {user_choice}.\nDeducted {bet_amount} coins, "
                        f"{user_bal - bet_amount} left in your account.")
             else:

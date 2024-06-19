@@ -18,7 +18,7 @@ async def get_balance(user_id, guild):
     money = (await session.scalars(select(Money.coins).where(Money.user_id == user_id))).first()
     if money is None:
         balance = 500
-        stmt = (insert(Money).values(guild=guild, username=commands.Bot.get_user(user_id).name, user_id=user_id, coins=balance))
+        stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
         await session.execute(stmt)
         await session.commit()
 
@@ -28,7 +28,7 @@ async def get_balance(user_id, guild):
 
 
 async def update_balance(user_id, guild, new_balance):
-    stmt = (update(Money).values(guild=guild, username=commands.Bot.get_user(user_id).name, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
+    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
     await session.execute(stmt)
     await session.commit()
 

@@ -18,7 +18,6 @@ session = Session()
 class Money(Base):
     __tablename__ = "money"
     index = Column('index', Integer, primary_key=True, autoincrement=True)
-    username = Column('username', String)
     user_id = Column('user_id', Integer)
     coins = Column('coins', Integer)
     guild = Column('guild', Integer)
