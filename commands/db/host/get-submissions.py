@@ -3,6 +3,7 @@ from api.submissions import get_display_name
 from api.utils import has_host_role, float_to_readable
 from api.db_classes import Submissions, session
 from sqlalchemy import select
+import asyncio
 
 
 class Get(commands.Cog):
@@ -27,15 +28,18 @@ class Get(commands.Cog):
         total_submissions = len(submissions)
         # Count submissions from current task
 
-        content = f"__Task {active_task} submissions__:\n(Total submissions: {total_submissions})\n\n"
+        header = f"__Task {active_task} submissions__:\n(Total submissions: {total_submissions})\n\n"
+        await ctx.send(header)
 
         # Add many lines depending on the number of submissions
         try:
             for submission in submissions:
-                content += (f"{await get_display_name(submission.user_id)} : {submission.url}"
+                content = (f"{await get_display_name(submission.user_id)} : {submission.url}"
                             f" | Fetched time: ||{float_to_readable(submission.time)}||\n")
+                await ctx.send(content=content)
+                await asyncio.sleep(0.5)
 
-            await ctx.reply(content=content)
+
 
         except TypeError:  # can happen if get_display_name throws an error; an id is not found in user.db
             # Happens, for example, if an admin /submit for someone who is not in the user.db

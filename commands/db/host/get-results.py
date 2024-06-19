@@ -28,7 +28,7 @@ class Results(commands.Cog):
         #TODO: Fix this
         # Rank valid submissions in order
         for (n, submission) in enumerate(submissions, start=1):
-            display_name = get_display_name(submission.user_id)
+            display_name = await get_display_name(submission.user_id)
             readable_time = float_to_readable(submission.time)
             content += f'{n}. {display_name} — {readable_time}\n'
 
@@ -37,7 +37,7 @@ class Results(commands.Cog):
 
         # Rank DQs in order
         for run in DQs:
-            display_name = get_display_name(run.user_id)
+            display_name = await get_display_name(run.user_id)
             readable_time = float_to_readable(run.time)
             dq_reason = run.dq_reason
             content += f'DQ. {display_name} — {readable_time} [{dq_reason}]\n'

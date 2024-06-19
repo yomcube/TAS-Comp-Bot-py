@@ -8,7 +8,6 @@ class DM(commands.Cog):
 
     @commands.hybrid_command(name="dm", description="Dm a user", with_app_command=True)
     @has_host_role()
-    @commands.has_role("Developer")
     async def command(self, ctx, user: discord.Member, *, message):
         """Send a direct message to a user"""
         try:

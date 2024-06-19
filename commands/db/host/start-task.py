@@ -35,7 +35,7 @@ class Start(commands.Cog):
             await session.commit()
 
             # Delete previous "Current submissions" message in submission channel
-            channel_id = get_submission_channel(DEFAULT)
+            channel_id = await get_submission_channel(DEFAULT)
             channel = self.bot.get_channel(channel_id)
 
             try:
