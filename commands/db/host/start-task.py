@@ -17,7 +17,7 @@ class Start(commands.Cog):
 
     @commands.hybrid_command(name="start-task", description="Start a task", with_app_command=True)
     @has_host_role()
-    async def command(self, ctx, number: int, year: int = None, collab: int = 0, multiple_tracks: int = 0,
+    async def command(self, ctx, number: int, year: int = None, team_size: int = 1, multiple_tracks: int = 0,
                       speed_task: int = 0):
 
         if not year:
@@ -26,7 +26,7 @@ class Start(commands.Cog):
         if await is_task_currently_running() is None:
             async with get_session() as session:
                 # Mark task as ongoing
-                await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, collab=collab,
+                await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
                                                            multiple_tracks=multiple_tracks, speed_task=speed_task))
 
                 # Clear submissions from previous task

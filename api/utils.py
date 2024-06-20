@@ -119,8 +119,19 @@ async def is_task_currently_running():
     # Is a task running?
     # Does this need to be a function even?
     async with get_session() as session:
-        active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1))).first()
+        active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active, Tasks.team_size,
+                                               Tasks.speed_task, Tasks.multiple_tracks)
+                                        .where(Tasks.is_active == 1))).first()
         return active
+
+
+async def get_team_size():
+    current_task = await is_task_currently_running()
+    if current_task is not None:
+        return current_task[3]
+    else:
+        return None
+
 
 
 def calculate_winnings(num_emojis, slot_number, constant=3):

@@ -33,7 +33,7 @@ class Tasks(Base):
     task = Column('task', Integer, primary_key=True)
     year = Column('year', Integer)
     is_active = Column('is_active', Integer)
-    collab = Column('collab', Integer)
+    team_size = Column('team_size', Integer)
     multiple_tracks = Column('multiple_tracks', Integer)
     speed_task = Column('speed_task', Integer)
 
@@ -65,6 +65,18 @@ class SubmissionChannel(Base):
     comp = Column('comp', String)
     channel_id = Column('channel_id', Integer)
     guild_id = Column('guild_id', Integer)
+
+
+class Teams(Base):
+    __tablename__ = "teams"
+    index = Column('index', Integer, primary_key=True, autoincrement=True)
+    leader = Column('leader', Integer)
+    teammate2 = Column('user2', Integer)
+    teammate3 = Column('user3', Integer)
+    teammate4 = Column('user4', Integer)
+
+
+
 
 
 class LogChannel(Base):
