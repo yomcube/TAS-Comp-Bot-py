@@ -14,7 +14,7 @@ async def get_submission_channel(comp):
         query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
         channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
         # Handle case where no rows are found in the database
-        if channel[0] is None:
+        if channel is None or channel[0] is None:
             print(f"No submission channel found for competition '{comp}'.")
             return None
         return channel[0]
