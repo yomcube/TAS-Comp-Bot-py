@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import sqlite3
 from api.utils import float_to_readable, has_host_role
 from api.db_classes import Submissions, get_session
 from sqlalchemy import select, update
@@ -18,7 +17,7 @@ class Edit(commands.Cog):
 
         if data is None:
             return await ctx.reply(f"{user} has no submission.")
-
+        data_dq = None
         # was DQ or not
         if data.dq == 0:
             data_dq = False

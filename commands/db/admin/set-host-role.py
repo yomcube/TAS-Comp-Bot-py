@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from sqlalchemy import insert, update, select
-from api.db_classes import HostRole, get_session, Base
+from api.db_classes import HostRole, get_session
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
@@ -33,7 +33,6 @@ class Sethostrole(commands.Cog):
             await session.commit()
 
         await ctx.send(f"The current host role has been set! {role.mention}")
-
 
 
 async def setup(bot) -> None:

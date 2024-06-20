@@ -4,7 +4,7 @@ from api.utils import is_task_currently_running, readable_to_float, has_host_rol
 from api.submissions import first_time_submission
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.db_classes import Submissions, get_session
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, update
 
 
 class Submit(commands.Cog):
