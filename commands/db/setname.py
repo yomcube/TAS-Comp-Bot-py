@@ -1,7 +1,6 @@
 from discord.ext import commands
-from api.db_classes import Userbase
+from api.db_classes import Userbase, get_session
 from api.submissions import get_submission_channel
-from api.utils import session
 from sqlalchemy import select, update
 import os
 from dotenv import load_dotenv
@@ -51,24 +50,26 @@ class Setname(commands.Cog):
             return await ctx.reply("Your name is too long!")
 
         # Gets his old display_name
-        old_display_name = (
-            await session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id))).first()
+        async with get_session() as session:
 
-        if old_display_name is None:
-            await ctx.send("Please submit, and retry again!")
+            old_display_name = (
+                await session.scalars(select(Userbase.display_name).where(Userbase.user_id == ctx.author.id))).first()
 
-        else:
-            # Detect illegal name change (2 identical names)
-            if (await session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
-                return await ctx.reply("The name is already in use by another user.")
+            if old_display_name is None:
+                await ctx.send("Please submit, and retry again!")
 
-            stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == ctx.author.id)
-            await session.execute(stmt)
-            await session.commit()
+            else:
+                # Detect illegal name change (2 identical names)
+                if (await session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
+                    return await ctx.reply("The name is already in use by another user.")
 
-            await ctx.send(f"Name successfully set to **{new_name}**.")
+                stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == ctx.author.id)
+                await session.execute(stmt)
+                await session.commit()
 
-            await rename_in_submission_list(self, old_display_name, new_name)
+                await ctx.send(f"Name successfully set to **{new_name}**.")
+
+                await rename_in_submission_list(self, old_display_name, new_name)
 
 
 async def setup(bot) -> None:

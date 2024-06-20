@@ -3,7 +3,7 @@ import discord
 from api.utils import is_task_currently_running, readable_to_float, has_host_role
 from api.submissions import first_time_submission
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
-from api.db_classes import Submissions, session
+from api.db_classes import Submissions, get_session
 from sqlalchemy import insert, select, update
 
 
@@ -52,16 +52,17 @@ class Submit(commands.Cog):
             await ctx.reply("Nice blank rkg there")
             return
 
-        if await first_time_submission(user.id):
-            query = insert(Submissions).values(task=current_task[0], name=user.name, user_id=user.id, url=url, time=time,
-                                               dq=0, dq_reason='', character=character, vehicle=vehicle)
-            await session.execute(query)
-            await session.commit()
-        else:
-            query = (update(Submissions).values(url=url, time=time, character=character, vehicle=vehicle)
-                     .where(Submissions.user_id == user.id))
-            await session.execute(query)
-            await session.commit()
+        async with get_session() as session:
+            if await first_time_submission(user.id):
+                query = insert(Submissions).values(task=current_task[0], name=user.name, user_id=user.id, url=url, time=time,
+                                                   dq=0, dq_reason='', character=character, vehicle=vehicle)
+                await session.execute(query)
+                await session.commit()
+            else:
+                query = (update(Submissions).values(url=url, time=time, character=character, vehicle=vehicle)
+                         .where(Submissions.user_id == user.id))
+                await session.execute(query)
+                await session.commit()
 
         await ctx.reply(f"A submission has been added for {user.name}!")
 

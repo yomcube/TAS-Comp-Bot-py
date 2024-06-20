@@ -1,7 +1,7 @@
 from discord.ext import commands
-from api.utils import float_to_readable, has_host_role, session
+from api.utils import float_to_readable, has_host_role
 from api.submissions import get_display_name
-from api.db_classes import Submissions
+from api.db_classes import Submissions, get_session
 from sqlalchemy import select
 
 
@@ -12,16 +12,17 @@ class Results(commands.Cog):
     @commands.hybrid_command(name="get-results", description="Get the ordered results", with_app_command=True)
     @has_host_role()
     async def command(self, ctx):
-        active_task = (await session.scalars(select(Submissions.task))).first()
-        # Get all submissions ordered by time
-        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
-                                                                       Submissions.dq == 0).order_by(
-            Submissions.time.asc()))).fetchall()
+        async with get_session() as session:
+            active_task = (await session.scalars(select(Submissions.task))).first()
+            # Get all submissions ordered by time
+            submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                                           Submissions.dq == 0).order_by(
+                Submissions.time.asc()))).fetchall()
 
-        # Get all DQs ordered by time
-        DQs = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
-                                                               Submissions.dq == 1).order_by(
-            Submissions.time.asc()))).fetchall()
+            # Get all DQs ordered by time
+            DQs = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                                   Submissions.dq == 1).order_by(
+                Submissions.time.asc()))).fetchall()
 
         content = f"**__Task {active_task} Results__**:\n\n"
         #try:

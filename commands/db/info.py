@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
-from api.utils import float_to_readable, session
+from api.utils import float_to_readable
 from api.mkwii.mkwii_utils import characters, vehicles
-from api.db_classes import Submissions
+from api.db_classes import Submissions, get_session
 from sqlalchemy import select
 
 
@@ -13,11 +13,11 @@ class Info(commands.Cog):
     @commands.command(name="info", aliases=['status'])
     @commands.dm_only()
     async def info(self, ctx):
-
-        # Get submission
-        submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
-                                            Submissions.dq_reason, Submissions.character,
-                                            Submissions.vehicle).where(Submissions.user_id == ctx.author.id))).fetchone()
+        async with get_session() as session:
+            # Get submission
+            submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
+                                                Submissions.dq_reason, Submissions.character,
+                                                Submissions.vehicle).where(Submissions.user_id == ctx.author.id))).fetchone()
 
         if not submission:
             await ctx.reply("Either there is no ongoing task, or you have not submitted.")
@@ -36,7 +36,7 @@ class Info(commands.Cog):
 
         embed.add_field(name="File", value=f"{url}", inline=True)
         embed.add_field(name="Time", value=f"{time}", inline=True)
-        embed.add_field(name="Combo", value=f"{character} on {vehicle}", inline=False)
+        embed.add_field(name="Combo", value=f"{character}, {vehicle}", inline=False)
         embed.add_field(name="DQ", value=f"{dq}", inline=True)
         if dq:
             embed.add_field(name="DQ reason", value=dq_reason, inline=True)

@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from api.db_classes import session, LogChannel
+from api.db_classes import get_session, LogChannel
 from sqlalchemy import select, insert, update
 
 load_dotenv()
@@ -17,19 +17,21 @@ class Setlogschannel(commands.Cog):
                              description="Set the channel where DMs with the bot are logged", with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
-        query = select(LogChannel.channel_id).where(LogChannel.guild_id == ctx.guild.id)
-        result = (await session.execute(query)).first()
+        async with get_session() as session:
+            query = select(LogChannel.channel_id).where(LogChannel.guild_id == ctx.guild.id)
+            result = (await session.execute(query)).first()
 
-        if result is None:
-            stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-            await session.execute(stmt)
-        elif channel.id == result[0]:
-            pass
-        else:
-            stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-            await session.execute(stmt)
+            if result is None:
+                stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+                await session.execute(stmt)
+            elif channel.id == result[0]:
+                pass
+            else:
+                stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+                await session.execute(stmt)
 
-        await session.commit()
+            await session.commit()
+
         await ctx.send(f"The log channel has been set! {channel.mention}")
 
 

@@ -12,8 +12,9 @@ DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 engine = create_async_engine(f"sqlite+aiosqlite:///{DB_DIR}/database.db")
 meta = MetaData()
 Session = async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False,class_=AsyncSession)
-session = Session()
 
+def get_session():
+    return Session()
 
 class Money(Base):
     __tablename__ = "money"
@@ -76,6 +77,7 @@ class HostRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
+
 
 
 async def db_connect():

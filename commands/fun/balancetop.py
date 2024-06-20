@@ -1,5 +1,5 @@
 from discord.ext import commands
-from api.db_classes import Money, session
+from api.db_classes import Money, get_session
 from sqlalchemy import select
 
 
@@ -11,11 +11,12 @@ class Balancetop(commands.Cog):
                              description="Shows the leaderboard of the richest users on this server.",
                              with_app_command=True)
     async def command(self, ctx):
-        leaderboard = "**__Balance leaderboard__**:\n"
-        query = select(Money.user_id, Money.coins).where(Money.guild == ctx.guild.id).order_by(Money.coins.desc())
-        result = (await session.execute(query)).fetchall()
+        leaderboard = "**__Balance leaderboard (Top 10)__**:\n"
+        async with get_session() as session:
+            query = select(Money.user_id, Money.coins).where(Money.guild == ctx.guild.id).order_by(Money.coins.desc())
+            result = (await session.execute(query)).fetchall()
 
-        for i in range(0, min(5, len(result))):
+        for i in range(0, min(10, len(result))):
             member = ctx.guild.get_member(result[i].user_id)
             if member:
                 name = member.display_name

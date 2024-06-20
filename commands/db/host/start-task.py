@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from datetime import date
 from api.utils import is_task_currently_running, has_host_role
 from api.submissions import get_submission_channel
-from api.db_classes import Tasks, Submissions, session
+from api.db_classes import Tasks, Submissions, get_session
 from sqlalchemy import insert, delete
 
 load_dotenv()
@@ -24,15 +24,15 @@ class Start(commands.Cog):
             year = date.today().year
 
         if await is_task_currently_running() is None:
+            async with get_session() as session:
+                # Mark task as ongoing
+                await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, collab=collab,
+                                                           multiple_tracks=multiple_tracks, speed_task=speed_task))
 
-            # Mark task as ongoing
-            await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, collab=collab,
-                                                       multiple_tracks=multiple_tracks, speed_task=speed_task))
-
-            # Clear submissions from previous task
-            await session.execute(delete(Submissions))
-            # Commit changes to both tables affected
-            await session.commit()
+                # Clear submissions from previous task
+                await session.execute(delete(Submissions))
+                # Commit changes to both tables affected
+                await session.commit()
 
             # Delete previous "Current submissions" message in submission channel
             channel_id = await get_submission_channel(DEFAULT)

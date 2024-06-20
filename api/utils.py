@@ -5,7 +5,7 @@ import discord
 from urllib.parse import urlparse
 from discord.ext import commands
 from sqlalchemy import select, insert, update
-from api.db_classes import Money, Tasks, HostRole, session
+from api.db_classes import Money, Tasks, HostRole, get_session
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,22 +15,24 @@ DB_DIR = os.getenv('DB_DIR')
 
 
 async def get_balance(user_id, guild):
-    money = (await session.scalars(select(Money.coins).where(Money.user_id == user_id))).first()
-    if money is None:
-        balance = 500
-        stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
-        await session.execute(stmt)
-        await session.commit()
+    async with get_session() as session:
+        money = (await session.scalars(select(Money.coins).where(Money.user_id == user_id))).first()
+        if money is None:
+            balance = 500
+            stmt = (insert(Money).values(guild=guild, user_id=user_id, coins=balance))
+            await session.execute(stmt)
+            await session.commit()
 
-    else:
-        balance = money
-    return balance
+        else:
+            balance = money
+        return balance
 
 
 async def update_balance(user_id, guild, new_balance):
-    stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
-    await session.execute(stmt)
-    await session.commit()
+    async with get_session() as session:
+        stmt = (update(Money).values(guild=guild, user_id=user_id, coins=new_balance).where(Money.user_id == user_id))
+        await session.execute(stmt)
+        await session.commit()
 
 
 async def add_balance(user_id, server_id, amount):
@@ -48,12 +50,13 @@ async def deduct_balance(user_id, guild, amount):
 async def get_host_role(guild_id):
     default = DEFAULT
     # Retrieves the host role. By default, on the server, the default host role is 'Host'.
-    host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
+    async with get_session() as session:
+        host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
 
-    if host_role:
-        return host_role
-    else:
-        return None
+        if host_role:
+            return host_role
+        else:
+            return None
 
 
 def has_host_role():
@@ -115,8 +118,9 @@ async def is_task_currently_running():
     """Check if a task is currently running"""
     # Is a task running?
     # Does this need to be a function even?
-    active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1))).first()
-    return active
+    async with get_session() as session:
+        active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active,).where(Tasks.is_active == 1))).first()
+        return active
 
 
 def calculate_winnings(num_emojis, slot_number, constant=3):

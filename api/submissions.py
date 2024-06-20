@@ -1,7 +1,7 @@
 import discord
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, session, Submissions, LogChannel
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel
 from sqlalchemy import insert, select
 from api.utils import get_file_types
 
@@ -10,59 +10,66 @@ DEFAULT = os.getenv('DEFAULT')
 
 
 async def get_submission_channel(comp):
-    query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
-    channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-    # Handle case where no rows are found in the database
-    if channel[0] is None:
-        print(f"No submission channel found for competition '{comp}'.")
-        return None
-    return channel[0]
+    async with get_session() as session:
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel[0] is None:
+            print(f"No submission channel found for competition '{comp}'.")
+            return None
+        return channel[0]
 
 
 async def get_submission_channel_guild(channel_id):
-    query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
-    guild_id = (await session.scalars(query)).first()
-    if guild_id is None:
-        return None
-    return guild_id
+    async with get_session() as session:
+        query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
+        guild_id = (await session.scalars(query)).first()
+        if guild_id is None:
+            return None
+        return guild_id
 
 
 async def get_logs_channel(comp):
-    query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
-    channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-    # Handle case where no rows are found in the database
-    if channel[0] is None:
-        print(f"No logging channel found for '{comp}'.")
-        return None
-    return channel[0]
+    async with get_session() as session:
+        query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel[0] is None:
+            print(f"No logging channel found for '{comp}'.")
+            return None
+        return channel[0]
 
 
 async def first_time_submission(user_id):
     """Check if a certain user id has submitted to this competition already"""
-    query = select(Submissions.user_id).where(Submissions.user_id == user_id)
-    result = (await session.execute(query)).first()
+    async with get_session() as session:
+        query = select(Submissions.user_id).where(Submissions.user_id == user_id)
+        result = (await session.execute(query)).first()
 
-    return not result
+        return not result
 
 
 async def new_competitor(user_id):
     """Checks if a competitor has EVER submitted (present and past tasks)."""
-    query = select(Userbase.user_id).where(Userbase.user_id == user_id)
-    result = (await session.execute(query)).first()
-    return not result
+    async with get_session() as session:
+        query = select(Userbase.user_id).where(Userbase.user_id == user_id)
+        result = (await session.execute(query)).first()
+        return not result
 
 
 async def get_display_name(user_id):
     """Returns the display name of a certain user ID."""
-    result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
-    return result
+    async with get_session() as session:
+        result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
+        return result
 
 
 async def count_submissions():
     """Counts the number of submissions in the current task."""
-    query = select(Submissions)
-    result = (await session.scalars(query)).fetchall()
-    return len(result)
+    async with get_session() as session:
+        query = select(Submissions)
+        result = (await session.scalars(query)).fetchall()
+        return len(result)
 
 
 # old parameters: message, file, num, year
@@ -81,8 +88,9 @@ async def handle_submissions(message, self):
     # Checking if submitter has ever participated before
     if await new_competitor(author_id):
         # adding him to the user database.
-        await session.execute(insert(Userbase).values(user_id=author_id, user=author_name, display_name=author_dn))
-        await session.commit()
+        async with get_session() as session:
+            await session.execute(insert(Userbase).values(user_id=author_id, user=author_name, display_name=author_dn))
+            await session.commit()
 
     if not channel:
         print("Could not find the channel.")

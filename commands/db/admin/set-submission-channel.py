@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from api.db_classes import session, SubmissionChannel
+from api.db_classes import get_session, SubmissionChannel
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
 
@@ -19,18 +19,20 @@ class Setsubmissionchannel(commands.Cog):
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
 
         # TODO: detect which server you are in, so the comp argument is no longer needed
-        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
-        result = (await session.execute(query)).first()
-        if result is None:
-            stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-            await session.execute(stmt)
-        elif channel.id == result[0]:
-            pass
-        else:
-            stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-            await session.execute(stmt)
+        async with get_session() as session:
+            query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
+            result = (await session.execute(query)).first()
+            if result is None:
+                stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+                await session.execute(stmt)
+            elif channel.id == result[0]:
+                pass
+            else:
+                stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+                await session.execute(stmt)
 
-        await session.commit()
+            await session.commit()
+
         await ctx.send(f"The public submission display channel has been set! {channel.mention}")
 
 

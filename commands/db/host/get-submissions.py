@@ -1,7 +1,7 @@
 from discord.ext import commands
 from api.submissions import get_display_name
 from api.utils import has_host_role, float_to_readable
-from api.db_classes import Submissions, session
+from api.db_classes import Submissions, get_session
 from sqlalchemy import select
 import asyncio
 
@@ -15,17 +15,17 @@ class Get(commands.Cog):
     @has_host_role()
     async def command(self, ctx):
         # Get current task by taking random submission, and extracting task number
-        active_task = (await session.scalars(select(Submissions.task).limit(1))).first()
+        async with get_session() as session:
+            active_task = (await session.scalars(select(Submissions.task).limit(1))).first()
 
         if active_task is None:
             await ctx.send("There were no submissions.")
             return
 
         # Get submissions from current task
-
-
-        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
-        total_submissions = len(submissions)
+        async with get_session() as session:
+            submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
+            total_submissions = len(submissions)
         # Count submissions from current task
 
         header = f"__Task {active_task} submissions__:\n(Total submissions: {total_submissions})\n\n"

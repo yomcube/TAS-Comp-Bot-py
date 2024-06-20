@@ -102,7 +102,8 @@ characters = {
     44: "Large Mii",
     45: "Peach Biker Outfit",
     46: "Daisy Biker Outfit",
-    47: "Rosalina Biker Outfit"
+    47: "Rosalina Biker Outfit",
+    48: "None"
 }
 
 vehicles = {
@@ -141,5 +142,6 @@ vehicles = {
     32: "Spear",
     33: "Jet Bubble",
     34: "Dolphin Dasher",
-    35: "Phantom"
+    35: "Phantom",
+    36: "None"
 }
