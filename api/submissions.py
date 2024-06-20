@@ -34,7 +34,7 @@ async def get_logs_channel(comp):
         query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
         channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
         # Handle case where no rows are found in the database
-        if channel[0] is None:
+        if channel is None or channel[0] is None:
             print(f"No logging channel found for '{comp}'.")
             return None
         return channel[0]

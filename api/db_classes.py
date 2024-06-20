@@ -4,17 +4,21 @@ from sqlalchemy import Column, Integer, String, Float, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, declarative_base
 
-Base = declarative_base()
+
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
 
 
 load_dotenv()
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 engine = create_async_engine(f"sqlite+aiosqlite:///{DB_DIR}/database.db")
 meta = MetaData()
-Session = async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False,class_=AsyncSession)
+Session = async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False, class_=AsyncSession)
+
 
 def get_session():
-    return Session()
+    return async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False, class_=AsyncSession)()
+
 
 class Money(Base):
     __tablename__ = "money"
@@ -45,6 +49,7 @@ class Submissions(Base):
     dq_reason = Column('dq_reason', String)
     character = Column('character', String)
     vehicle = Column('vehicle', String)
+
 
 class Userbase(Base):
     __tablename__ = "userbase"
@@ -79,12 +84,6 @@ class HostRole(Base):
     guild_id = Column('guild_id', Integer)
 
 
-
 async def db_connect():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
-
-
-
-
