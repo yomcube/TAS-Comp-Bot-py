@@ -41,6 +41,8 @@ Fun commands 👀\n
         elif category == "misc":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Miscellaneous commands\n
+  **collab** -- (IN DEVELOPMENT) Team up with someone during a collab task!
+  **dissolve** -- (IN DEVELOPMENT) Disband your team during a collab task.
   **info** -- Shows information about the status of your submission. (DM only)
   **setname** -- Changes your display name for the submission channel (Not your server name!)
   **tracks** -- Picks a random track from the game!
