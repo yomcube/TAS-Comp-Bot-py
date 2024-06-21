@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel
 from sqlalchemy import insert, select
-from api.utils import get_file_types
+from api.utils import get_file_types, get_leader, get_team_size, is_in_team
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -72,7 +72,6 @@ async def count_submissions():
         return len(result)
 
 
-# old parameters: message, file, num, year
 async def handle_submissions(message, self):
     author = message.author
     author_name = message.author.name
@@ -102,24 +101,29 @@ async def handle_submissions(message, self):
     else:
         last_message = None
 
+    # Determine the correct author_id and display_name
+    if await get_team_size() > 1 and await is_in_team(author_id):
+        author_id = await get_leader(author_id)
+    author_display_name = await get_display_name(author_id)
+
     if last_message:
         # Try to find an editable message by the bot
         if last_message.author == self.bot.user:
 
             # Add a new line only if it's a new user ID submitting
             if await first_time_submission(author_id):
-                new_content = (f"{last_message.content}\n{await count_submissions()}. {await get_display_name(author_id)}"
+                new_content = (f"{last_message.content}\n{await count_submissions()}. {author_display_name}"
                                f" ||{author.mention}||")
                 await last_message.edit(content=new_content)
         else:
             # If the last message is not sent by the bot, send a new one
             await channel.send(
-                f"**__Current Submissions:__**\n1. {await get_display_name(author_id)} ||{author.mention}||")
+                f"**__Current Submissions:__**\n1. {author_display_name} ||{author.mention}||")
     else:
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
         await channel.send(
-            f"**__Current Submissions:__**\n1. {await get_display_name(author_id)} ||{author.mention}||")
+            f"**__Current Submissions:__**\n1. {author_display_name} ||{author.mention}||")
 
 
 async def handle_dms(message, self):

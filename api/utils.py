@@ -4,8 +4,8 @@ import aiohttp
 import discord
 from urllib.parse import urlparse
 from discord.ext import commands
-from sqlalchemy import select, insert, update
-from api.db_classes import Money, Tasks, HostRole, get_session
+from sqlalchemy import select, insert, update, inspect, or_
+from api.db_classes import Money, Tasks, Teams, HostRole, get_session
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -126,13 +126,33 @@ async def is_task_currently_running():
 
 
 async def get_team_size():
+    """Retrieves the team size of the running task. Over 1 means it is a collab task"""
     current_task = await is_task_currently_running()
     if current_task is not None:
         return current_task[3]
     else:
         return None
 
+async def is_in_team(id):
+    """Returns if a certain id is in a team (found in the Teams db)"""
+    async with get_session() as session:
+        inspector = inspect(Teams)
+        columns = inspector.columns
+        conditions = [getattr(Teams, column.name) == id for column in columns if
+                      column.type.python_type == int]
+        stmt = select(Teams).filter(or_(*conditions))
+        result = await session.execute(stmt)
+        results = result.scalars().all()
+        return results
 
+async def get_leader(id):
+    """Takes the id and returns the leader of id's team. Used for collab tasks. Returns none if not found."""
+    async with get_session() as session:
+        stmt = select(Teams.leader).filter(
+            (Teams.leader == id) | (Teams.user2 == id) |(Teams.user3 == id) | (Teams.user4 == id))
+        result = await session.execute(stmt)
+        leader = result.scalars().first()
+        return leader
 
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from datetime import date
 from api.utils import is_task_currently_running, has_host_role
 from api.submissions import get_submission_channel
-from api.db_classes import Tasks, Submissions, get_session
+from api.db_classes import Tasks, Submissions, Teams, get_session
 from sqlalchemy import insert, delete
 
 load_dotenv()
@@ -29,8 +29,9 @@ class Start(commands.Cog):
                 await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
                                                            multiple_tracks=multiple_tracks, speed_task=speed_task))
 
-                # Clear submissions from previous task
+                # Clear submissions from previous task, aswell as potential teams
                 await session.execute(delete(Submissions))
+                await session.execute(delete(Teams))
                 # Commit changes to both tables affected
                 await session.commit()
 

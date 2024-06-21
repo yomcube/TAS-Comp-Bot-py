@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Greedy
-from api.utils import get_team_size
-from api.db_classes import Teams, get_session
-from sqlalchemy import select, insert, update, delete, inspect, or_
+from api.utils import get_team_size, is_in_team
+from api.db_classes import Teams, Userbase, get_session
+from api.submissions import new_competitor
+from sqlalchemy import select, insert, update, delete
 
 
 class AcceptDeclineButtons(discord.ui.View):
@@ -82,16 +83,8 @@ class Team(commands.Cog):
             return await ctx.send("You are trying to collab with too many people!")
 
         # Make sure they are not already in a team
-        async with get_session() as session:
-            inspector = inspect(Teams)
-            columns = inspector.columns
-            conditions = [getattr(Teams, column.name) == ctx.author.id for column in columns if
-                          column.type.python_type == int]
-            stmt = select(Teams).filter(or_(*conditions))
-            result = await session.execute(stmt)
-            results = result.scalars().all()
-            if results:
-                return await ctx.send("You are already in a team.")
+        if await is_in_team(ctx.author.id):
+            return await ctx.send("You are already in a team.")
 
         # Make sure they are not collaborating with themselves: absurd
         for user in users:
@@ -120,7 +113,7 @@ class Team(commands.Cog):
                 user_mentions = ", ".join(f"<@{user_id}>" for user_id in self.pending_users)
                 await self.ctx.send(f"{self.author.mention} is collaborating with {user_mentions}!")
 
-                # Add team to db
+                # Add team to Teams db
                 user_ids = list(self.pending_users.keys())
                 async with get_session() as session:
                     await session.execute(
@@ -128,6 +121,13 @@ class Team(commands.Cog):
                                              user3=user_ids[1] if len(user_ids) > 1 else None,
                                              user4=user_ids[2] if len(user_ids) > 2 else None))
 
+                    # Add any new users to Userbase db
+                    for id in self.pending_users:
+                        if await new_competitor(id):
+                            # adding him to the user database.
+                            await session.execute(insert(Userbase).values(user_id=id, user=self.bot.get_user(id).name,
+                                                                              display_name=self.bot.get_user(id).display_name))
+                    # Commit both changes
                     await session.commit()
 
                 # clear pending users list
