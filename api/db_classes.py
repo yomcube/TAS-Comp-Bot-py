@@ -76,9 +76,6 @@ class Teams(Base):
     user4 = Column('user4', Integer, nullable=True)
 
 
-
-
-
 class LogChannel(Base):
     __tablename__ = "log_channel"
     index = Column('index', Integer, primary_key=True)

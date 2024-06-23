@@ -49,7 +49,7 @@ class AcceptDeclineButtons(discord.ui.View):
         self.handled = True
 
 
-class Team(commands.Cog):
+class Collab(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pending_users = {}
@@ -57,9 +57,7 @@ class Team(commands.Cog):
         self.author = None
         self.team_size = None
 
-    @commands.hybrid_command(name="collab", aliases=["team"],
-                             description="Collaborate with someone during a team task", with_app_command=True)
-    @commands.has_permissions(administrator=True)
+    @commands.hybrid_command(name="collab", description="Collaborate with someone during a team task", with_app_command=True)
     async def collab(self, ctx, users: Greedy[discord.Member]):
         self.ctx = ctx
         self.author = ctx.author
@@ -89,7 +87,7 @@ class Team(commands.Cog):
         # Make sure they are not collaborating with themselves: absurd
         for user in users:
             if user.id == self.author.id:
-                return await ctx.send("Collaborating with...yourself? sus")
+                return await ctx.send("Collaborating with... yourself? sus")
 
         #####################
         # Button view
@@ -135,27 +133,7 @@ class Team(commands.Cog):
             else:
                 await self.ctx.send("One or more users declined the collaboration. No teams have been formed.")
                 self.pending_users.clear()
-
-    @commands.hybrid_command(name="dissolve", aliases=["disband"],
-                                 description="Dissolve your team (WARNING: No confirmation)", with_app_command=True)
-    @commands.has_permissions(administrator=True)
-    async def dissolve(self, ctx):
-        async with get_session() as session:
-            # Check if the user is the leader of any team
-            stmt = select(Teams).where(Teams.leader == ctx.author.id)
-            result = await session.execute(stmt)
-            team = result.scalar()
-
-            if team:
-                # Delete the team
-                await session.execute(delete(Teams).where(Teams.leader == ctx.author.id))
-                await session.commit()
-                await ctx.send("Your team has been dissolved.")
-            else:
-                await ctx.send("You are not the leader of any team.")
-
-
-
+                
 
 async def setup(bot):
-    await bot.add_cog(Team(bot))
+    await bot.add_cog(Collab(bot))
