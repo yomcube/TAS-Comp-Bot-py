@@ -102,6 +102,18 @@ class Collab(commands.Cog):
                 view=view)
             view.message = message  # Store the message in the view for later editing
 
+        ####################################
+        # Adding executor to user db if new
+        ####################################
+        if await new_competitor(ctx.author.id):
+            async with get_session() as session:
+                await session.execute(insert(Userbase).values(user_id=ctx.author.id, user=self.bot.get_user(ctx.author.id).name,
+                                                              display_name=self.bot.get_user(ctx.author.id).display_name))
+                await session.commit()
+
+
+
+
     async def user_response(self, user, accepted):
         self.pending_users[user.id] = accepted
         if all(response is not None for response in self.pending_users.values()):

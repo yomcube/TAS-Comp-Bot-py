@@ -115,7 +115,7 @@ def float_to_readable(seconds):
 
 
 async def is_task_currently_running():
-    """Check if a task is currently running"""
+    """Check if a task is currently running. Returns a list with the parameters of active task, if so."""
     # Is a task running?
     # Does this need to be a function even?
     async with get_session() as session:
