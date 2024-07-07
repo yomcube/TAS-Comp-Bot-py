@@ -46,7 +46,7 @@ class TeamsCommand(commands.Cog):
                     display_name = self.bot.get_user(value).display_name
                     row_data.append(display_name)
             teams[row.index] = row_data
-            content += f'{row.index}. {', '.join(row_data)} \n'
+            content += f"{row.index}. {', '.join(row_data)} \n"
 
         return await ctx.send(content)
 
