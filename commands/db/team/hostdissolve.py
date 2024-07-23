@@ -3,8 +3,6 @@ from api.db_classes import Teams, get_session
 from api.utils import has_host_role
 from sqlalchemy import select, delete
 
-
-
 class HostDissolve(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel
 from sqlalchemy import insert, select
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team
+from api.utils import get_file_types, get_team_size, is_in_team
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -101,9 +101,6 @@ async def handle_submissions(message, self):
     else:
         last_message = None
 
-    # Determine the correct author_id and display_name
-    if await get_team_size() > 1 and await is_in_team(author_id):
-        author_id = await get_leader(author_id)
     author_display_name = await get_display_name(author_id)
 
     if last_message:

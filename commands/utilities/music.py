@@ -71,7 +71,7 @@ class Music(commands.Cog):
         except Exception as e:
             print(f'Error: {e}')
 
-    @commands.hybrid_command(name="leave", description="Kick the bot out of your VC channel.", with_app_command=True)
+    @commands.hybrid_command(name="leave-vc", description="Kick the bot out of your VC channel.", with_app_command=True)
     async def leave(self, ctx):
         if ctx.voice_client:
 

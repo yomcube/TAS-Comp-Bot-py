@@ -127,7 +127,7 @@ class Collab(commands.Cog):
                 user_ids = list(self.pending_users.keys())
                 async with get_session() as session:
                     await session.execute(
-                        insert(Teams).values(leader=self.author.id, user2=user_ids[0] if len(user_ids) > 0 else None,
+                        insert(Teams).values(user1=self.author.id, user2=user_ids[0] if len(user_ids) > 0 else None,
                                              user3=user_ids[1] if len(user_ids) > 1 else None,
                                              user4=user_ids[2] if len(user_ids) > 2 else None))
 
