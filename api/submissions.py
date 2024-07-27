@@ -142,10 +142,16 @@ async def handle_dms(message, self):
 
         if len(attachments) > 0:
             file_dict = get_file_types(attachments)
-            from api.mkwii.mkwii_file_handling import handle_mkwii_files  # TODO: use a class here?
-
             try:
-                await handle_mkwii_files(message, attachments, file_dict, self)
+                # TODO: use a class here?
+                if DEFAULT == "mkw":
+                    from api.mkwii.mkwii_file_handling import handle_mkwii_files
+                    await handle_mkwii_files(message, attachments, file_dict, self)
+                elif DEFAULT == "nsmbw":
+                    from api.nsmbwii.nsmbwii_file_handling import handle_nsmbwii_files
+                    await handle_nsmbwii_files(message, attachments, file_dict, self)
+                else:
+                    pass
 
             except TimeoutError:
                 await channel.send("Could not process Files!")

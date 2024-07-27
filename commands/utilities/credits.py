@@ -19,6 +19,7 @@ Here is the list of contributors to this project, in alphabetical order:
   **Epik95** -- Foundation of the bot
   **shxd** -- Competition structure, MKW submission handling, economy, helped with commands
   **slither** -- SM64 features, and helping with some of the fun commands
+  **TomCube** -- NSMBW submission handling
 """
 
         await ctx.reply(credits)
