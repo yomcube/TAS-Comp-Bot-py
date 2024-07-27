@@ -18,7 +18,7 @@ class Message(commands.Cog):
         content = message.content
         lower_content = content.lower()
 
-        msg_list = ["kierio", "crazy", "😃"]
+        msg_list = ["kierio", "crazy", "😃", "when stream"]
 
         if str(lower_content).startswith(msg_list[0]):
             await message.reply("kiro*")
@@ -27,6 +27,8 @@ class Message(commands.Cog):
             await self.wait_crazy(message)
         elif msg_list[2] in lower_content:
             await message.add_reaction("✈️")
+        elif msg_list[3] in lower_content:
+            await message.reply("The stream will start at <t:1721689200:t> (local time), unless said otherwise by streamer or the host.")
 
     async def wait_crazy(self, message):
         def check(m):

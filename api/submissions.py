@@ -1,7 +1,7 @@
 import discord
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel
 from sqlalchemy import insert, select
 from api.utils import get_file_types, get_team_size, is_in_team
 
@@ -32,6 +32,16 @@ async def get_submission_channel_guild(channel_id):
 async def get_logs_channel(comp):
     async with get_session() as session:
         query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No logging channel found for '{comp}'.")
+            return None
+        return channel[0]
+    
+async def get_seeking_channel(comp):
+    async with get_session() as session:
+        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
         channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
         # Handle case where no rows are found in the database
         if channel is None or channel[0] is None:
