@@ -24,6 +24,9 @@ class Weather(commands.Cog):
 
     @commands.hybrid_command(name="weather", description="Checks the weather for a specific place", with_app_command=True)
     async def command(self, ctx, *, city: str, country: str = None):
+        if key == "":
+            await ctx.send("Could not find an OpenWeather API key.")
+            return
         check_limit()
         request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric")
         response = request.json()
