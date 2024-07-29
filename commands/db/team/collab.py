@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import Greedy
 from api.utils import get_team_size, is_in_team
 from api.db_classes import Teams, Userbase, get_session
-from api.submissions import new_competitor
+from api.submissions import new_competitor, get_display_name
 from sqlalchemy import select, insert, update, delete
 
 
@@ -123,11 +123,23 @@ class Collab(commands.Cog):
                 user_mentions = ", ".join(f"<@{user_id}>" for user_id in self.pending_users)
                 await self.ctx.send(f"{self.author.mention} is collaborating with {user_mentions}!")
 
+
+                members = []
+                members.append(await get_display_name(self.author.id))
+
+                for member in self.pending_users.keys():
+                    if await get_display_name(member) is not None:
+                        member_name = await get_display_name(member)
+                    else:
+                        member_name = self.bot.get_user(member).display_name
+                    members.append(member_name)
+                default_team_name = " & ".join(members)
+
                 # Add team to Teams db
                 user_ids = list(self.pending_users.keys())
                 async with get_session() as session:
                     await session.execute(
-                        insert(Teams).values(user1=self.author.id, user2=user_ids[0] if len(user_ids) > 0 else None,
+                        insert(Teams).values(team_name = default_team_name, leader=self.author.id, user2=user_ids[0] if len(user_ids) > 0 else None,
                                              user3=user_ids[1] if len(user_ids) > 1 else None,
                                              user4=user_ids[2] if len(user_ids) > 2 else None))
 

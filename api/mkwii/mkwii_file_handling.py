@@ -1,5 +1,5 @@
 from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team
+from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.db_classes import get_session, Submissions, Teams, Userbase
 from sqlalchemy import insert, update, select
@@ -49,6 +49,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
             # If submitter is in a team, make any submission on behalf of his leader
             async with get_session() as session:
                 if await get_team_size() > 1 and await is_in_team(submitter_id):
+                    submitter_id = await get_leader(submitter_id)
                     submitter_name = await session.scalar(select(Userbase.user).where(Userbase.user_id == submitter_id))
 
             ###################
@@ -104,6 +105,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
             # If submitter is in a team, make any submission on behalf of his leader
             async with get_session() as session:
                 if await get_team_size() > 1 and await is_in_team(submitter_id):
+                    submitter_id = await get_leader(submitter_id)
                     submitter_name = await session.scalar(select(Userbase.user).where(Userbase.user_id == submitter_id))
 
             # Add first-time submission

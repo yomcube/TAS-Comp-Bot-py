@@ -145,6 +145,18 @@ async def is_in_team(id):
         results = result.scalars().all()
         return results
 
+async def get_leader(id):
+    """Takes the id and returns the leader of id's team. Used for collab tasks. Returns none if not found."""
+    async with get_session() as session:
+        stmt = select(Teams.leader).filter(
+            (Teams.leader == id) | (Teams.user2 == id) |(Teams.user3 == id) | (Teams.user4 == id))
+        result = await session.execute(stmt)
+        leader = result.scalars().first()
+        return leader
+
+
+
+
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))
     winnings = constant * slot_number * (1 / probability)

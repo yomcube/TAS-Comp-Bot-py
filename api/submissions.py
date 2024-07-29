@@ -1,9 +1,9 @@
 import discord
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel
-from sqlalchemy import insert, select
-from api.utils import get_file_types, get_team_size, is_in_team
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
+from sqlalchemy import insert, select, or_
+from api.utils import get_file_types, get_leader, get_team_size, is_in_team
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -73,6 +73,41 @@ async def get_display_name(user_id):
         result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
         return result
 
+async def get_team_name(user_id):
+    """Returns the display name of the team a certain user ID is in."""
+    async with get_session() as session:
+        stmt = select(Teams.team_name).filter(
+            (Teams.leader == user_id) | (Teams.user2 == user_id) | (Teams.user3 == user_id) |
+            (Teams.user4 == user_id))
+
+        result = (await session.execute(stmt)).first()
+        return result[0] if result else None
+async def get_team_ids(id):
+    """Takes list of IDs, and retrieves all the members of the team. Used for submission list"""
+    async with get_session() as session:
+        # Construct the query to find the team with the specified user ID
+        result = await session.execute(
+            select(Teams).where(
+                or_(Teams.leader == id, Teams.user2 == id, Teams.user3 == id, Teams.user4 == id)
+            )
+        )
+        team = result.scalars().first()
+
+        if team:
+            # Filter out None values and return the list of user IDs
+            return [user for user in [team.leader, team.user2, team.user3, team.user4] if user is not None]
+        else:
+            return None
+
+
+async def get_team_members(id_list):
+    """Takes list of IDs, and retrieves all the members of the team. Used for submission list"""
+    Members = []
+    for id in id_list:
+        name = await get_display_name(id)
+        Members.append(name)
+    return Members
+
 
 async def count_submissions():
     """Counts the number of submissions in the current task."""
@@ -80,6 +115,41 @@ async def count_submissions():
         query = select(Submissions)
         result = (await session.scalars(query)).fetchall()
         return len(result)
+
+async def post_submission_list(channel, id, name):
+    # Case if user is in team
+    if await is_in_team(id):
+        ids = await get_team_ids(id)
+        members = await get_team_members(ids)
+        team_name = await get_team_name(id)
+        mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
+
+        return await channel.send(
+            f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||")
+
+    # Case if solo
+    return await channel.send(
+        f"**__Current Submissions:__**\n1. {name} ||<@{id}>||")
+
+
+async def update_submission_list(last_message, id, name):
+    """Handles updating the submission list message and renaming user submissions"""
+    # Case if user is in team
+    if await is_in_team(id):
+        ids = await get_team_ids(id)
+        members = await get_team_members(ids)
+        team_name = await get_team_name(id)
+        mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
+
+        new_content = (f"{last_message.content}\n{await count_submissions()}. {team_name} ({' & '.join(members)})"
+                       f" ||{mentions}||")
+        return await last_message.edit(content=new_content)
+
+    # solo submission
+    new_content = (f"{last_message.content}\n{await count_submissions()}. {name}"
+                    f" ||<@{id}>||")
+    return await last_message.edit(content=new_content)
+
 
 
 async def handle_submissions(message, self):
@@ -111,6 +181,9 @@ async def handle_submissions(message, self):
     else:
         last_message = None
 
+    # Determine the correct author_id and display_name
+    if await get_team_size() > 1 and await is_in_team(author_id):
+        author_id = await get_leader(author_id)
     author_display_name = await get_display_name(author_id)
 
     if last_message:
@@ -119,18 +192,21 @@ async def handle_submissions(message, self):
 
             # Add a new line only if it's a new user ID submitting
             if await first_time_submission(author_id):
-                new_content = (f"{last_message.content}\n{await count_submissions()}. {author_display_name}"
-                               f" ||{author.mention}||")
-                await last_message.edit(content=new_content)
+            #     new_content = (f"{last_message.content}\n{await count_submissions()}. {author_display_name}"
+            #                    f" ||{author.mention}||")
+            #     await last_message.edit(content=new_content)
+                await update_submission_list(last_message, author_id, author_display_name)
+
+
         else:
             # If the last message is not sent by the bot, send a new one
-            await channel.send(
-                f"**__Current Submissions:__**\n1. {author_display_name} ||{author.mention}||")
+            # await channel.send(
+            #     f"**__Current Submissions:__**\n1. {author_display_name} ||{author.mention}||")
+            await post_submission_list(channel, author_id, author_display_name)
     else:
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
-        await channel.send(
-            f"**__Current Submissions:__**\n1. {author_display_name} ||{author.mention}||")
+        await post_submission_list(channel, author_id, author_display_name)
 
 
 async def handle_dms(message, self):

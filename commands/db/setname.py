@@ -1,6 +1,6 @@
 from discord.ext import commands
 from api.db_classes import Userbase, get_session
-from api.submissions import get_submission_channel
+from api.submissions import get_submission_channel, is_in_team
 from sqlalchemy import select, update
 import os
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
 
 
-async def rename_in_submission_list(self, old_display_name, new_display_name):
+async def rename_in_submission_list(self, ctx, old_display_name, new_display_name):
     submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
@@ -24,15 +24,30 @@ async def rename_in_submission_list(self, old_display_name, new_display_name):
                 if new_display_name in line:
                     return
 
-            for line in lines[1:]:
-                if old_display_name in line:
-                    line = line.replace(old_display_name, new_display_name)
-                new_lines.append(line)
+            # how to replace if in team (replace name only within the parentheses).
+            if await is_in_team(ctx.author.id):
+                for line in lines[1:]:
+                    start_idx = line.find('(')
+                    end_idx = line.find(')')
+                    if start_idx != -1 and end_idx != -1:
+                        within_parentheses = line[start_idx:end_idx]
+                        if old_display_name in within_parentheses:
+                            updated_within_parentheses = within_parentheses.replace(old_display_name, new_display_name)
+                            line = line[:start_idx] + updated_within_parentheses + line[end_idx:]
+
+            # Replace normally if solo
+            else:
+                for line in lines[1:]:
+                    if old_display_name in line:
+                        line = line.replace(old_display_name, new_display_name)
+
+            new_lines.append(line)
 
             new_content = '\n'.join(new_lines)
             if new_content != message.content:
                 await message.edit(content=new_content)
             break  # Stop after finding the last bot message
+
 
 
 class Setname(commands.Cog):
@@ -69,7 +84,7 @@ class Setname(commands.Cog):
 
                 await ctx.send(f"Name successfully set to **{new_name}**.")
 
-                await rename_in_submission_list(self, old_display_name, new_name)
+                await rename_in_submission_list(self, ctx, old_display_name, new_name)
 
 
 async def setup(bot) -> None:

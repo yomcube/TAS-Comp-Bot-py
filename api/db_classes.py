@@ -70,7 +70,8 @@ class SubmissionChannel(Base):
 class Teams(Base):
     __tablename__ = "teams"
     index = Column('index', Integer, primary_key=True, autoincrement=True)
-    user1 = Column('user1', Integer, nullable=False)
+    team_name = Column('team_name', String)
+    leader = Column('leader', Integer, nullable=False)
     user2 = Column('user2', Integer, nullable=True)
     user3 = Column('user3', Integer, nullable=True)
     user4 = Column('user4', Integer, nullable=True)
