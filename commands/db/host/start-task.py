@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from datetime import date
 from api.utils import is_task_currently_running, has_host_role, get_team_size
 from api.submissions import get_submission_channel, get_seeking_channel
-from api.db_classes import Tasks, Submissions, Teams, get_session
+from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session
 from sqlalchemy import insert, delete, select
 
 load_dotenv()
@@ -84,9 +84,10 @@ class Start(commands.Cog):
                 await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
                                                            multiple_tracks=multiple_tracks, speed_task=speed_task))
 
-                # Clear submissions from previous task, as well as potential teams
+                # Clear submissions from previous task, as well as potential teams, and speed task table
                 await session.execute(delete(Submissions))
                 await session.execute(delete(Teams))
+                await session.execute(delete(SpeedTask))
                 # Commit changes to both tables affected
                 await session.commit()
 
@@ -124,7 +125,6 @@ class Start(commands.Cog):
             await ctx.send("Seeking channel not found. Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
             return
 
-        ctx.author
         team_size = await get_team_size()
 
         # Verify if it's indeed a collab task

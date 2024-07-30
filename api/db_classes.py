@@ -50,6 +50,12 @@ class Submissions(Base):
     character = Column('character', String)
     vehicle = Column('vehicle', String)
 
+class SpeedTask(Base):
+    __tablename__ = "speedtask"
+    user_id = Column('user_id', Integer, primary_key=True)
+    end_time = Column('end_time', Integer)
+    active = Column('active', String)
+
 
 class Userbase(Base):
     __tablename__ = "userbase"
@@ -97,6 +103,20 @@ class SeekingChannel(Base):
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
     channel_id = Column('channel_id', Integer)
+    guild_id = Column('guild_id', Integer)
+
+class SpeedTaskTime(Base):
+    __tablename__ = "speedtasktime"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    time = Column('time', Float, default = 4.0)
+    guild_id = Column('guild_id', Integer)
+
+class SpeedTaskDesc(Base):
+    __tablename__ = "speedtaskdesc"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    desc = Column('desc', Integer)
     guild_id = Column('guild_id', Integer)
 
 
