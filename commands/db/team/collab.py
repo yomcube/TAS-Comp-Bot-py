@@ -3,9 +3,14 @@ from discord.ext import commands
 from discord.ext.commands import Greedy
 from api.utils import get_team_size, is_in_team
 from api.db_classes import Teams, Userbase, get_session
-from api.submissions import new_competitor, get_display_name
+from api.submissions import new_competitor, get_display_name, get_seeking_channel
 from sqlalchemy import select, insert, update, delete
+import os
+from dotenv import load_dotenv
 
+
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')
 
 class AcceptDeclineButtons(discord.ui.View):
     def __init__(self, user: discord.Member, callback):
@@ -25,6 +30,7 @@ class AcceptDeclineButtons(discord.ui.View):
         await interaction.response.edit_message(content=f"{self.user.mention} has accepted the collaboration!",
                                                 view=self)
         await self.callback(self.user, True)
+
 
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red)
     async def decline(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -151,6 +157,27 @@ class Collab(commands.Cog):
                                                                               display_name=self.bot.get_user(id).display_name))
                     # Commit both changes
                     await session.commit()
+
+                # Add team to pinned team message
+
+                usernames = []
+                usernames.append(self.bot.get_user(self.author.id).display_name)
+                for user_id in user_ids:
+                    usernames.append(self.bot.get_user(user_id).display_name)
+
+                seeking_channel_id = await get_seeking_channel(DEFAULT)
+                seeking_channel = self.bot.get_channel(seeking_channel_id)
+                pinned_messages = await seeking_channel.pins()
+                bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
+                latest_bot_pinned_message = bot_pinned_messages[-1]
+
+                content = latest_bot_pinned_message.content
+
+                # Join the lines back into a single string
+                new_content = ', '.join(usernames)
+
+                # Edit the message with the new content
+                await latest_bot_pinned_message.edit(content=f'{content}\n{new_content}')
 
                 # clear pending users list
                 self.pending_users.clear()

@@ -11,61 +11,6 @@ from sqlalchemy import insert, delete, select
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
 
-class TeamsView(discord.ui.View):
-    def __init__(self, bot, final_message):
-        super().__init__()
-        self.bot = bot
-        self.final_message = final_message
-        self.partners = []  # list to store users who have pressed the button
-
-    @discord.ui.button(label="🤝", style=discord.ButtonStyle.blurple)
-    async def free(self, interaction: discord.Interaction, button: discord.ui.Button):
-        username = interaction.user.name
-        if username in self.partners:
-            self.partners.remove(username)
-            await interaction.response.send_message("You have been removed from the list of available partners.", ephemeral=True)
-        else:
-            self.partners.append(username)
-            await interaction.response.send_message("You have been added to the list of available partners!\nClick again to remove yourself, or else it will remove you by default when you find a team.", ephemeral=True)
-
-        await self.update_message()
-
-    async def update_message(self):
-        teams_content = "__**Confirmed teams:**__\n"
-        partners_content = "__**Available partners:**__\n"
-
-        try:
-            # Retrieve teams from db
-            async with get_session() as session:
-                result = await session.execute(select(Teams))
-                rows = result.scalars().all()
-
-            # Write each line of teams
-            teams = {}
-            for row in rows:
-                row_data = []
-                for column in row.__table__.columns:
-                    # value is discord account id
-                    value = getattr(row, column.name)
-
-                    if value is not None and column.name != "index":
-                        display_name = self.bot.get_user(value).display_name
-                        row_data.append(display_name)
-                teams[row.index] = row_data
-                teams_content += f"{row.index}. {', '.join(row_data)} \n"
-            
-            # Write each line of partners
-            for partner in self.partners:
-                if partner in teams:
-                    self.partners.pop(partner)
-                else:
-                    partners_content += f"{partner}\n"
-            
-            await self.final_message.edit(content=f"{teams_content}\n{partners_content}")
-        
-        except AttributeError as e:
-            print(f"AttributeError: {e}")
-
 class Start(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -88,6 +33,7 @@ class Start(commands.Cog):
                 await session.execute(delete(Submissions))
                 await session.execute(delete(Teams))
                 await session.execute(delete(SpeedTask))
+
                 # Commit changes to both tables affected
                 await session.commit()
 
@@ -117,13 +63,22 @@ class Start(commands.Cog):
         ######################
         #### TEAMS SYSTEM ####
         ######################
-        
-        seeking_channel_id = await get_seeking_channel(DEFAULT)
-        seeking_channel = self.bot.get_channel(seeking_channel_id)
-        
-        if seeking_channel is None:
-            await ctx.send("Seeking channel not found. Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
-            return
+        try:
+            seeking_channel_id = await get_seeking_channel(DEFAULT)
+            seeking_channel = self.bot.get_channel(seeking_channel_id)
+
+
+            # unpin old teams message
+            pinned_messages = await seeking_channel.pins()
+            bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
+            if not bot_pinned_messages:
+                print("No pinned messages by the bot found. Nothing to unpin")
+
+            await bot_pinned_messages[-1].unpin()
+
+        except AttributeError:
+            await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
+
 
         team_size = await get_team_size()
 
@@ -131,45 +86,15 @@ class Start(commands.Cog):
         if team_size < 2:
             return
 
+
         teams_content = "__**Confirmed teams:**__\n"
-        partners_content = "__**Available partners:**__\n"
 
         try:
-            # Retrieve teams from db
-            async with get_session() as session:
-                result = await session.execute(select(Teams))
-                rows = result.scalars().all()
 
-            # Write each line of teams
-            teams = {}
-            for row in rows:
-                row_data = []
-                for column in row.__table__.columns:
-                    # value is discord account id
-                    value = getattr(row, column.name)
-
-                    if value is not None and column.name != "index":
-                        display_name = self.bot.get_user(value).display_name
-                        row_data.append(display_name)
-                teams[row.index] = row_data
-                teams_content += f"{row.index}. {', '.join(row_data)} \n"
-            
-            # Write each line of partners
-            partners = []
-            partners_content = "__**Available partners:**__\n"
-            for partner in partners:
-                if partner in teams:
-                    partners.pop(partner)
-                else:
-                    partners_content += f"{partner}\n"
-
-            final_message = await seeking_channel.send(f"{teams_content}\n{partners_content}")
+            final_message = await seeking_channel.send(f"{teams_content}")
             await final_message.pin()
 
-            teams_view = TeamsView(self.bot, final_message)
 
-            await final_message.edit(view=teams_view)
-        
         except AttributeError:
             await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
 

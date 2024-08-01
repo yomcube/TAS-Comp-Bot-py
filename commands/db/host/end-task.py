@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from api.utils import has_host_role
-from api.submissions import get_seeking_channel
 from api.db_classes import Tasks, get_session
 from sqlalchemy import select, update, delete
 
@@ -23,6 +22,7 @@ class End(commands.Cog):
         # Is a task running?
         if currently_running:
             async with get_session() as session:
+
                 number = currently_running.task
                 year = currently_running.year
                 await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
@@ -31,6 +31,7 @@ class End(commands.Cog):
                 await session.execute(delete(Tasks).where(Tasks.is_active == 0))
                 
                 await session.commit()
+
 
             await ctx.send(f"Successfully ended **Task {number} - {year}**!")
         else:
