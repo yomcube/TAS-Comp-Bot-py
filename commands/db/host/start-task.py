@@ -71,13 +71,14 @@ class Start(commands.Cog):
             # unpin old teams message
             pinned_messages = await seeking_channel.pins()
             bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
-            if not bot_pinned_messages:
-                print("No pinned messages by the bot found. Nothing to unpin")
 
             await bot_pinned_messages[-1].unpin()
 
         except AttributeError:
             await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
+
+        except IndexError:
+            print("No message from bot to unpin")
 
 
         team_size = await get_team_size()
