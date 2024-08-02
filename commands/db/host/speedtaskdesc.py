@@ -17,7 +17,7 @@ class Speedtaskdesc(commands.Cog):
     @commands.hybrid_command(name="speed-task-desc", aliases=['std'],
                              description="Set the description of the speed tasks", with_app_command=True)
     @has_host_role()
-    async def command(self, ctx, desc: str, comp: str = DEFAULT):
+    async def command(self, ctx, *, desc: str, comp: str = DEFAULT):
 
         # TODO: detect which server you are in, so the comp argument is no longer needed
         async with get_session() as session:

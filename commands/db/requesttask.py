@@ -31,9 +31,8 @@ class Requesttask(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="requesttask",
-                             description="Request the task (Speed tasks only)", with_app_command=True)
-    async def command(self, ctx):
+    @commands.command(name="requesttask")
+    async def requesttask(self, ctx):
 
         current_task = await is_task_currently_running()
 
@@ -64,7 +63,7 @@ class Requesttask(commands.Cog):
                 await ctx.author.send(f"You have requested the task!\n\n**__Task {task_number}, {task_year}:__** \n\n{task_desc}\n\n"
                                       f"You have until <t:{end_time}:f> (<t:{end_time}:R>) to submit.\nGood luck!")
 
-            except discord.Forbidden:
+            except discord.Forbidden: # Catch DM closed error
                 return await ctx.send("I couldn't send you a DM. Do you have DMs disabled?")
 
             await session.execute(insert(SpeedTask).values(user_id=ctx.author.id, end_time=end_time, active=1))

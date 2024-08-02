@@ -12,8 +12,9 @@ class Help(commands.Cog):
 List of commands\n
 **Commands**:
   **help** -- this
-  **fun** -- Fun commands, such as slots
+  **comp** -- Public competition-related commands
   **misc** -- Miscellaneous commands
+  **fun** -- Fun commands, such as slots
   **voice** -- Voice chat commands
   **host** -- Host-only commands, for handling tasks.
   **admin** -- Admin commands
@@ -23,7 +24,20 @@ Write `$help <category>` to view help for a specific category. (Except credits, 
 Note: Most commands are available using the prefix `$`, aswell as using `/`.
     """
 
-        elif category == "fun":
+        if category.lower() == "comp":
+            help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+Competition commands\n
+  **collab** -- Team up with someone during a collab task!
+  **info** -- Shows information about the status of your submission. (DM only)
+  **leaveteam** -- Leave your team during a collab task.
+  **requesttask** -- Request the task (sent to your DMs) during a speed task.
+  **setname** -- Changes your display name for the submission channel (Not your server name!).
+  **setteamname** -- Changes your team's name in the submission channel.
+  **teams** -- View the list of teams during a collab task.
+"""
+
+
+        elif category.lower() == "fun":
 
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Fun commands 👀\n
@@ -38,51 +52,53 @@ Fun commands 👀\n
   **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
 """
 
-        elif category == "misc":
+        elif category.lower() == "misc":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Miscellaneous commands\n
-  **collab** -- (IN DEVELOPMENT) Team up with someone during a collab task!
-  **dissolve** -- (IN DEVELOPMENT) Disband your team during a collab task.
-  **info** -- Shows information about the status of your submission. (DM only)
-  **setname** -- Changes your display name for the submission channel (Not your server name!)
   **tracks** -- Picks a random track from the game!
   **urban** -- Search urban dictionary for a word or expression!
   **weather** -- Get the weather of a city!
 """
 
-        elif category == "voice":
+        elif category.lower() == "voice":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Voice chat commands :musical_note: \n
   **joinvc** -- Invites the bot in your vc.
-  **leave** -- Kicks the bot off of your vc.
+  **leave-vc** -- Kicks the bot off of your vc.
   **play** -- Plays a youtube video (sound-only) inside the vc!
   **stop** -- Stops the ongoing video.
 """
 
 
 
-
-        elif category == "host":
+        elif category.lower() == "host":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Host commands :mishchievous:\n
+  **delete-submission** -- Delete someone's submission. 
   **/dm** -- Make the bot dm someone!
   **/edit-submission** -- Edits someone's submission status: time, dq (True/False), dq reason
   **end-task** -- Ends the current task (Warning: No confirmation). This does not clear submissions.
   **get-results** -- Prints the results of the current (ended or not) task. Valid and DQ'ed runs
   **get-submissions** -- Your bread and butter for starting to judge and time runs!
+  **hostdissolve** -- Dissolve a team. Use $teams to see different team indexes.
+  **speed-task-desc** -- Set the description of a speed task.
+  **speed-task-time** -- Set the duration competitors have to submit to a speed task.
   **/start-task** -- Starts a new task. Warning: this deletes last task's stored submissions, results, and 'Current submission' message.
   **/submit** -- Submit a file for someone, should an issue arise. Use this as last resort :P
 """
 
-        elif category == "admin":
+        elif category.lower() == "admin":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
-Admin commands :cereal:\n
+Admin commands \n
   **addcoins** -- Adds coins to someone's balance (or remove, if a negative number is specified).
+  **config** -- Configure the different roles and channels
   **say** -- Make the bot say something in a channel!
-  **set-host-role -- Sets the host role that can use all the Host commands. Default role is a role called 'Host'.
-  **set-logs-channel -- Sets the dm logging channel 
+  **set-host-role** -- Sets the host role that can use all the Host commands. Default role is a role called 'Host'.
+  **set-logs-channel** -- Sets the dm logging channel 
+  **set-seeking-channel** -- Sets the Seeking partners channel
   **set-submission-channel** -- Set the submission channel where the 'Current submissions' message is.
   """
+
 
         await ctx.send(help_menu)
 

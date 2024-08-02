@@ -15,7 +15,7 @@ class Speedtasktime(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="speed-task-time", aliases=['stt'],
-                             description="Set the time users have to submit to speed tasks", with_app_command=True)
+                             description="Set the time users have to submit to speed tasks (in hours)", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, time: float, comp: str = DEFAULT):
 
