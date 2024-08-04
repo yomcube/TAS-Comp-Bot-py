@@ -24,7 +24,6 @@ async def rename_in_submission_list(self, ctx, old_display_name, new_display_nam
                 if new_display_name in line:
                     return
 
-            # how to replace if in team (replace name only within the parentheses).
             if await is_in_team(ctx.author.id):
                 for line in lines[1:]:
                     start_idx = line.find('(')
@@ -34,14 +33,12 @@ async def rename_in_submission_list(self, ctx, old_display_name, new_display_nam
                         if old_display_name in within_parentheses:
                             updated_within_parentheses = within_parentheses.replace(old_display_name, new_display_name)
                             line = line[:start_idx] + updated_within_parentheses + line[end_idx:]
-
-            # Replace normally if solo
+                    new_lines.append(line)
             else:
                 for line in lines[1:]:
                     if old_display_name in line:
                         line = line.replace(old_display_name, new_display_name)
-
-            new_lines.append(line)
+                    new_lines.append(line)
 
             new_content = '\n'.join(new_lines)
             if new_content != message.content:

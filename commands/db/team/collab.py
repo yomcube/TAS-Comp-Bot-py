@@ -160,24 +160,24 @@ class Collab(commands.Cog):
 
                 # Add team to pinned team message
 
-                usernames = []
-                usernames.append(self.bot.get_user(self.author.id).display_name)
-                for user_id in user_ids:
-                    usernames.append(self.bot.get_user(user_id).display_name)
-
-                seeking_channel_id = await get_seeking_channel(DEFAULT)
-                seeking_channel = self.bot.get_channel(seeking_channel_id)
-                pinned_messages = await seeking_channel.pins()
-                bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
-                latest_bot_pinned_message = bot_pinned_messages[-1]
-
-                content = latest_bot_pinned_message.content
-
-                # Join the lines back into a single string
-                new_content = ', '.join(usernames)
-
-                # Edit the message with the new content
-                await latest_bot_pinned_message.edit(content=f'{content}\n{new_content}')
+                # usernames = []
+                # usernames.append(self.bot.get_user(self.author.id).display_name)
+                # for user_id in user_ids:
+                #     usernames.append(self.bot.get_user(user_id).display_name)
+                #
+                # seeking_channel_id = await get_seeking_channel(DEFAULT)
+                # seeking_channel = self.bot.get_channel(seeking_channel_id)
+                # pinned_messages = await seeking_channel.pins()
+                # bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
+                # latest_bot_pinned_message = bot_pinned_messages[-1]
+                #
+                # content = latest_bot_pinned_message.content
+                #
+                # # Join the lines back into a single string
+                # new_content = ', '.join(usernames)
+                #
+                # # Edit the message with the new content
+                # await latest_bot_pinned_message.edit(content=f'{content}\n{new_content}')
 
                 # clear pending users list
                 self.pending_users.clear()

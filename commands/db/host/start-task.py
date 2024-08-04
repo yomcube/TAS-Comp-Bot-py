@@ -63,41 +63,41 @@ class Start(commands.Cog):
         ######################
         #### TEAMS SYSTEM ####
         ######################
-        try:
-            seeking_channel_id = await get_seeking_channel(DEFAULT)
-            seeking_channel = self.bot.get_channel(seeking_channel_id)
-
-
-            # unpin old teams message
-            pinned_messages = await seeking_channel.pins()
-            bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
-
-            await bot_pinned_messages[-1].unpin()
-
-        except AttributeError:
-            await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
-
-        except IndexError:
-            print("No message from bot to unpin")
-
-
-        team_size = await get_team_size()
-
-        # Verify if it's indeed a collab task
-        if team_size < 2:
-            return
-
-
-        teams_content = "__**Confirmed teams:**__\n"
-
-        try:
-
-            final_message = await seeking_channel.send(f"{teams_content}")
-            await final_message.pin()
-
-
-        except AttributeError:
-            await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
+        # try:
+        #     seeking_channel_id = await get_seeking_channel(DEFAULT)
+        #     seeking_channel = self.bot.get_channel(seeking_channel_id)
+        #
+        #
+        #     # unpin old teams message
+        #     pinned_messages = await seeking_channel.pins()
+        #     bot_pinned_messages = [msg for msg in pinned_messages if msg.author == self.bot.user]
+        #
+        #     await bot_pinned_messages[-1].unpin()
+        #
+        # except AttributeError:
+        #     await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
+        #
+        # except IndexError:
+        #     print("No message from bot to unpin")
+        #
+        #
+        # team_size = await get_team_size()
+        #
+        # # Verify if it's indeed a collab task
+        # if team_size < 2:
+        #     return
+        #
+        #
+        # teams_content = "__**Confirmed teams:**__\n"
+        #
+        # try:
+        #
+        #     final_message = await seeking_channel.send(f"{teams_content}")
+        #     await final_message.pin()
+        #
+        #
+        # except AttributeError:
+        #     await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
 
 async def setup(bot) -> None:
     await bot.add_cog(Start(bot))
