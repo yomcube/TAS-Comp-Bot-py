@@ -151,7 +151,7 @@ async def update_submission_list(last_message, id, name):
         team_name = await get_team_name(id)
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
-        new_content = (f"{last_message.content}\n{await count_submissions()}. {team_name} ({' & '.join(members)})"
+        new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
                        f" ||{mentions}||")
         return await last_message.edit(content=new_content)
 
