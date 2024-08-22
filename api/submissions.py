@@ -45,7 +45,17 @@ async def get_seeking_channel(comp):
         channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
         # Handle case where no rows are found in the database
         if channel is None or channel[0] is None:
-            print(f"No logging channel found for '{comp}'.")
+            print(f"No seeking channel found for '{comp}'.")
+            return None
+        return channel[0]
+    
+async def get_join_channel(comp):
+    async with get_session() as session:
+        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No seeking channel found for '{comp}'.")
             return None
         return channel[0]
 

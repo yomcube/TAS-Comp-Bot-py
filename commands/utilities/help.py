@@ -4,7 +4,7 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="help")
+    @commands.hybrid_command(name="help", description="List of commands", with_app_command=True)
     async def help(self, ctx, category: str = ""):
         if category == "":
 
