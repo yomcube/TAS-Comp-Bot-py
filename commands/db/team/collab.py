@@ -67,7 +67,7 @@ class AcceptDeclineButtons(discord.ui.View):
 
 class ConfirmAddToTeamView(discord.ui.View):
     def __init__(self, ctx, invitees, on_confirm):
-        super().__init__(timeout=10)  # 60 seconds to respond
+        super().__init__(timeout=60)  # 60 seconds to respond
         self.ctx = ctx
         self.invitees = invitees
         self.on_confirm = on_confirm
