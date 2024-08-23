@@ -42,7 +42,7 @@ class AcceptDeclineButtons(discord.ui.View):
         await interaction.response.edit_message(content=f"{self.user.mention} has declined the collaboration!", view=self)
         await self.callback(self.user, False)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
+
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.inviter:
@@ -56,7 +56,7 @@ class AcceptDeclineButtons(discord.ui.View):
     async def on_timeout(self):
         if not self.handled:
             self.disable_all_buttons()
-            await self.message.edit(view=self)
+            await self.message.edit(content=f"The collaboration request to <@{self.user.id}> has timed out.", view=self)
             await self.callback(self.user, False)
 
     def disable_all_buttons(self):
@@ -254,13 +254,14 @@ class Collab(commands.Cog):
                     del self.pending_collabs[author_id]
 
                 else:
-                    await ctx.send("No valid team has been formed as all invitations were declined or cancelled.")
+                    await ctx.send("No valid team was formed as all invitations were declined, cancelled or timed out.")
                     del self.pending_collabs[author_id]
-            elif not accepted:
-                if len(self.pending_collabs[author_id]) > 1:
-                    await ctx.send(f"{user.display_name} declined the collaboration. Others can still accept.")
-                else:
-                    await ctx.send(f"{user.display_name} declined the collaboration. No other invitations were sent.")
+            # elif not accepted:
+            #     if len(self.pending_collabs[author_id]) > 1:
+            #         await ctx.send(f"{user.display_name} declined the collaboration. Others can still accept.")
+            #
+            #     else:
+            #         await ctx.send(f"{user.display_name} declined the collaboration. No other invitations were sent.")
 
 
     async def cancel_collab(self, ctx, author_id, invited_user, cancelling_user):
@@ -268,8 +269,8 @@ class Collab(commands.Cog):
                 self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
 
                 # Announce this specific cancellation
-                await ctx.send(
-                    f"{cancelling_user.display_name} has canceled the collaboration invite to {invited_user.display_name}.")
+               # await ctx.send(
+                #    f"{cancelling_user.display_name} has canceled the collaboration invite to {invited_user.display_name}.")
 
                 # Check if this cancellation resolves the pending state
                 if all(resp is not None for resp in self.pending_collabs[author_id].values()):
@@ -315,7 +316,7 @@ class Collab(commands.Cog):
 
                         del self.pending_collabs[author_id]  # Clear the collaboration state
                     else:
-                        await ctx.send("No valid team was formed as all invitations were declined or cancelled.")
+                        await ctx.send("No valid team was formed as all invitations were declined, cancelled or timed out.")
                         del self.pending_collabs[author_id]  # Clear the collaboration state
 
 
