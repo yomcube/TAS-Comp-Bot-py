@@ -77,7 +77,7 @@ class Collab(commands.Cog):
 
         # Check if the author already has a pending collaboration
         if author_id in self.pending_collabs:
-            return await ctx.send("You already have a pending collaboration request. Please wait for it to be resolved.")
+            return await ctx.send("You already have a pending collaboration request. Please wait for it to be resolved, or cancel it.")
 
         team_size = await get_team_size()
 
@@ -92,6 +92,10 @@ class Collab(commands.Cog):
         # Verify if it's indeed a collab task
         elif team_size < 2:
             return await ctx.send("This is a solo task. You may **not** collaborate!")
+
+        # Check for invalid users
+        if not users:
+            return await ctx.send("You didn't specify any valid members!")
 
         # Check if invited person is already in a team
         for user in users:
@@ -116,6 +120,9 @@ class Collab(commands.Cog):
         for user in users:
             if user.id == author_id:
                 return await ctx.send("Collaborating with... yourself? sus")
+
+
+
 
         #####################
         # Button view
