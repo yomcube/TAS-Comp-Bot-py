@@ -38,7 +38,8 @@ async def get_logs_channel(comp):
             print(f"No logging channel found for '{comp}'.")
             return None
         return channel[0]
-    
+
+
 async def get_seeking_channel(comp):
     async with get_session() as session:
         query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
@@ -48,7 +49,8 @@ async def get_seeking_channel(comp):
             print(f"No seeking channel found for '{comp}'.")
             return None
         return channel[0]
-    
+
+
 async def get_join_channel(comp):
     async with get_session() as session:
         query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)

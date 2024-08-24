@@ -23,11 +23,6 @@ class Info(commands.Cog):
                 submission_id = ctx.author.id
 
 
-
-
-
-
-
             # Get submission
             submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
                                                 Submissions.dq_reason, Submissions.character,

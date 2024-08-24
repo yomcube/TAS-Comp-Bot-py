@@ -3,6 +3,7 @@ from discord.ext import commands
 from api import submissions
 from api.submissions import get_join_channel
 
+
 class Message(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -12,7 +13,7 @@ class Message(commands.Cog):
 
         if message.author == self.bot.user:
             return
-        
+
         await submissions.handle_dms(message, self)
 
         content = message.content
@@ -28,10 +29,11 @@ class Message(commands.Cog):
         elif msg_list[2] in lower_content:
             await message.add_reaction("✈️")
         elif msg_list[3] in lower_content:
-            await message.reply("The stream will start at <t:1721689200:t> (local time), unless said otherwise by streamer or the host.")
-            
-        async for message in discord.get_channel(int(get_join_channel())).history(): #Loop through all messages
-            await message.add_reaction("👀") #Add Reaction for every message
+            await message.reply(
+                "The stream will start at <t:1721689200:t> (local time), unless said otherwise by streamer or the host.")
+
+        async for message in discord.get_channel(int(get_join_channel())).history():  # Loop through all messages
+            await message.add_reaction("👀")  # Add Reaction for every message
 
     async def wait_crazy(self, message):
         def check(m):
@@ -46,7 +48,6 @@ class Message(commands.Cog):
             response_lower = response.content.lower()
             if response_lower.startswith(crazy_list[1]):
                 await response.reply("A rubber room with rats.")
-
 
 
 async def setup(bot):
