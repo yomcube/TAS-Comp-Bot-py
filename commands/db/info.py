@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from api.utils import float_to_readable
+from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
 from api.mkwii.mkwii_utils import characters, vehicles
 from api.db_classes import Submissions, get_session
 from sqlalchemy import select
@@ -14,10 +14,24 @@ class Info(commands.Cog):
     @commands.dm_only()
     async def info(self, ctx):
         async with get_session() as session:
+            # Verify if collab task, and if author is in a team
+            team_size = await get_team_size()
+
+            if team_size > 1 and await is_in_team(ctx.author.id):
+                submission_id = await get_leader(ctx.author.id)
+            else:
+                submission_id = ctx.author.id
+
+
+
+
+
+
+
             # Get submission
             submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
                                                 Submissions.dq_reason, Submissions.character,
-                                                Submissions.vehicle).where(Submissions.user_id == ctx.author.id))).fetchone()
+                                                Submissions.vehicle).where(Submissions.user_id == submission_id))).fetchone()
 
         if not submission:
             await ctx.reply("Either there is no ongoing task, or you have not submitted.")
