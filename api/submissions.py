@@ -1,7 +1,7 @@
 import discord
 import os
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams, JoinChannel
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from sqlalchemy import insert, select, or_
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team
 

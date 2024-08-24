@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, JoinChannel
+from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel
 from sqlalchemy import select, insert, update
 
 load_dotenv()
