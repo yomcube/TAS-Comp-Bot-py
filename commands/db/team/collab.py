@@ -50,7 +50,7 @@ class AcceptDeclineButtons(discord.ui.View):
                                                     ephemeral=True)
             return
         self.disable_all_buttons()
-        await interaction.response.edit_message(content="The collaboration invite has been canceled.", view=self)
+        await interaction.response.edit_message(content=f"The collaboration invite to <@{self.user.id}> has been canceled.", view=self)
         await self.cancel_callback(self.user, interaction.user)  # Pass the user who was invited and who cancelled
 
     async def on_timeout(self):
@@ -63,39 +63,6 @@ class AcceptDeclineButtons(discord.ui.View):
         for item in self.children:
             item.disabled = True
         self.handled = True
-
-
-class ConfirmAddToTeamView(discord.ui.View):
-    def __init__(self, ctx, invitees, on_confirm):
-        super().__init__(timeout=60)  # 60 seconds to respond
-        self.ctx = ctx
-        self.invitees = invitees
-        self.on_confirm = on_confirm
-        self.message = None
-
-    @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("You cannot click this button!", ephemeral=True)
-            return
-
-        await interaction.response.edit_message(content="Adding members to your team...", view=None)
-        await self.on_confirm()  # Call the confirm function
-
-    @discord.ui.button(label="No", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("You cannot click this button!", ephemeral=True)
-            return
-
-        await interaction.response.edit_message(content="Team update canceled.", view=None)
-
-    async def on_timeout(self):
-        # Delete the original message if the user doesn't respond in time
-        try:
-            await self.message.delete()
-        except discord.NotFound:
-            pass  # The message was already deleted or not found
 
 
 class Collab(commands.Cog):
@@ -138,22 +105,12 @@ class Collab(commands.Cog):
         # Check if the author is already in a team
         current_team = await self.get_current_team(author_id)
 
-        # Check if adding new users exceeds the team size limit, and if inviting someone to existing team
+        # Check if adding new users exceeds the team size limit
         if current_team:
             if len(current_team) + len(users) > team_size:
                 return await ctx.send("You are trying to exceed the team size limit!")
             else:
-                invitee_mentions = ", ".join(f"<@{user.id}>" for user in users)
-                # Create the view and pass the continuation function as on_confirm
-                view = ConfirmAddToTeamView(ctx, users, lambda: self.continue_collab(ctx, users, author_id))
-                message = await ctx.send(
-                    f"WARNING: You are already in a team. This will add {invitee_mentions} to your team. To instead create a new team, use either $leaveteam or $dissolve first.\n\nAre you sure you want to continue?",
-                    view=view
-                )
-                view.message = message  # Set the message on the view for later reference
-                return
-
-                #await ctx.send("Inviting new members to your existing team...")
+                await ctx.send("Inviting new members to your existing team...")
 
         # Make sure they don't try to collab with too many people (if not already in a team)
         elif len(users) + 1 > team_size:
@@ -164,9 +121,9 @@ class Collab(commands.Cog):
             if user.id == author_id:
                 return await ctx.send("Collaborating with... yourself? sus")
 
-        await self.continue_collab(ctx, users, author_id)
 
-    async def continue_collab(self, ctx, users, author_id):
+
+
         #####################
         # Button view
         #####################
@@ -199,8 +156,6 @@ class Collab(commands.Cog):
                     )
                 )
                 await session.commit()
-
-
 
     async def get_current_team(self, user_id):
         async with get_session() as session:
@@ -276,7 +231,7 @@ class Collab(commands.Cog):
                                 if new_member_mentions:
                                     await ctx.send(f"{new_member_mentions} has been added to your team!")
                                 else:
-                                    await ctx.send("No new members were added.")
+                                    await ctx.send("Nobody has been added to your team as all invitations were declined, cancelled, or timed out")
 
                     else:
                         # No existing team, create a new team
@@ -299,30 +254,27 @@ class Collab(commands.Cog):
                     del self.pending_collabs[author_id]
 
                 else:
-                    await ctx.send("No valid team was formed as all invitations were declined, cancelled or timed out.")
+                    if await is_in_team(author_id):
+                        message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                    else:
+                        message = "No team was formed as all invitations were declined, cancelled or timed out."
+
+                    await ctx.send(message)
                     del self.pending_collabs[author_id]
-            # elif not accepted:
-            #     if len(self.pending_collabs[author_id]) > 1:
-            #         await ctx.send(f"{user.display_name} declined the collaboration. Others can still accept.")
-            #
-            #     else:
-            #         await ctx.send(f"{user.display_name} declined the collaboration. No other invitations were sent.")
+
 
 
     async def cancel_collab(self, ctx, author_id, invited_user, cancelling_user):
             if author_id in self.pending_collabs and invited_user.id in self.pending_collabs[author_id]:
                 self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
 
-                # Announce this specific cancellation
-               # await ctx.send(
-                #    f"{cancelling_user.display_name} has canceled the collaboration invite to {invited_user.display_name}.")
 
                 # Check if this cancellation resolves the pending state
                 if all(resp is not None for resp in self.pending_collabs[author_id].values()):
                     accepted_users = [uid for uid, resp in self.pending_collabs[author_id].items() if resp]
                     if accepted_users:
                         user_mentions = ", ".join(f"<@{uid}>" for uid in accepted_users)
-                        await ctx.send(f"Despite the cancellations, <@{author_id}> will collaborate with {user_mentions}.")
+                        await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
 
                         members = []
                         members.append(await get_display_name(author_id))
@@ -361,7 +313,12 @@ class Collab(commands.Cog):
 
                         del self.pending_collabs[author_id]  # Clear the collaboration state
                     else:
-                        await ctx.send("No valid team was formed as all invitations were declined, cancelled or timed out.")
+                        if await is_in_team(author_id):
+                            message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                        else:
+                            message = "No team was formed as all invitations were declined, cancelled or timed out."
+
+                        await ctx.send(message)
                         del self.pending_collabs[author_id]  # Clear the collaboration state
 
 
