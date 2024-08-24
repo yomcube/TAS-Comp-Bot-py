@@ -1,18 +1,21 @@
 import discord
 from discord.ext import commands
 from api import submissions
-from api.submissions import get_join_channel
 
 
 class Message(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        if message.author == self.bot.user:
-            return
+        # Reacting to new members joining
+        if message.channel.id == message.guild.system_channel.id:
+            if message.type == discord.MessageType.new_member:
+                emoji = "👀"
+                await message.add_reaction(emoji)
 
         await submissions.handle_dms(message, self)
 
@@ -32,8 +35,6 @@ class Message(commands.Cog):
             await message.reply(
                 "The stream will start at <t:1721689200:t> (local time), unless said otherwise by streamer or the host.")
 
-        async for message in discord.get_channel(int(get_join_channel())).history():  # Loop through all messages
-            await message.add_reaction("👀")  # Add Reaction for every message
 
     async def wait_crazy(self, message):
         def check(m):
