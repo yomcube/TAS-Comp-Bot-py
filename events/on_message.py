@@ -11,6 +11,9 @@ class Message(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
+        if message.author == self.bot.user:
+            return
+
         # Reacting to new members joining
         if message.guild is not None and message.channel.id == message.guild.system_channel.id:
             if message.type == discord.MessageType.new_member:
