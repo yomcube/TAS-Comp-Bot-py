@@ -11,7 +11,7 @@ class Bug(commands.Cog):
             dash = self.bot.get_user(222853720692490240)
             shxd = self.bot.get_user(812615237168660481)
         
-            #await dash.send(bug)
+            await dash.send(bug)
             await shxd.send(bug)
 
             await ctx.reply(f"Bug sent to {shxd.display_name} and {dash.display_name}, thank you!\nRemember that you can also [open an issue](https://github.com/crackhex/TAS-Comp-Bot-py/issues/new) on Github if you have an account.")
