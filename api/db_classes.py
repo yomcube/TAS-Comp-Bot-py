@@ -89,13 +89,7 @@ class LogChannel(Base):
     channel_id = Column('channel_id', Integer)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
-    
-class JoinChannel(Base):
-    __tablename__ = "join_channel"
-    index = Column('index', Integer, primary_key=True)
-    channel_id = Column('channel_id', Integer)
-    comp = Column('comp', String)
-    guild_id = Column('guild_id', Integer)
+
 
 class HostRole(Base):
     __tablename__ = "host_role"
