@@ -12,7 +12,7 @@ class Message(commands.Cog):
     async def on_message(self, message):
 
         # Reacting to new members joining
-        if message.channel.id == message.guild.system_channel.id:
+        if message.guild is not None and message.channel.id == message.guild.system_channel.id:
             if message.type == discord.MessageType.new_member:
                 emoji = "👀"
                 await message.add_reaction(emoji)
