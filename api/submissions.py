@@ -168,6 +168,8 @@ async def handle_submissions(message, self):
     author_id = message.author.id
     author_dn = message.author.display_name
 
+
+
     ##################################################
     # Adding submission to submission list channel
     ##################################################
