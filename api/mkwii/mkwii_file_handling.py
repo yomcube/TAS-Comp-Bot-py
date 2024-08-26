@@ -1,6 +1,7 @@
 from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader
+from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, is_task_currently_running
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
+from commands.db.requesttask import has_requested_already, is_time_over
 from api.db_classes import get_session, Submissions, Teams, Userbase
 from sqlalchemy import insert, update, select
 
@@ -12,6 +13,25 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
         index = file_dict.get("rkg")
 
         if current_task:
+            ##################################################
+            # Cases where someone is denied submission
+            ##################################################
+
+            # Speed task: Has not requested task, or time is over
+            is_speed_task = (await is_task_currently_running())[4]
+
+            if is_speed_task:
+                if not await has_requested_already(message.author.id):
+                    await message.channel.send("You may not submit yet! Use $requesttask first.")
+                    return
+
+                if await is_time_over(message.author.id):
+                    await message.channel.send("Your can't submit, your time is already over!")
+                    return
+
+            ##################################################
+            # Otherwise continue
+            ##################################################
 
             # handle submission
             await handle_submissions(message, self)
@@ -92,6 +112,23 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
     elif file_dict.get("dat") is not None:
         index = file_dict.get("dat")
         if current_task:
+
+            if current_task:
+                ##################################################
+                # Cases where someone is denied submission
+                ##################################################
+
+                # Speed task: Has not requested task, or time is over
+                is_speed_task = (await is_task_currently_running())[4]
+
+                if is_speed_task:
+                    if not await has_requested_already(message.author.id):
+                        await message.channel.send("You may not submit yet! Use $requesttask first.")
+                        return
+
+                    if await is_time_over(message.author.id):
+                        await message.channel.send("You can't submit, your time is already over!")
+                        return
 
             # handle submission
             await handle_submissions(message, self)
