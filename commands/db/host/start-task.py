@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import date
 from api.utils import is_task_currently_running, has_host_role, get_team_size
 from api.submissions import get_submission_channel, get_seeking_channel
-from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session
+from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session, SpeedTaskLength
 from sqlalchemy import insert, delete, select
 import math
 
@@ -44,11 +44,23 @@ class Start(commands.Cog):
                                                                multiple_tracks=multiple_tracks, speed_task=speed_task,
                                                                deadline=deadline, is_released=1))
 
+
                 # Insert task in database. Speed task case
                 else:
                     await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
                                                                multiple_tracks=multiple_tracks, speed_task=speed_task,
                                                                deadline=deadline, is_released=0))
+
+                    # If a speed task and there is no default task duration set, set it to 4h.
+                    query = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == ctx.guild.id)
+                    task_duration = (await session.scalars(query)).first()
+
+                    if task_duration is None:
+                        stmt = insert(SpeedTaskLength).values(guild_id=ctx.message.guild.id, time=4.0, comp=DEFAULT)
+                        await session.execute(stmt)
+                        await session.commit()
+
+
 
                 # Clear submissions from previous task, as well as potential teams, and speed task table
                 await session.execute(delete(Submissions))
