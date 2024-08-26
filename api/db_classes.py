@@ -36,6 +36,8 @@ class Tasks(Base):
     team_size = Column('team_size', Integer)
     multiple_tracks = Column('multiple_tracks', Integer)
     speed_task = Column('speed_task', Integer)
+    deadline = Column('deadline', Integer)
+    is_released = Column('is_released', Integer)
 
 
 class Submissions(Base):
@@ -89,16 +91,19 @@ class LogChannel(Base):
     channel_id = Column('channel_id', Integer)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
-    
-class JoinChannel(Base):
-    __tablename__ = "join_channel"
-    index = Column('index', Integer, primary_key=True)
-    channel_id = Column('channel_id', Integer)
-    comp = Column('comp', String)
-    guild_id = Column('guild_id', Integer)
+
 
 class HostRole(Base):
     __tablename__ = "host_role"
+    index = Column(Integer, primary_key=True)
+    role_id = Column('role_id', Integer)
+    name = Column('name', String)
+    comp = Column('comp', String)
+    guild_id = Column('guild_id', Integer)
+    
+    
+class SubmitterRole(Base):
+    __tablename__ = "submitter_role"
     index = Column(Integer, primary_key=True)
     role_id = Column('role_id', Integer)
     name = Column('name', String)
@@ -112,8 +117,8 @@ class SeekingChannel(Base):
     channel_id = Column('channel_id', Integer)
     guild_id = Column('guild_id', Integer)
 
-class SpeedTaskTime(Base):
-    __tablename__ = "speedtasktime"
+class SpeedTaskLength(Base):
+    __tablename__ = "speedtasklength"
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
     time = Column('time', Float, default = 4.0)

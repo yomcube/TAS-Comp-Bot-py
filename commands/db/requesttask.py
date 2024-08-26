@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands, tasks
 from api.utils import is_task_currently_running
-from api.db_classes import SpeedTaskDesc, SpeedTaskTime, SpeedTask, get_session
+from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTask, get_session
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
 import math
@@ -41,7 +41,7 @@ async def get_end_time(task_duration):
 
 
 @tasks.loop(seconds=60)
-async def check_deadlines(bot):
+async def check_speed_task_deadlines(bot):
     async with get_session() as session:
 
         # Only check deadlines if a speed task is ongoing
@@ -55,12 +55,12 @@ async def check_deadlines(bot):
 
         # Check if the table is empty
         result = await session.execute(select(SpeedTask))
-        tasks_list = result.scalars().all()  # Fetch all tasks into a list
+        user_list = result.scalars().all()  # Fetch all users in a list
 
-        task_count = len(tasks_list)  # Get the count of tasks
+        user_count = len(user_list)  # Get the count of users
 
         # Only check deadlines once people have started requesting tasks
-        if task_count == 0:
+        if user_count == 0:
             return
 
         # Get the current time rounded to the nearest minute
@@ -84,7 +84,7 @@ async def check_deadlines(bot):
             user = bot.get_user(task.user_id)
             await user.send("Your time for this competition is over! Your deadline has passed.")
 
-@check_deadlines.before_loop
+@check_speed_task_deadlines.before_loop
 async def before_check_deadlines():
     # Wait until the start of the next minute
     now = time.time()
@@ -113,7 +113,7 @@ class Requesttask(commands.Cog):
             query = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.guild_id == ctx.guild.id)
             task_desc = (await session.scalars(query)).first()
 
-            query2 = select(SpeedTaskTime.time).where(SpeedTaskTime.guild_id == ctx.guild.id)
+            query2 = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == ctx.guild.id)
             task_duration = (await session.scalars(query2)).first()
 
             task_number = current_task[0]

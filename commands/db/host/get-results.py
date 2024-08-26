@@ -1,6 +1,6 @@
 from discord.ext import commands
 from api.utils import float_to_readable, has_host_role
-from api.submissions import get_display_name
+from api.submissions import get_display_name, is_in_team, get_team_ids, get_team_members, get_team_name
 from api.db_classes import Submissions, get_session
 from sqlalchemy import select
 
@@ -25,13 +25,19 @@ class Results(commands.Cog):
                 Submissions.time.asc()))).fetchall()
 
         content = f"**__Task {active_task} Results__**:\n\n"
-        #try:
-        #TODO: Fix this
-        # Rank valid submissions in order
+
         for (n, submission) in enumerate(submissions, start=1):
-            display_name = await get_display_name(submission.user_id)
+            if await is_in_team(submission.user_id):
+                ids = await get_team_ids(submission.user_id)
+                members = await get_team_members(ids)
+                team_name = await get_team_name(submission.user_id)
+
+                name = f'{team_name} ({" & ".join(members)})'
+            else:
+                name = await get_display_name(submission.user_id)
+
             readable_time = float_to_readable(submission.time)
-            content += f'{n}. {display_name} — {readable_time}\n'
+            content += f'{n}. {name} — {readable_time}\n'
 
         # add return incase of DQs.
         content += '\n'

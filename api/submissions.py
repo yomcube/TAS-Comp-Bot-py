@@ -1,12 +1,16 @@
 import discord
 import os
+import shared
 from dotenv import load_dotenv
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from sqlalchemy import insert, select, or_
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team
+from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
+if DEFAULT == 'mkw':
+    guild_id = 1214800758881394718
 
 
 async def get_submission_channel(comp):
@@ -38,7 +42,8 @@ async def get_logs_channel(comp):
             print(f"No logging channel found for '{comp}'.")
             return None
         return channel[0]
-    
+
+
 async def get_seeking_channel(comp):
     async with get_session() as session:
         query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
@@ -48,16 +53,8 @@ async def get_seeking_channel(comp):
             print(f"No seeking channel found for '{comp}'.")
             return None
         return channel[0]
-    
-async def get_join_channel(comp):
-    async with get_session() as session:
-        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No seeking channel found for '{comp}'.")
-            return None
-        return channel[0]
+
+
 
 
 async def first_time_submission(user_id):
@@ -160,6 +157,9 @@ async def update_submission_list(last_message, id, name):
                     f" ||<@{id}>||")
     return await last_message.edit(content=new_content)
 
+async def assign_submitter_role(self):
+
+    pass
 
 
 async def handle_submissions(message, self):
@@ -167,8 +167,6 @@ async def handle_submissions(message, self):
     author_name = message.author.name
     author_id = message.author.id
     author_dn = message.author.display_name
-
-
 
     ##################################################
     # Adding submission to submission list channel
@@ -219,6 +217,32 @@ async def handle_submissions(message, self):
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
         await post_submission_list(channel, author_id, author_display_name)
+
+    ##################################################
+    # Adding submitter role to submitters
+    ##################################################
+    guild_id = shared.main_guild.id
+
+    if guild_id is None:
+        print("Guild not detected yet.")
+        return
+
+    submitter_role = await get_submitter_role(DEFAULT)
+
+    # Fetch the member from the detected guild
+    server = self.bot.get_guild(guild_id)
+    member = server.get_member(author_id)
+
+    if member:
+        role = server.get_role(submitter_role)
+        if role:
+            if role not in member.roles:
+                await member.add_roles(role)
+                print(f"Role {role.name} has been assigned to {member.display_name}.")
+        else:
+            await message.channel.send(f"Role with ID {submitter_role} not found in this server.")
+    else:
+        await message.channel.send(f"User with ID {author_id} not found in this server.")
 
 
 async def handle_dms(message, self):

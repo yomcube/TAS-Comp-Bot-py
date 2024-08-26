@@ -1,12 +1,14 @@
 from discord.ext import commands
 import discord
 import os
+import time
 from dotenv import load_dotenv
 from datetime import date
 from api.utils import is_task_currently_running, has_host_role, get_team_size
 from api.submissions import get_submission_channel, get_seeking_channel
 from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session
 from sqlalchemy import insert, delete, select
+import math
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -18,16 +20,35 @@ class Start(commands.Cog):
     @commands.hybrid_command(name="start-task", description="Start a task", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, number: int, team_size: int = 1, multiple_tracks: int = 0,
-                      speed_task: int = 0, year: int = None):
+                      speed_task: int = 0, year: int = None, deadline: int = None):
 
+
+        if deadline is not None:
+            # Prevent a task from creating if deadline is in the past
+            if deadline < int(time.time()):
+                return await ctx.send("This deadline is in the past! Retry again.")
+
+            else: # if deadline is valid, round it up to nearest minute
+                deadline = math.ceil(deadline / 60) * 60
+
+        # auto set year
         if not year:
             year = date.today().year
 
         if await is_task_currently_running() is None:
             async with get_session() as session:
-                # Mark task as ongoing
-                await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
-                                                           multiple_tracks=multiple_tracks, speed_task=speed_task))
+
+                # Insert task in database. Non speed task case (difference is the is-released parameter)
+                if speed_task == 0:
+                    await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
+                                                               multiple_tracks=multiple_tracks, speed_task=speed_task,
+                                                               deadline=deadline, is_released=1))
+
+                # Insert task in database. Speed task case
+                else:
+                    await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
+                                                               multiple_tracks=multiple_tracks, speed_task=speed_task,
+                                                               deadline=deadline, is_released=0))
 
                 # Clear submissions from previous task, as well as potential teams, and speed task table
                 await session.execute(delete(Submissions))
@@ -51,7 +72,14 @@ class Start(commands.Cog):
                 await ctx.send(
                     "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")
 
-            await ctx.send(f"Successfully started **Task {number} - {year}**!")
+
+
+            # Successful message to send:
+            if deadline is not None:
+                await ctx.send(f"Successfully started **Task {number} - {year}**! Deadline: <t:{deadline}:f>")
+            else:
+                await ctx.send(f"Successfully started **Task {number} - {year}**!")
+
 
         else:
             # if a task is already ongoing...
