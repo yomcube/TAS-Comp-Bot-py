@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel
+from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, SubmitterRole
 from sqlalchemy import select, insert, update
 
 load_dotenv()
@@ -16,9 +16,7 @@ class Config(commands.Cog):
     @commands.hybrid_command(name="config", aliases=['conf'], description="Set all the channel and stuff",
                              with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, set_host_role: discord.Role, set_logs_channel: discord.TextChannel,
-                      set_submission_channel: discord.TextChannel, set_seeking_channel: discord.TextChannel,
-                      comp: str = DEFAULT):
+    async def command(self, ctx, set_host_role: discord.Role, set_logs_channel: discord.TextChannel, set_submission_channel: discord.TextChannel, set_seeking_channel: discord.TextChannel, set_submitter_role: discord.Role, comp: str = DEFAULT):
 
         ### HOST ROLE ###
         async with get_session() as session:
@@ -36,6 +34,7 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
+            
 
         ### LOGS CHANNEL ###
         async with get_session() as session:
@@ -54,6 +53,7 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
+            
 
         ### SUBMISSION CHANNEL ###
         async with get_session() as session:
@@ -72,6 +72,7 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
+            
 
         ### SEEK CHANNEL ###
         async with get_session() as session:
@@ -90,11 +91,29 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
+            
+            
+        ### SUBMITTER ROLE ###
+        async with get_session() as session:
+            submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
+            name = set_submitter_role.name
+            role_id = set_submitter_role.id
+
+            # Check if submitter_role doesn't exist yet for the comp
+            if submitter_role is None:
+                stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
+                await session.execute(stmt)
+            else:
+
+                stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
+                await session.execute(stmt)
+
+            await session.commit()
 
 
 
         await ctx.send(
-            f"The current host role has been set! {set_host_role.mention}\nThe log channel has been set! {set_logs_channel.mention}\nThe submission channel has been set! {set_submission_channel.mention}\nThe seek channel has been set! {set_seeking_channel.mention}")
+            f"The current host role has been set! {set_host_role.mention}\nThe log channel has been set! {set_logs_channel.mention}\nThe submission channel has been set! {set_submission_channel.mention}\nThe seek channel has been set! {set_seeking_channel.mention}\nThe submitter role has been set! {set_submitter_role.mention}")
 
 
 async def setup(bot) -> None:

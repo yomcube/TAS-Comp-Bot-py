@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from sqlalchemy import insert, select, or_
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team
+from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -210,6 +210,17 @@ async def handle_submissions(message, self):
         # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
         # channels
         await post_submission_list(channel, author_id, author_display_name)
+        
+    ## assign submitter role
+    async with get_session() as session:
+        submitter_role = await get_submitter_role(DEFAULT)
+        print(submitter_role)
+        role = discord.utils.get(author.roles, id=submitter_role)
+        print(role)
+        
+        user = self.bot.get_user(author_id)
+        print(user)
+        await user.add_roles(role)
 
 
 async def handle_dms(message, self):
