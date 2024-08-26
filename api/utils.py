@@ -132,7 +132,7 @@ async def is_task_currently_running():
     # Does this need to be a function even?
     async with get_session() as session:
         active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active, Tasks.team_size,
-                                               Tasks.speed_task, Tasks.multiple_tracks)
+                                               Tasks.speed_task, Tasks.multiple_tracks, Tasks.deadline, Tasks.is_released)
                                         .where(Tasks.is_active == 1))).first()
         return active
 

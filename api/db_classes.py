@@ -36,6 +36,8 @@ class Tasks(Base):
     team_size = Column('team_size', Integer)
     multiple_tracks = Column('multiple_tracks', Integer)
     speed_task = Column('speed_task', Integer)
+    deadline = Column('deadline', Integer)
+    is_released = Column('is_released', Integer)
 
 
 class Submissions(Base):
