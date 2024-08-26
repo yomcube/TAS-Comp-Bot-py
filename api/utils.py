@@ -5,7 +5,7 @@ import discord
 from urllib.parse import urlparse
 from discord.ext import commands
 from sqlalchemy import select, insert, update, inspect, or_
-from api.db_classes import Money, Tasks, Teams, HostRole, get_session
+from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -55,6 +55,18 @@ async def get_host_role(guild_id):
 
         if host_role:
             return host_role
+        else:
+            return None
+        
+        
+async def get_submitter_role(guild_id):
+    default = DEFAULT
+    # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
+    async with get_session() as session:
+        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
+
+        if submitter_role:
+            return submitter_role
         else:
             return None
 

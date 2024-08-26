@@ -99,6 +99,15 @@ class HostRole(Base):
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
     
+    
+class SubmitterRole(Base):
+    __tablename__ = "submitter_role"
+    index = Column(Integer, primary_key=True)
+    role_id = Column('role_id', Integer)
+    name = Column('name', String)
+    comp = Column('comp', String)
+    guild_id = Column('guild_id', Integer)
+    
 class SeekingChannel(Base):
     __tablename__ = "seeking_channel"
     index = Column(Integer, primary_key=True)
