@@ -5,7 +5,7 @@ import discord
 from urllib.parse import urlparse
 from discord.ext import commands
 from sqlalchemy import select, insert, update, inspect, or_
-from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session
+from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session, TasksChannel, AnnouncementsChannel
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -69,6 +69,27 @@ async def get_submitter_role(guild_id):
             return submitter_role
         else:
             return None
+
+
+async def get_tasks_channel(comp):
+    async with get_session() as session:
+        query = select(TasksChannel.channel_id).where(TasksChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No tasks channel found for '{comp}'.")
+            return None
+        return channel[0]
+
+async def get_announcement_channel(comp):
+    async with get_session() as session:
+        query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No announcements channel found for '{comp}'.")
+            return None
+        return channel[0]
 
 
 def has_host_role():

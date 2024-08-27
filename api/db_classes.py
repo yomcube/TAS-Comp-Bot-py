@@ -117,6 +117,21 @@ class SeekingChannel(Base):
     channel_id = Column('channel_id', Integer)
     guild_id = Column('guild_id', Integer)
 
+
+class TasksChannel(Base):
+        __tablename__ = "tasks_channel"
+        index = Column(Integer, primary_key=True)
+        comp = Column('comp', String)
+        channel_id = Column('channel_id', Integer)
+        guild_id = Column('guild_id', Integer)
+
+class AnnouncementsChannel(Base):
+    __tablename__ = "announcements_channel"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    channel_id = Column('channel_id', Integer)
+    guild_id = Column('guild_id', Integer)
+
 class SpeedTaskLength(Base):
     __tablename__ = "speedtasklength"
     index = Column(Integer, primary_key=True)
@@ -129,6 +144,16 @@ class SpeedTaskDesc(Base):
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
     desc = Column('desc', Integer)
+    guild_id = Column('guild_id', Integer)
+
+class SpeedTaskReminders(Base):
+    __tablename__ = "speedtaskreminders"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    reminder1 = Column('reminder1', Integer)
+    reminder2 = Column('reminder2', Integer)
+    reminder3 = Column('reminder3', Integer)
+    reminder4 = Column('reminder4', Integer)
     guild_id = Column('guild_id', Integer)
 
 

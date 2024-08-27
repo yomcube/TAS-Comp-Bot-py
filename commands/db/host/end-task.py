@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from api.utils import has_host_role
-from api.db_classes import Tasks, get_session
+from api.db_classes import Tasks, get_session, SpeedTaskDesc
 from sqlalchemy import select, update, delete
 
 load_dotenv()
@@ -27,8 +27,9 @@ class End(commands.Cog):
                 year = currently_running.year
                 await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
                 
-                # Delete the task -- we don't really need to keep
+                # Delete the task -- we don't really need to keep, and delete speed task desc
                 await session.execute(delete(Tasks).where(Tasks.is_active == 0))
+                await session.execute(delete(SpeedTaskDesc))
                 
                 await session.commit()
 
