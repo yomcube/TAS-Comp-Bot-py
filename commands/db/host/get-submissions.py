@@ -31,6 +31,7 @@ class Get(commands.Cog):
         # Send all submissions and truncate if > 2000
         try:
             msg_limit = 2000
+            buffer = 50  # Small buffer to prevent exceeding the limit
             submissions_parts = []
             current_part = ""
 
@@ -43,11 +44,11 @@ class Get(commands.Cog):
                     name = f'{team_name} ({" & ".join(members)})'
                 else:
                     name = await get_display_name(submission.user_id)
-                
+
                 submission_text = f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
 
                 # Check if adding this submission would exceed the message limit
-                if len(current_part) + len(submission_text) > msg_limit:
+                if len(current_part) + len(submission_text) > (msg_limit - buffer):
                     submissions_parts.append(current_part)  # Save the current part
                     current_part = submission_text  # Start a new part
                 else:
@@ -62,12 +63,17 @@ class Get(commands.Cog):
             # Send the messages, including the header in the first message
             for i, part in enumerate(submissions_parts):
                 if i == 0:
-                    await ctx.reply(header + part)
+                    if len(header + part) > msg_limit:
+                        await ctx.reply(header)
+                        await ctx.reply(part)
+                    else:
+                        await ctx.reply(header + part)
                 else:
                     await ctx.reply(part)
 
-        except TypeError as e:  # can happen if get_display_name throws an error; an id is not found in user.db
-            # Happens, for example, if an admin /submit for someone who is not in the user.db
+                await asyncio.sleep(1)
+
+        except TypeError as e:
             print(e)
             await ctx.send("Someone's submission could not be retrieved.")
 
