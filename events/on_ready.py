@@ -1,8 +1,13 @@
 import discord
+import os
+
+from dotenv import load_dotenv
 import shared
 import time
 import asyncio
 from discord.ext import commands, tasks
+
+from api.submissions import get_logs_channel
 from commands.db.requesttask import check_speed_task_deadlines
 from api.utils import is_task_currently_running
 from api.db_classes import  get_session, Tasks
@@ -11,7 +16,7 @@ from sqlalchemy import select, update, delete
 host_role_id = None
 
 @tasks.loop(seconds=60)
-async def check_task_deadline():
+async def check_task_deadline(bot):
     async with get_session() as session:
 
         # Only check deadlines if a task is ongoing
@@ -23,6 +28,11 @@ async def check_task_deadline():
         # If deadline is none, don't try to auto close task
         if ongoing_task[6] is None:
             return
+
+        load_dotenv()
+        DEFAULT = os.getenv('DEFAULT')
+
+        log_channel = bot.get_channel(await get_logs_channel(DEFAULT))
 
         # Get the current time rounded to the nearest minute
         current_time = int(time.time())
@@ -49,6 +59,8 @@ async def check_task_deadline():
             await session.execute(delete(Tasks).where(Tasks.is_active == 0))
             await session.commit()
 
+            await log_channel.send("The task has been closed automatically; deadline has passed.")
+
         # if we get here, there is no task that needed to be stopped
         except UnboundLocalError:
             pass
@@ -73,7 +85,7 @@ class Ready(commands.Cog):
         shared.main_guild = self.bot.guilds[0]
         print(f"Detected main server: {shared.main_guild.name} (ID: {shared.main_guild.id})")
 
-        check_task_deadline.start()
+        check_task_deadline.start(self.bot)
         check_speed_task_deadlines.start(self.bot)
 
 
