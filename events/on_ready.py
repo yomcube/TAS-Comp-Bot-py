@@ -5,8 +5,10 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
+
+from api.submissions import get_logs_channel
 from commands.db.requesttask import check_speed_task_deadlines, check_speed_task_reminders
-from api.utils import is_task_currently_running, get_tasks_channel, get_announcement_channel
+from api.utils import is_task_currently_running, get_tasks_channel
 from api.db_classes import get_session, Tasks, SpeedTaskDesc, SpeedTaskLength
 from sqlalchemy import select, update, delete
 
@@ -88,7 +90,7 @@ async def before_release_task():
 ####################################################
 
 @tasks.loop(seconds=60)
-async def check_task_deadline():
+async def check_task_deadline(bot):
     async with get_session() as session:
 
         # Only check deadlines if a task is ongoing
@@ -100,6 +102,11 @@ async def check_task_deadline():
         # If deadline is none, don't try to auto close task
         if ongoing_task[6] is None:
             return
+
+        load_dotenv()
+        DEFAULT = os.getenv('DEFAULT')
+
+        log_channel = bot.get_channel(await get_logs_channel(DEFAULT))
 
         # Get the current time rounded to the nearest minute
         current_time = int(time.time())
@@ -127,6 +134,8 @@ async def check_task_deadline():
             await session.execute(delete(SpeedTaskDesc))
             await session.commit()
 
+            await log_channel.send("The task has been closed automatically; deadline has passed.")
+
         # if we get here, there is no task that needed to be stopped
         except UnboundLocalError:
             pass
@@ -151,7 +160,7 @@ class Ready(commands.Cog):
         shared.main_guild = self.bot.guilds[0]
         print(f"Detected main server: {shared.main_guild.name} (ID: {shared.main_guild.id})")
 
-        check_task_deadline.start()
+        check_task_deadline.start(self.bot)
         check_speed_task_deadlines.start(self.bot)
 
         release_speed_task.start(self.bot)

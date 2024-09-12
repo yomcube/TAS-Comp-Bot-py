@@ -28,11 +28,13 @@ class Get(commands.Cog):
             total_submissions = len(submissions)
         # Count submissions from current task
 
-        header = f"__Task {active_task} submissions__:\n(Total submissions: {total_submissions})\n\n"
-        await ctx.send(header)
-
-        # Send all submissions
+        # Send all submissions and truncate if > 2000
         try:
+            msg_limit = 2000
+            buffer = 50  # Small buffer to prevent exceeding the limit
+            submissions_parts = []
+            current_part = ""
+
             for submission in submissions:
                 if await is_in_team(submission.user_id):
                     ids = await get_team_ids(submission.user_id)
@@ -43,17 +45,38 @@ class Get(commands.Cog):
                 else:
                     name = await get_display_name(submission.user_id)
 
-                content = (f"{name} : {submission.url}"
-                            f" | Fetched time: ||{float_to_readable(submission.time)}||\n")
-                await ctx.send(content=content)
-                await asyncio.sleep(0.5)
+                submission_text = f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
 
+                # Check if adding this submission would exceed the message limit
+                if len(current_part) + len(submission_text) > (msg_limit - buffer):
+                    submissions_parts.append(current_part)  # Save the current part
+                    current_part = submission_text  # Start a new part
+                else:
+                    current_part += submission_text
 
+            # Append the last part
+            if current_part:
+                submissions_parts.append(current_part)
 
-        except TypeError as e:  # can happen if get_display_name throws an error; an id is not found in user.db
-            # Happens, for example, if an admin /submit for someone who is not in the user.db
+            header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {total_submissions})\n\n"
+
+            # Send the messages, including the header in the first message
+            for i, part in enumerate(submissions_parts):
+                if i == 0:
+                    if len(header + part) > msg_limit:
+                        await ctx.reply(header)
+                        await ctx.reply(part)
+                    else:
+                        await ctx.reply(header + part)
+                else:
+                    await ctx.reply(part)
+
+                await asyncio.sleep(1)
+
+        except TypeError as e:
             print(e)
             await ctx.send("Someone's submission could not be retrieved.")
+
 
 
 async def setup(bot) -> None:

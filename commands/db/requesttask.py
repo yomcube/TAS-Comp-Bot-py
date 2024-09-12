@@ -2,7 +2,7 @@ import os
 import discord
 import shared
 from discord.ext import commands, tasks
-from api.utils import is_task_currently_running, get_submitter_role
+from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel
 from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, SpeedTask, get_session
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
@@ -80,6 +80,29 @@ async def check_speed_task_reminders(bot):
                         user = bot.get_user(task.user_id)
                         if user:
                             await user.send(f"Reminder: You have {reminder} minutes left to submit your task!")
+
+        # Also do public reminders
+        if ongoing_task[7]:
+            reminder_query = select(SpeedTaskReminders).where(SpeedTaskReminders.comp == DEFAULT)
+            reminder_result = await session.execute(reminder_query)
+            reminders = reminder_result.scalar_one_or_none()
+
+            if reminders:
+                announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
+                deadline = ongoing_task[6]
+                time_left = deadline - current_time
+
+                if announcement_channel:
+                    for reminder in [reminders.reminder1, reminders.reminder2, reminders.reminder3,
+                                     reminders.reminder4]:
+                        if reminder is not None and time_left == reminder * 60:  # Convert reminder from minutes to seconds
+                            time_unit = "hours" if reminder >= 60 else "minutes"
+                            time_value = reminder // 60 if reminder >= 60 else reminder
+
+                            await announcement_channel.send(
+                                f"Attention: You have {time_value} {time_unit} left to continue the task!"
+                            )
+
 
 @check_speed_task_reminders.before_loop
 async def before_check_reminders():
