@@ -14,7 +14,7 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
-# Credits to original sm64 / mkw tas comp bot (by Xander) for messages 
+# Credits to original sm64 / mkw tas comp bot (by Xander) for messages
 
 
 async def has_requested_already(id):
