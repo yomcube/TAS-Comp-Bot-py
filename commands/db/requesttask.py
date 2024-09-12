@@ -2,7 +2,7 @@ import os
 import discord
 import shared
 from discord.ext import commands, tasks
-from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel
+from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel, get_tasks_channel
 from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, SpeedTask, get_session
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
@@ -12,6 +12,9 @@ import asyncio
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
+
+
+# Credits to original sm64 / mkw tas comp bot (by Xander) for messages 
 
 
 async def has_requested_already(id):
@@ -77,11 +80,29 @@ async def check_speed_task_reminders(bot):
                 # Send reminders based on the time left
                 for reminder in [reminders.reminder1, reminders.reminder2, reminders.reminder3, reminders.reminder4]:
                     if reminder is not None and time_left == reminder * 60:  # Convert reminder from minutes to seconds
+                        hours = reminder // 60
+                        minutes = reminder % 60
+
+                        # Handle exactly 60 minutes as 1 hour
+                        if reminder == 60:
+                            time_str = "1 hour"
+                        else:
+                            time_str = ""
+                            if hours > 0:
+                                hour_unit = "hour" if hours == 1 else "hours"
+                                time_str = f"{hours} {hour_unit}"
+
+                            if minutes > 0:
+                                minute_unit = "minute" if minutes == 1 else "minutes"
+                                if time_str:
+                                    time_str += f" and {minutes} {minute_unit}"
+                                else:
+                                    time_str = f"{minutes} {minute_unit}"
                         user = bot.get_user(task.user_id)
                         if user:
-                            await user.send(f"Reminder: You have {reminder} minutes left to submit your task!")
+                            await user.send(f"You have {time_str} remaining to submit!")
 
-        # Also do public reminders
+        # Also do public reminders is task is released
         if ongoing_task[7]:
             reminder_query = select(SpeedTaskReminders).where(SpeedTaskReminders.comp == DEFAULT)
             reminder_result = await session.execute(reminder_query)
@@ -96,11 +117,27 @@ async def check_speed_task_reminders(bot):
                     for reminder in [reminders.reminder1, reminders.reminder2, reminders.reminder3,
                                      reminders.reminder4]:
                         if reminder is not None and time_left == reminder * 60:  # Convert reminder from minutes to seconds
-                            time_unit = "hours" if reminder >= 60 else "minutes"
-                            time_value = reminder // 60 if reminder >= 60 else reminder
+                            hours = reminder // 60
+                            minutes = reminder % 60
+
+                            # Handle exactly 60 minutes as 1 hour
+                            if reminder == 60:
+                                time_str = "1 hour"
+                            else:
+                                time_str = ""
+                                if hours > 0:
+                                    hour_unit = "hour" if hours == 1 else "hours"
+                                    time_str = f"{hours} {hour_unit}"
+
+                                if minutes > 0:
+                                    minute_unit = "minute" if minutes == 1 else "minutes"
+                                    if time_str:
+                                        time_str += f" and {minutes} {minute_unit}"
+                                    else:
+                                        time_str = f"{minutes} {minute_unit}"
 
                             await announcement_channel.send(
-                                f"Attention: You have {time_value} {time_unit} left to continue the task!"
+                                f"Reminder: You have {time_str} remaining to submit!"
                             )
 
 
@@ -154,7 +191,7 @@ async def check_speed_task_deadlines(bot):
             await session.commit()
 
             user = bot.get_user(task.user_id)
-            await user.send("Your time for this competition is over! Your deadline has passed.")
+            await user.send(f"Your time is up! Thank you for participating in Task {ongoing_task[0]}.")
 
             # Give the user a role upon their deadline
             guild_id = shared.main_guild.id
@@ -204,10 +241,16 @@ class Requesttask(commands.Cog):
 
         # if not speed task
         if not current_task[4]:
-            return await ctx.send("This is not a speed task! The task is posted publicly already.")
+            tasks_channel = await get_tasks_channel(DEFAULT)
+            return await ctx.send(f"This is not a speed task! Please see <#{tasks_channel}> for task information.")
 
         if await has_requested_already(ctx.author.id):
             return await ctx.send("You have already requested the task.")
+
+        # if task is released, but try to requets task
+        if current_task[7]:
+            tasks_channel = await get_tasks_channel(DEFAULT)
+            return await ctx.send(f"The task has already been posted publicly! Please see <#{tasks_channel}> for task information.")
 
         async with get_session() as session:
 

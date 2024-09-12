@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 
 from api.submissions import get_logs_channel
 from commands.db.requesttask import check_speed_task_deadlines, check_speed_task_reminders
-from api.utils import is_task_currently_running, get_tasks_channel
+from api.utils import is_task_currently_running, get_tasks_channel, get_announcement_channel
 from api.db_classes import get_session, Tasks, SpeedTaskDesc, SpeedTaskLength
 from sqlalchemy import select, update, delete
 
@@ -65,8 +65,21 @@ async def release_speed_task(bot):
             # Get speed task description and send it
             query2 = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.comp == DEFAULT)
             task_desc = (await session.scalars(query2)).first()
+            task_num = ongoing_task[0]
+            year = ongoing_task[1]
+            deadline = ongoing_task[6]
 
-            await channel.send(task_desc)
+            await channel.send(f"__**Task {task_num}, {year}**:__\n\n{task_desc}\n\nYou have until <t:{deadline}:f> "
+                               f"(<t:{deadline}:R>) to submit.")
+
+            # Also send an announcement in announcement channel
+            announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
+            await announcement_channel.send(f"@ everyone Task {task_num} has been released publicly! You have until "
+                                      f"<t:{deadline}:R> to submit to this speed task! Please see <#{tasks_channel}> "
+                                      f"for task information.")
+
+
+
 
             # set the task to released; everyone may submit, and bot won't publish task again
             await session.execute(update(Tasks).values(is_released=1).where(Tasks.is_active == 1))
@@ -107,6 +120,7 @@ async def check_task_deadline(bot):
         DEFAULT = os.getenv('DEFAULT')
 
         log_channel = bot.get_channel(await get_logs_channel(DEFAULT))
+        announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
 
         # Get the current time rounded to the nearest minute
         current_time = int(time.time())
@@ -135,6 +149,8 @@ async def check_task_deadline(bot):
             await session.commit()
 
             await log_channel.send("The task has been closed automatically; deadline has passed.")
+            await announcement_channel.send(f"Task {ongoing_task[0]} is over! Thank you to everyone who participated!")
+
 
         # if we get here, there is no task that needed to be stopped
         except UnboundLocalError:
