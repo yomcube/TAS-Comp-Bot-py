@@ -74,7 +74,7 @@ async def release_speed_task(bot):
 
             # Also send an announcement in announcement channel
             announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
-            await announcement_channel.send(f"@ everyone Task {task_num} has been released publicly! You have until "
+            await announcement_channel.send(f"@everyone Task {task_num} has been released publicly! You have until "
                                       f"<t:{deadline}:R> to submit to this speed task! Please see <#{tasks_channel}> "
                                       f"for task information.")
 
