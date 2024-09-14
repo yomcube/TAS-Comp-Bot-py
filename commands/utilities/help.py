@@ -56,6 +56,7 @@ Fun commands 👀\n
         elif category.lower() == "misc":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
 Miscellaneous commands\n
+  **quote** -- Read an inspirational quote!
   **tracks** -- Picks a random track from the game!
   **urban** -- Search urban dictionary for a word or expression!
   **weather** -- Get the weather of a city!
