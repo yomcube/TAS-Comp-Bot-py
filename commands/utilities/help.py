@@ -48,6 +48,7 @@ Fun commands 👀\n
   **coinflip** -- Bet on a coinflip against the bot, or another player. For now, only betting 5 coins is possible.
   **connect4** -- Play connect 4 against MKWTASCompBot in any of 3 modes: easy, normal and hard, or against another player.
   **joke** -- Get a good ol' joke from the bot!
+  **memory** -- Play a memory game! Default board size is 4x4. Be warned: board size 6 and up are way harder due to emoji size.
   **rps** -- Play rock paper scissors against the bot, or against another player. Coins are involved.
   **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
 """
@@ -73,7 +74,7 @@ Voice chat commands :musical_note: \n
 
         elif category.lower() == "host":
             help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
-Host commands :mishchievous:\n
+Host commands :P\n
   **delete-submission** -- Delete someone's submission. 
   **/dm** -- Make the bot dm someone!
   **/edit-submission** -- Edits someone's submission status: time, dq (True/False), dq reason
@@ -82,7 +83,8 @@ Host commands :mishchievous:\n
   **get-submissions** -- Your bread and butter for starting to judge and time runs!
   **hostdissolve** -- Dissolve a team. Use $teams to see different team indexes.
   **speed-task-desc** -- Set the description of a speed task.
-  **speed-task-time** -- Set the duration competitors have to submit to a speed task.
+  **speed-task-length** -- Set the duration competitors have to submit to a speed task.
+  **speed-task-reminders** -- Set the reminders for a speed task. Up to 4 reminders.
   **/start-task** -- Starts a new task. Warning: this deletes last task's stored submissions, results, and 'Current submission' message.
   **/submit** -- Submit a file for someone, should an issue arise. Use this as last resort :P
 """
@@ -93,10 +95,14 @@ Admin commands \n
   **addcoins** -- Adds coins to someone's balance (or remove, if a negative number is specified).
   **config** -- Configure the different roles and channels
   **say** -- Make the bot say something in a channel!
+  **set-announcement-role** -- Set the announcement channel.
   **set-host-role** -- Sets the host role that can use all the Host commands. Default role is a role called 'Host'.
   **set-logs-channel** -- Sets the dm logging channel 
   **set-seeking-channel** -- Sets the Seeking partners channel
   **set-submission-channel** -- Set the submission channel where the 'Current submissions' message is.
+  **set-submitter-role** -- Set the submitter role. Given out when user submit.
+  **set-tasks-role** -- Set the tasks channel.
+  **toggle-reminder-pings** -- Toggle whether we want to ping @ everyone when doing speed task reminders. Default: False
   """
 
 

@@ -157,6 +157,14 @@ class SpeedTaskReminders(Base):
     guild_id = Column('guild_id', Integer)
 
 
+class ReminderPings(Base):
+    __tablename__ = "reminderpings"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    ping = Column('ping', Integer)
+    guild_id = Column('guild_id', Integer)
+
+
 async def db_connect():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
