@@ -5,7 +5,11 @@ import discord
 from urllib.parse import urlparse
 from discord.ext import commands
 from sqlalchemy import select, insert, update, inspect, or_
+
 from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session, TasksChannel, AnnouncementsChannel
+
+from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -71,6 +75,7 @@ async def get_submitter_role(guild_id):
             return None
 
 
+
 async def get_tasks_channel(comp):
     async with get_session() as session:
         query = select(TasksChannel.channel_id).where(TasksChannel.comp == comp)
@@ -90,6 +95,7 @@ async def get_announcement_channel(comp):
             print(f"No announcements channel found for '{comp}'.")
             return None
         return channel[0]
+
 
 
 def has_host_role():

@@ -100,6 +100,24 @@ async def before_release_task():
 # Automatically close tasks after deadline
 ####################################################
 
+
+import os
+
+from dotenv import load_dotenv
+import shared
+import time
+import asyncio
+from discord.ext import commands, tasks
+
+from api.submissions import get_logs_channel
+from commands.db.requesttask import check_speed_task_deadlines
+from api.utils import is_task_currently_running
+from api.db_classes import  get_session, Tasks
+from sqlalchemy import select, update, delete
+
+host_role_id = None
+
+
 @tasks.loop(seconds=60)
 async def check_task_deadline(bot):
     async with get_session() as session:
@@ -118,7 +136,10 @@ async def check_task_deadline(bot):
         DEFAULT = os.getenv('DEFAULT')
 
         log_channel = bot.get_channel(await get_logs_channel(DEFAULT))
+
         announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
+
+
 
         # Get the current time rounded to the nearest minute
         current_time = int(time.time())
@@ -137,17 +158,26 @@ async def check_task_deadline(bot):
                 .values(is_active=0)
             )
 
+
         try:  # Ending task if we pass deadline
+        try: # Ending task if we pass deadline
+
             await session.execute(stmt)
             await session.commit()
 
             # Delete task
             await session.execute(delete(Tasks).where(Tasks.is_active == 0))
+
             await session.execute(delete(SpeedTaskDesc))
             await session.commit()
 
             await log_channel.send("The task has been closed automatically; deadline has passed.")
             await announcement_channel.send(f"Task {ongoing_task[0]} is over! Thank you to everyone who participated!")
+
+
+            await session.commit()
+
+            await log_channel.send("The task has been closed automatically; deadline has passed.")
 
 
         # if we get here, there is no task that needed to be stopped
@@ -161,6 +191,7 @@ async def before_check_deadline():
     now = time.time()
     seconds_until_next_minute = 60 - (int(now) % 60)
     await asyncio.sleep(seconds_until_next_minute)
+
 
 ####################################################
 # Check for reminders in speed tasks

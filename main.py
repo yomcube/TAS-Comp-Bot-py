@@ -34,8 +34,10 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.db.admin.set-submission-channel',
                 'commands.db.admin.set-seeking-channel',
                 'commands.db.admin.set-submitter-role',
+
                 'commands.db.admin.set-tasks-channel',
                 'commands.db.admin.togglereminderpings',
+
                 'commands.db.admin.config',
                 'commands.db.info',
                 'commands.db.requesttask',
