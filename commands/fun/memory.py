@@ -49,6 +49,9 @@ class Memory(commands.Cog):
             await ctx.send("You're already playing a game!")
             return
 
+        if size <= 0:
+            return await ctx.send("Board size is too small!")
+
         lives = int(size - 1)
 
         # Create the embed for game instructions
