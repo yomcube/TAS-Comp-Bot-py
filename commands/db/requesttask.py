@@ -1,15 +1,9 @@
 import os
 import discord
-
 import shared
 from discord.ext import commands, tasks
 from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel, get_tasks_channel
 from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, SpeedTask, get_session, ReminderPings
-
-from discord.ext import commands, tasks
-from api.utils import is_task_currently_running
-from api.db_classes import SpeedTaskDesc, SpeedTaskTime, SpeedTask, get_session
-
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
 import math
@@ -28,15 +22,6 @@ async def has_requested_already(id):
         result = (await session.execute(select(SpeedTask)
                                         .where(SpeedTask.user_id == id))).first()
         return result
-
-async def is_time_over(id):
-    async with get_session() as session:
-        result = (await session.execute(select(SpeedTask.active)
-                                        .where(SpeedTask.user_id == id))).first()
-
-        return int(result[0]) == 0
-
-
 
 
 async def is_time_over(id):
@@ -62,59 +47,6 @@ async def get_end_time(task_duration):
 
     return rounded_time_to_minute
 
-
-
-@tasks.loop(seconds=60)
-async def check_speed_task_deadlines(bot):
-    async with get_session() as session:
-
-        # Only check deadlines if a speed task is ongoing
-        ongoing_task = await is_task_currently_running()
-
-        if ongoing_task is None:
-            return
-
-        if not ongoing_task[4]:
-            return
-
-        # Check if the table is empty
-        result = await session.execute(select(SpeedTask))
-        user_list = result.scalars().all()  # Fetch all users in a list
-
-        user_count = len(user_list)  # Get the count of users
-
-        # Only check deadlines once people have started requesting tasks
-        if user_count == 0:
-            return
-
-        # Get the current time rounded to the nearest minute
-        current_time = int(time.time())
-
-        # Query for all active tasks with deadlines
-        result = await session.execute(
-            select(SpeedTask).where(SpeedTask.end_time <= current_time, SpeedTask.active == True)
-        )
-        tasks_to_update = result.scalars().all()
-
-        for task in tasks_to_update:
-            stmt = (
-                update(SpeedTask)
-                .where(SpeedTask.user_id == task.user_id)  # Ensure we update based on user_id
-                .values(active=0)
-            )
-            await session.execute(stmt)
-            await session.commit()
-
-            user = bot.get_user(task.user_id)
-            await user.send("Your time for this competition is over! Your deadline has passed.")
-
-
-@check_speed_task_deadlines.before_loop
-async def before_check_deadlines():
-    # Wait until the start of the next minute
-    now = time.time()
-    seconds_until_next_minute = 60 - (int(now) % 60)
-    await asyncio.sleep(seconds_until_next_minute)
 
 class Requesttask(commands.Cog):
     def __init__(self, bot) -> None:

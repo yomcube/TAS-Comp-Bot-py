@@ -4,11 +4,7 @@ import shared
 from dotenv import load_dotenv
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from sqlalchemy import insert, select, or_
-
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
-
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role
-
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -161,9 +157,6 @@ async def update_submission_list(last_message, id, name):
                     f" ||<@{id}>||")
     return await last_message.edit(content=new_content)
 
-async def assign_submitter_role(self):
-
-    pass
 
 
 async def handle_submissions(message, self):
@@ -222,7 +215,6 @@ async def handle_submissions(message, self):
         # channels
         await post_submission_list(channel, author_id, author_display_name)
 
-
     ##################################################################
     # Adding submitter role to submitters (if not speed task)
     ##################################################################
@@ -250,33 +242,6 @@ async def handle_submissions(message, self):
                 await message.channel.send(f"Role with ID {submitter_role} not found in this server.")
         else:
             await message.channel.send(f"User with ID {author_id} not found in this server.")
-
-    ##################################################
-    # Adding submitter role to submitters
-    ##################################################
-    guild_id = shared.main_guild.id
-
-    if guild_id is None:
-        print("Guild not detected yet.")
-        return
-
-    submitter_role = await get_submitter_role(DEFAULT)
-
-    # Fetch the member from the detected guild
-    server = self.bot.get_guild(guild_id)
-    member = server.get_member(author_id)
-
-    if member:
-        role = server.get_role(submitter_role)
-        if role:
-            if role not in member.roles:
-                await member.add_roles(role)
-                print(f"Role {role.name} has been assigned to {member.display_name}.")
-        else:
-            await message.channel.send(f"Role with ID {submitter_role} not found in this server.")
-    else:
-        await message.channel.send(f"User with ID {author_id} not found in this server.")
-
 
 
 async def handle_dms(message, self):

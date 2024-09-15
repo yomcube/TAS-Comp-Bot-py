@@ -19,7 +19,6 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
             # Speed task: Has not requested task, or time is over
             is_speed_task = (await is_task_currently_running())[4]
-
             is_released = (await is_task_currently_running())[7]
 
             if is_speed_task:
@@ -43,16 +42,6 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
 
                     await message.channel.send(message_to_send)
-
-
-            if is_speed_task:
-                if not await has_requested_already(message.author.id):
-                    await message.channel.send("You may not submit yet! Use $requesttask first.")
-                    return
-
-                if await is_time_over(message.author.id):
-                    await message.channel.send("Your can't submit, your time is already over!")
-
                     return
 
             ##################################################
@@ -146,16 +135,10 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
                 # Speed task: Has not requested task, or time is over
                 is_speed_task = (await is_task_currently_running())[4]
-
                 is_released = (await is_task_currently_running())[7]
 
                 if is_speed_task:
                     if not await has_requested_already(message.author.id) and not is_released:
-
-
-                if is_speed_task:
-                    if not await has_requested_already(message.author.id):
-
                         await message.channel.send("You may not submit yet! Use $requesttask first.")
                         return
 

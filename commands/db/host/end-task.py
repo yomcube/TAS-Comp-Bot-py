@@ -27,10 +27,7 @@ class End(commands.Cog):
                 year = currently_running.year
                 await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
                 
-
                 # Delete the task -- we don't really need to keep, and delete speed task desc
-
-                # Delete the task -- we don't really need to keep
                 await session.execute(delete(Tasks).where(Tasks.is_active == 0))
                 await session.execute(delete(SpeedTaskDesc))
                 

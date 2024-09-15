@@ -3,7 +3,6 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, SubmitterRole, TasksChannel, AnnouncementsChannel
-from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, SubmitterRole
 from sqlalchemy import select, insert, update
 
 load_dotenv()
@@ -21,8 +20,6 @@ class Config(commands.Cog):
                       set_seeking_channel: discord.TextChannel, set_submitter_role: discord.Role,
                       set_announcement_channel: discord.TextChannel, set_tasks_channel: discord.TextChannel,
                       comp: str = DEFAULT):
-    async def command(self, ctx, set_host_role: discord.Role, set_logs_channel: discord.TextChannel, set_submission_channel: discord.TextChannel, set_seeking_channel: discord.TextChannel, set_submitter_role: discord.Role, comp: str = DEFAULT):
-
 
         ### HOST ROLE ###
         async with get_session() as session:
@@ -132,19 +129,6 @@ class Config(commands.Cog):
                 stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id,
                                                      channel_id=set_tasks_channel.id,
                                                      comp=comp)
-        async with get_session() as session:
-            submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
-            name = set_submitter_role.name
-            role_id = set_submitter_role.id
-
-            # Check if submitter_role doesn't exist yet for the comp
-            if submitter_role is None:
-                stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
-                await session.execute(stmt)
-            else:
-
-                stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
-
                 await session.execute(stmt)
 
             await session.commit()
@@ -176,12 +160,6 @@ class Config(commands.Cog):
 
         await ctx.send(
             f"The current host role has been set! {set_host_role.mention}\nThe log channel has been set! {set_logs_channel.mention}\nThe submission channel has been set! {set_submission_channel.mention}\nThe seek channel has been set! {set_seeking_channel.mention}\nThe submitter role has been set! {set_submitter_role.mention}\nThe tasks channel has been set! {set_tasks_channel.mention}\nThe announcement channel has been set! {set_announcement_channel.mention}")
-
-
-
-        await ctx.send(
-            f"The current host role has been set! {set_host_role.mention}\nThe log channel has been set! {set_logs_channel.mention}\nThe submission channel has been set! {set_submission_channel.mention}\nThe seek channel has been set! {set_seeking_channel.mention}\nThe submitter role has been set! {set_submitter_role.mention}")
-
 
 
 async def setup(bot) -> None:

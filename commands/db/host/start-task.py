@@ -22,23 +22,12 @@ class Start(commands.Cog):
     async def command(self, ctx, number: int, team_size: int = 1, multiple_tracks: int = 0,
                       speed_task: int = 0, year: int = None, deadline: int = None):
 
-
-
-        if deadline is not None:
-            # Prevent a task from creating if deadline is in the past
-            if deadline < int(time.time()):
-                return await ctx.send("This deadline is in the past! Retry again.")
-
-            else: # if deadline is valid, round it up to nearest minute
-                deadline = math.ceil(deadline / 60) * 60
-
         # auto set year
         if not year:
             year = date.today().year
 
         if await is_task_currently_running() is None:
             async with get_session() as session:
-
 
                 #########################################
                 # Cases where a task cannot be started
@@ -69,7 +58,6 @@ class Start(commands.Cog):
 
 
 
-
                 # Insert task in database. Non speed task case (difference is the is-released parameter)
                 if speed_task == 0:
                     await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
@@ -82,7 +70,6 @@ class Start(commands.Cog):
                     await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
                                                                multiple_tracks=multiple_tracks, speed_task=speed_task,
                                                                deadline=deadline, is_released=0))
-
 
                     # If a speed task and there is no default task duration set, set it to 4h.
                     query = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == ctx.guild.id)
@@ -118,7 +105,6 @@ class Start(commands.Cog):
 
                         # Commit changes to the database
                         await session.commit()
-
 
 
                 # Clear submissions from previous task, as well as potential teams, and speed task table
