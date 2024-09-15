@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from api.db_classes import get_session, SpeedTaskTime
+from api.db_classes import get_session, SpeedTaskLength
 from api.utils import has_host_role
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
@@ -10,25 +10,25 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
-class Speedtasktime(commands.Cog):
+class Speedtasklength(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="speed-task-time", aliases=['stt'],
+    @commands.hybrid_command(name="speed-task-length", aliases=['stt'],
                              description="Set the time users have to submit to speed tasks (in hours)", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, time: float, comp: str = DEFAULT):
 
         # TODO: detect which server you are in, so the comp argument is no longer needed
         async with get_session() as session:
-            query = select(SpeedTaskTime.time).where(SpeedTaskTime.guild_id == ctx.guild.id)
+            query = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == ctx.guild.id)
             result = (await session.execute(query)).first()
             if result is None:
-                stmt = insert(SpeedTaskTime).values(guild_id=ctx.message.guild.id, time=time, comp=comp)
+                stmt = insert(SpeedTaskLength).values(guild_id=ctx.message.guild.id, time=time, comp=comp)
                 await session.execute(stmt)
 
             else:
-                stmt = update(SpeedTaskTime).values(guild_id=ctx.message.guild.id, time=time, comp=comp)
+                stmt = update(SpeedTaskLength).values(guild_id=ctx.message.guild.id, time=time, comp=comp)
                 await session.execute(stmt)
 
             await session.commit()
@@ -37,4 +37,4 @@ class Speedtasktime(commands.Cog):
 
 
 async def setup(bot) -> None:
-    await bot.add_cog(Speedtasktime(bot))
+    await bot.add_cog(Speedtasklength(bot))

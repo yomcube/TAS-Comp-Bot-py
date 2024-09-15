@@ -11,6 +11,10 @@ class Clear(commands.Cog):
         if amount < 1:
             await ctx.send('The number of messages to delete must be at least 1.', ephemeral=True)
             return
+
+        if amount > 20:
+            await ctx.send('For security reasons, you may not delete more than 20 messages at once', ephemeral=True)
+            return
         
         deleting_message = await ctx.send(f'Deleting {amount} messages...', ephemeral=True)
         await deleting_message.delete()

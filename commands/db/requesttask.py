@@ -1,8 +1,9 @@
 import os
 import discord
+import shared
 from discord.ext import commands, tasks
-from api.utils import is_task_currently_running
-from api.db_classes import SpeedTaskDesc, SpeedTaskTime, SpeedTask, get_session
+from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel, get_tasks_channel
+from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, SpeedTask, get_session, ReminderPings
 from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
 import math
@@ -12,20 +13,27 @@ import asyncio
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
+
+# Credits to original sm64 / mkw tas comp bot (by Xander) for messages
+
+
 async def has_requested_already(id):
     async with get_session() as session:
         result = (await session.execute(select(SpeedTask)
                                         .where(SpeedTask.user_id == id))).first()
         return result
 
+
 async def is_time_over(id):
     async with get_session() as session:
         result = (await session.execute(select(SpeedTask.active)
                                         .where(SpeedTask.user_id == id))).first()
 
+        if result is None: # this happens when they are doing the task after it has been revealed; towards the end
+            return False
+
+
         return int(result[0]) == 0
-
-
 
 
 async def get_end_time(task_duration):
@@ -40,57 +48,6 @@ async def get_end_time(task_duration):
     return rounded_time_to_minute
 
 
-@tasks.loop(seconds=60)
-async def check_speed_task_deadlines(bot):
-    async with get_session() as session:
-
-        # Only check deadlines if a speed task is ongoing
-        ongoing_task = await is_task_currently_running()
-
-        if ongoing_task is None:
-            return
-
-        if not ongoing_task[4]:
-            return
-
-        # Check if the table is empty
-        result = await session.execute(select(SpeedTask))
-        user_list = result.scalars().all()  # Fetch all users in a list
-
-        user_count = len(user_list)  # Get the count of users
-
-        # Only check deadlines once people have started requesting tasks
-        if user_count == 0:
-            return
-
-        # Get the current time rounded to the nearest minute
-        current_time = int(time.time())
-
-        # Query for all active tasks with deadlines
-        result = await session.execute(
-            select(SpeedTask).where(SpeedTask.end_time <= current_time, SpeedTask.active == True)
-        )
-        tasks_to_update = result.scalars().all()
-
-        for task in tasks_to_update:
-            stmt = (
-                update(SpeedTask)
-                .where(SpeedTask.user_id == task.user_id)  # Ensure we update based on user_id
-                .values(active=0)
-            )
-            await session.execute(stmt)
-            await session.commit()
-
-            user = bot.get_user(task.user_id)
-            await user.send("Your time for this competition is over! Your deadline has passed.")
-
-@check_speed_task_deadlines.before_loop
-async def before_check_deadlines():
-    # Wait until the start of the next minute
-    now = time.time()
-    seconds_until_next_minute = 60 - (int(now) % 60)
-    await asyncio.sleep(seconds_until_next_minute)
-
 class Requesttask(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -100,20 +57,30 @@ class Requesttask(commands.Cog):
 
         current_task = await is_task_currently_running()
 
+        if current_task is None:
+            return await ctx.send("There is no active speed task yet.")
+
+
         # if not speed task
         if not current_task[4]:
-            return await ctx.send("This is not a speed task! The task is posted publicly already.")
+            tasks_channel = await get_tasks_channel(DEFAULT)
+            return await ctx.send(f"This is not a speed task! Please see <#{tasks_channel}> for task information.")
 
         if await has_requested_already(ctx.author.id):
             return await ctx.send("You have already requested the task.")
 
-
+        # if task is released, but try to requets task
+        if current_task[7]:
+            tasks_channel = await get_tasks_channel(DEFAULT)
+            return await ctx.send(f"The task has already been posted publicly! Please see <#{tasks_channel}> for task information.")
 
         async with get_session() as session:
-            query = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.guild_id == ctx.guild.id)
+
+            # use shared.main_guild.id to be able to use the command both in server, and in DM (where guild is None)
+            query = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.guild_id == shared.main_guild.id)
             task_desc = (await session.scalars(query)).first()
 
-            query2 = select(SpeedTaskTime.time).where(SpeedTaskTime.guild_id == ctx.guild.id)
+            query2 = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == shared.main_guild.id)
             task_duration = (await session.scalars(query2)).first()
 
             task_number = current_task[0]
@@ -121,19 +88,17 @@ class Requesttask(commands.Cog):
 
             end_time = await get_end_time(task_duration)
 
-
-
             try:
-                await ctx.author.send(f"You have requested the task!\n\n**__Task {task_number}, {task_year}:__** \n\n{task_desc}\n\n"
-                                      f"You have until <t:{end_time}:f> (<t:{end_time}:R>) to submit.\nGood luck!")
+                await ctx.author.send(
+                    f"You have requested the task!\n\n**__Task {task_number}, {task_year}:__** \n\n{task_desc}\n\n"
+                    f"You have until <t:{end_time}:f> (<t:{end_time}:R>) to submit.\nGood luck!")
 
-            except discord.Forbidden: # Catch DM closed error
+            except discord.Forbidden:  # Catch DM closed error
                 return await ctx.send("I couldn't send you a DM. Do you have DMs disabled?")
 
             await session.execute(insert(SpeedTask).values(user_id=ctx.author.id, end_time=end_time, active=1))
 
             await session.commit()
-
 
 
 async def setup(bot) -> None:

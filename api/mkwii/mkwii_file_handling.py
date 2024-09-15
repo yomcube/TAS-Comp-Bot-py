@@ -19,14 +19,29 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
             # Speed task: Has not requested task, or time is over
             is_speed_task = (await is_task_currently_running())[4]
+            is_released = (await is_task_currently_running())[7]
 
             if is_speed_task:
-                if not await has_requested_already(message.author.id):
-                    await message.channel.send("You may not submit yet! Use $requesttask first.")
+                if not (await has_requested_already(message.author.id)) and not is_released:
+                    await message.channel.send("You may not submit yet! Use `$requesttask` first.")
                     return
 
                 if await is_time_over(message.author.id):
-                    await message.channel.send("Your can't submit, your time is already over!")
+                    # If they have not submitted, they get a different message.
+                    async with get_session() as session:
+                        query = select(Submissions.user_id).where(Submissions.user_id == message.author.id)
+                        result = (await session.execute(query)).first()
+
+
+                        if result is None:
+                            message_to_send = (f"You can't submit, your time is up! If you wish to send in a late submission, "
+                                       f"please DM the current host so they can add your submission manually.")
+
+                        else:
+                            message_to_send = "You can't submit, your time is up!"
+
+
+                    await message.channel.send(message_to_send)
                     return
 
             ##################################################
@@ -120,9 +135,10 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
                 # Speed task: Has not requested task, or time is over
                 is_speed_task = (await is_task_currently_running())[4]
+                is_released = (await is_task_currently_running())[7]
 
                 if is_speed_task:
-                    if not await has_requested_already(message.author.id):
+                    if not await has_requested_already(message.author.id) and not is_released:
                         await message.channel.send("You may not submit yet! Use $requesttask first.")
                         return
 
