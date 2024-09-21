@@ -17,7 +17,10 @@ class Info(commands.Cog):
             # Verify if collab task, and if author is in a team
             team_size = await get_team_size()
 
-            if team_size > 1 and await is_in_team(ctx.author.id):
+            # TODO: Temporary fix for a bug where you can't use $info after task has ended; currently only will work for
+            #  solo tasks after task has ended
+
+            if team_size is not None and team_size > 1 and await is_in_team(ctx.author.id):
                 submission_id = await get_leader(ctx.author.id)
             else:
                 submission_id = ctx.author.id
