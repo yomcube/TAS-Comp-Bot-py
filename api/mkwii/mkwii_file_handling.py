@@ -20,6 +20,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
             # Speed task: Has not requested task, or time is over
             is_speed_task = (await is_task_currently_running())[4]
             is_released = (await is_task_currently_running())[7]
+            is_multiple_tracks = (await is_task_currently_running())[5]
 
             if is_speed_task:
                 if not (await has_requested_already(message.author.id)) and not is_released:
@@ -43,6 +44,10 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
 
                     await message.channel.send(message_to_send)
                     return
+
+            if is_multiple_tracks:
+                await message.channel.send("You must send an rksys.dat file!")
+                return
 
             ##################################################
             # Otherwise continue
@@ -136,6 +141,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 # Speed task: Has not requested task, or time is over
                 is_speed_task = (await is_task_currently_running())[4]
                 is_released = (await is_task_currently_running())[7]
+                is_multiple_tracks = (await is_task_currently_running())[5]
 
                 if is_speed_task:
                     if not await has_requested_already(message.author.id) and not is_released:
@@ -145,6 +151,10 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                     if await is_time_over(message.author.id):
                         await message.channel.send("You can't submit, your time is already over!")
                         return
+
+                if not is_multiple_tracks:
+                    await message.channel.send("You must send an .rkg file!")
+                    return
 
             # handle submission
             await handle_submissions(message, self)
@@ -169,6 +179,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                                                                      url=attachments[index].url, time=0, dq=0,
                                                                      dq_reason='', character="48", vehicle="36"))
                     # I defined 48 and 36 as being none
+                    await session.commit()
 
             # If not first submission: replace old submission
             else:
