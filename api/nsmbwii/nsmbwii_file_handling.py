@@ -1,6 +1,6 @@
 from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader
-from api.nsmbwii.nsmbwii_utils import get_vi_count
+from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, is_task_currently_running
+from commands.db.requesttask import has_requested_already, is_time_over
 from api.db_classes import get_session, Submissions, Teams, Userbase
 from sqlalchemy import insert, update, select
 from struct import unpack
@@ -13,6 +13,41 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
         index = file_dict.get("dtm")
 
         if current_task:
+            ##################################################
+            # Cases where someone is denied submission
+            ##################################################
+
+            # Speed task: Has not requested task, or time is over
+            is_speed_task = (await is_task_currently_running())[4]
+            is_released = (await is_task_currently_running())[7]
+            is_multiple_tracks = (await is_task_currently_running())[5]
+
+            if is_speed_task:
+                if not (await has_requested_already(message.author.id)) and not is_released:
+                    await message.channel.send("You may not submit yet! Use `$requesttask` first.")
+                    return
+
+                if await is_time_over(message.author.id):
+                    # If they have not submitted, they get a different message.
+                    async with get_session() as session:
+                        query = select(Submissions.user_id).where(Submissions.user_id == message.author.id)
+                        result = (await session.execute(query)).first()
+
+
+                        if result is None:
+                            message_to_send = (f"You can't submit, your time is up! If you wish to send in a late submission, "
+                                       f"please DM the current host so they can add your submission manually.")
+
+                        else:
+                            message_to_send = "You can't submit, your time is up!"
+
+
+                    await message.channel.send(message_to_send)
+                    return
+
+            ##################################################
+            # Otherwise continue
+            ##################################################
 
             # handle submission
             await handle_submissions(message, self)
@@ -24,7 +59,7 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             try:
                 dtm = bytearray(dtm_data)
                 if dtm[:4] == b'DTM\x1A':
-                    vi_count = unpack('<L', dtm[0xD:0x11])[0]
+                    vi_count = unpack("<Q", dtm[0xD:0x15])[0]
 
                 # float time to upload to db
                 time = vi_count / 60
@@ -52,6 +87,7 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
 
             # first time submission (within the task)
             if await first_time_submission(submitter_id):
+                async with get_session() as session:
                     await session.execute(insert(Submissions).values(task=current_task[0], name=submitter_name,
                                                                      user_id=submitter_id,
                                                                      url=attachments[index].url, time=time, dq=0,
@@ -68,10 +104,8 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             # Tell the user the submission has been received
             print(f"File received!\nBy: {message.author}\nMessage sent: {message.content}")
             await message.channel.send(
-                "`.dtm` file detected!\nThe file was successfully saved. "
-                "Type `$info` for more information about the file.")
+                "`.dtm` file detected!\nThe file was successfully saved.")
 
         # No ongoing task
         else:
-            await message.channel.send("There is no active task yet.")
-
+            await message.channel.send("There is no active task.")
