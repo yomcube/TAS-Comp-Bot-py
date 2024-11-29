@@ -60,7 +60,7 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
                     vi_count = unpack("<Q", dtm[0xD:0x15])[0]
 
                 # float time to upload to db
-                time = vi_count / 60
+                time = vi_count
 
             except UnboundLocalError:
                 # This exception catches blank dtm files
@@ -85,19 +85,22 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             
             url = " ".join(a.url for a in attachments)
             
+            # Hacky, but the character is set with the DTM bytes so
+            # another field doesn't have to be added to the DB
+            
             # first time submission (within the task)
             if await first_time_submission(submitter_id):
                 async with get_session() as session:
                     await session.execute(insert(Submissions).values(task=current_task[0], name=submitter_name,
                                                                      user_id=submitter_id,
-                                                                     url=url, time=time, dq=0,
-                                                                     dq_reason=''))
+                                                                     url=url, time=time, character=dtm,
+                                                                     dq=0, dq_reason=''))
                     await session.commit()
 
             # If not first submission: replace old submission
             else:
                 async with get_session() as session:
-                    await session.execute(update(Submissions).values(url=url, time=time)
+                    await session.execute(update(Submissions).values(url=url, time=time, character=dtm)
                                           .where(Submissions.user_id == submitter_id))
                     await session.commit()
 

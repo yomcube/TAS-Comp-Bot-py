@@ -12,6 +12,7 @@ from api.db_classes import db_connect
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
+DEFAULT = os.getenv('DEFAULT')
 
 os.makedirs(DB_DIR) if not os.path.exists(DB_DIR) else None
 activity = discord.Game(name="Dolphin Emulator")
@@ -37,7 +38,7 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.db.admin.set-tasks-channel',
                 'commands.db.admin.togglereminderpings',
                 'commands.db.admin.config',
-                'commands.db.info',
+                'commands.db.info_nsmbw' if DEFAULT == 'nsmbw' else 'commands.db.info',
                 'commands.db.requesttask',
                 'commands.db.setname',
                 'commands.db.team.collab',
