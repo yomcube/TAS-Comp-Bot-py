@@ -10,7 +10,6 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
     current_task = await is_task_currently_running()
 
     if file_dict.get("dtm") is not None:
-        index = file_dict.get("dtm")
 
         if current_task:
             ##################################################
@@ -20,7 +19,6 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             # Speed task: Has not requested task, or time is over
             is_speed_task = (await is_task_currently_running())[4]
             is_released = (await is_task_currently_running())[7]
-            is_multiple_tracks = (await is_task_currently_running())[5]
 
             if is_speed_task:
                 if not (await has_requested_already(message.author.id)) and not is_released:
@@ -84,20 +82,22 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             ####################
             # Adding submission
             ####################
-
+            
+            url = " ".join(a.url for a in attachments)
+            
             # first time submission (within the task)
             if await first_time_submission(submitter_id):
                 async with get_session() as session:
                     await session.execute(insert(Submissions).values(task=current_task[0], name=submitter_name,
                                                                      user_id=submitter_id,
-                                                                     url=attachments[index].url, time=time, dq=0,
+                                                                     url=url, time=time, dq=0,
                                                                      dq_reason=''))
                     await session.commit()
 
             # If not first submission: replace old submission
             else:
                 async with get_session() as session:
-                    await session.execute(update(Submissions).values(url=attachments[index].url, time=time)
+                    await session.execute(update(Submissions).values(url=url, time=time)
                                           .where(Submissions.user_id == submitter_id))
                     await session.commit()
 
