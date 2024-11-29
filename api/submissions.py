@@ -11,6 +11,8 @@ DEFAULT = os.getenv('DEFAULT')
 
 if DEFAULT == 'mkw':
     guild_id = 1214800758881394718
+elif DEFAULT == 'nsmbw':
+    guild_id = 1238999592947810366
 
 
 async def get_submission_channel(comp):
@@ -245,8 +247,8 @@ async def handle_dms(message, self):
         channel = self.bot.get_channel(await get_logs_channel(DEFAULT))
         attachments = message.attachments
         if channel:
-            await channel.send("Message from " + str(author_dn) + ": " + message.content + " "
-                               .join([attachment.url for attachment in message.attachments if message.attachments]))
+            await channel.send(f"Message from {author_dn}: {message.content} " +
+                                " ".join([attachment.url for attachment in message.attachments if message.attachments]))
 
         #########################
         # Recognizing submission
