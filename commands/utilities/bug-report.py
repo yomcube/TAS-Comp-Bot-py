@@ -1,5 +1,10 @@
 from discord.ext import commands
 import discord
+from dotenv import load_dotenv
+from os import getenv
+
+load_dotenv()
+DEFAULT = getenv('DEFAULT')
 
 class Bug(commands.Cog):
     def __init__(self, bot) -> None:
@@ -13,8 +18,14 @@ class Bug(commands.Cog):
         
             await dash.send(bug)
             await shxd.send(bug)
-
-            await ctx.reply(f"Bug sent to {shxd.display_name} and {dash.display_name}, thank you!\nRemember that you can also [open an issue](https://github.com/crackhex/TAS-Comp-Bot-py/issues/new) on Github if you have an account.")
+            names = [ shxd.display_name, dash.display_name ]
+            
+            if DEFAULT == 'nsmbw':
+                tomcube = self.bot.get_user(1096803802029510766)
+                names.append(tomcube.display_name)
+                await tomcube.send(bug)
+            
+            await ctx.reply(f"Bug sent to {' and '.join(names)}, thank you!\nRemember that you can also [open an issue](https://github.com/crackhex/TAS-Comp-Bot-py/issues/new) on Github if you have an account.")
         except discord.HTTPException:
             await ctx.send("Failed to send message")
 
