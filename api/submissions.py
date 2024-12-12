@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from sqlalchemy import insert, select, or_
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
+from api.dm_handlers import handlers_dict, init_dm_handlers
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -266,9 +267,11 @@ async def handle_dms(message, self):
         if len(attachments) > 0:
             file_dict = get_file_types(attachments)
             try:
-                dm_handlers[DEFAULT](message, attachments, file_dict, self)
-                
+                await handlers_dict[DEFAULT](message, attachments, file_dict, self)
+            
+            except KeyError:
+                print(f"Could not find DM handler for '{DEFAULT}'.")
             except TimeoutError:
                 await channel.send("Could not process Files!")
-            except KeyError:
-                print(f"DM handler not found for '{DEFAULT}'")
+
+init_dm_handlers()
