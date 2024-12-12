@@ -14,6 +14,7 @@ TOKEN = os.getenv('TOKEN')
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 
 os.makedirs(DB_DIR) if not os.path.exists(DB_DIR) else None
+open("aliases.csv", "x") if not os.path.exists("aliases.csv") else None
 activity = discord.Game(name="Dolphin Emulator")
 
 commands_ext = ['commands.db.host.start-task',

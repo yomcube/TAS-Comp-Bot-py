@@ -53,6 +53,7 @@ class Setname(commands.Cog):
 
     @commands.hybrid_command(name="setname", description="Set your displayed name in the submission list",
                              with_app_command=True)
+    @commands.has_permissions(administrator=True)
     async def command(self, ctx, *, new_name):
 
         if '@' in new_name:
