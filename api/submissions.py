@@ -237,6 +237,15 @@ async def handle_submissions(message, self):
             await message.channel.send(f"User with ID {author_id} not found in this server.")
 
 
+dm_handlers = {}
+def init_dm_handlers():
+    from api.mkwii.mkwii_file_handling import handle_mkwii_files
+    dm_handlers["mkw"] = handle_mkwii_files
+    
+    from api.nsmbwii.nsmbwii_file_handling import handle_nsmbwii_files
+    dm_handlers["nsmbw"] = handle_nsmbwii_files
+    
+
 async def handle_dms(message, self):
     author = message.author
     author_dn = message.author.display_name
@@ -257,15 +266,9 @@ async def handle_dms(message, self):
         if len(attachments) > 0:
             file_dict = get_file_types(attachments)
             try:
-                # TODO: use a class here?
-                if DEFAULT == "mkw":
-                    from api.mkwii.mkwii_file_handling import handle_mkwii_files
-                    await handle_mkwii_files(message, attachments, file_dict, self)
-                elif DEFAULT == "nsmbw":
-                    from api.nsmbwii.nsmbwii_file_handling import handle_nsmbwii_files
-                    await handle_nsmbwii_files(message, attachments, file_dict, self)
-                else:
-                    pass
-
+                dm_handlers[DEFAULT](message, attachments, file_dict, self)
+                
             except TimeoutError:
                 await channel.send("Could not process Files!")
+            except KeyError:
+                print(f"DM handler not found for '{DEFAULT}'")
