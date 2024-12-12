@@ -238,15 +238,6 @@ async def handle_submissions(message, self):
             await message.channel.send(f"User with ID {author_id} not found in this server.")
 
 
-dm_handlers = {}
-def init_dm_handlers():
-    from api.mkwii.mkwii_file_handling import handle_mkwii_files
-    dm_handlers["mkw"] = handle_mkwii_files
-    
-    from api.nsmbwii.nsmbwii_file_handling import handle_nsmbwii_files
-    dm_handlers["nsmbw"] = handle_nsmbwii_files
-    
-
 async def handle_dms(message, self):
     author = message.author
     author_dn = message.author.display_name
