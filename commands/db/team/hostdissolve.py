@@ -3,6 +3,21 @@ from api.db_classes import Teams, get_session
 from api.utils import has_host_role
 from sqlalchemy import select, delete
 
+async def reorder_primary_keys():
+    async with get_session() as session:
+
+        # Retrieve the teams
+        query = select(Teams).order_by(Teams.index)
+        result = await session.execute(query)
+        teams = result.scalars().all()
+
+        # Reassign indexes
+        for idx, team in enumerate(teams, start=1):
+            team.index = idx
+
+        await session.commit()
+
+
 class HostDissolve(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -21,6 +36,9 @@ class HostDissolve(commands.Cog):
 
             await session.execute(delete(Teams).where(Teams.index == index))
             await session.commit()
+
+            await reorder_primary_keys()
+
             await ctx.send("The team has been deleted.")
 
 

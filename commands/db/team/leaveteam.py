@@ -4,7 +4,19 @@ from api.db_classes import Teams, get_session
 from sqlalchemy import select, delete, inspect
 from api.utils import get_team_size, is_in_team
 
+async def reorder_primary_keys():
+    async with get_session() as session:
 
+        # Retrieve the teams
+        query = select(Teams).order_by(Teams.index)
+        result = await session.execute(query)
+        teams = result.scalars().all()
+
+        # Reassign indexes
+        for idx, team in enumerate(teams, start=1):
+            team.index = idx
+
+        await session.commit()
 
 class LeaveTeam(commands.Cog):
     def __init__(self, bot):
@@ -25,6 +37,10 @@ class LeaveTeam(commands.Cog):
             if leader:
                 # Delete the team
                 await session.execute(delete(Teams).where(Teams.leader == ctx.author.id))
+
+                # Rearrange team indexes
+                await reorder_primary_keys()
+
                 await session.commit()
                 await ctx.send("You have abandoned your team. Your team has been dissolved")
             else:
@@ -44,6 +60,10 @@ class LeaveTeam(commands.Cog):
                 for row in rows:
                     if row.leader and row.user2 is None and row.user3 is None and row.user4 is None:
                         await session.delete(row)
+
+                        # Rearrange team indexes
+                        await reorder_primary_keys()
+
                         await ctx.send(f"<@{row.leader}> Poor you :( Your partner(s) gave up on you. Your team has been dissolved.")
 
                 await session.commit()
