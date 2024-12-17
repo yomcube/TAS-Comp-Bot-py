@@ -11,6 +11,20 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
 
 
+async def reorder_primary_keys():
+    async with get_session() as session:
+
+        # Retrieve the submissions
+        query = select(Submissions).order_by(Submissions.index)
+        result = await session.execute(query)
+        submissions = result.scalars().all()
+
+        # Reassign indexes
+        for idx, submission in enumerate(submissions, start=1):
+            submission.index = idx
+
+        await session.commit()
+
 class DeleteSubmission(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -33,6 +47,10 @@ class DeleteSubmission(commands.Cog):
         async with get_session() as session:
             await session.execute(delete(Submissions).where(Submissions.user_id == user.id))
             await session.commit()
+
+
+        # Re-arrange the indexes in the submission table so that they are no gaps between numbers
+        await reorder_primary_keys()
 
         # Update submission list
         await generate_submission_list(self)
