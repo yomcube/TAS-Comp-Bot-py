@@ -11,26 +11,6 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
 
 
-async def remove_from_submission_list(self, name_to_remove):
-    submission_channel = await get_submission_channel(DEFAULT)
-    channel = self.bot.get_channel(submission_channel)
-
-    async for message in channel.history(limit=3):
-        # Check if the message was sent by the bot
-        if message.author == self.bot.user:
-            lines = message.content.split('\n')
-            new_lines = [lines[0]]  # Preserve the first line as is ("Current submissions")
-
-            for line in lines[1:]:
-                if name_to_remove not in line:
-                    new_lines.append(line)
-
-            new_content = '\n'.join(new_lines)
-            if new_content != message.content:
-                await message.edit(content=new_content)
-            break  # Stop after finding the last bot message
-
-
 class DeleteSubmission(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -54,16 +34,8 @@ class DeleteSubmission(commands.Cog):
             await session.execute(delete(Submissions).where(Submissions.user_id == user.id))
             await session.commit()
 
-
-
-        # Get the submission list channel, and update the submission list with the new name
-        submission_channel = await get_submission_channel(DEFAULT)
-        channel = self.bot.get_channel(submission_channel)
-        async for message in channel.history(limit=3):
-            # Check if the message was sent by the bot
-            if message.author == self.bot.user:
-                message_to_edit = message
-        await generate_submission_list(message_to_edit)
+        # Update submission list
+        await generate_submission_list(self)
 
 
         await ctx.send(f"{user.display_name}'s submission has been deleted.")

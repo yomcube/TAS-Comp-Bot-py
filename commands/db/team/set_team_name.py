@@ -69,18 +69,11 @@ class Setteamname(commands.Cog):
 
         async with get_session() as session:
 
-            # get old team name
-            stmt = select(Teams.team_name).filter(
-                (Teams.leader == user_id) | (Teams.user2 == user_id) | (Teams.user3 == user_id) |
-                (Teams.user4 == user_id))
-
-            result = await session.execute(stmt)
-            old_team_name = result.scalars().first()
-
             # Detect illegal name change (2 identical names)
             if (await session.scalars(select(Teams.team_name).where(Teams.team_name == new_name))).first():
                 return await ctx.reply("That team name is already in use.")
 
+            # Update team name in db
             await session.execute(
                 update(Teams)
                 .where(
@@ -91,21 +84,10 @@ class Setteamname(commands.Cog):
 
             await session.commit()
 
+        # Update submission list
+        await generate_submission_list(self)
 
-
-
-        # Get the submission list channel, and update the submission list with the new name
-        submission_channel = await get_submission_channel(DEFAULT)
-        channel = self.bot.get_channel(submission_channel)
-        async for message in channel.history(limit=3):
-            # Check if the message was sent by the bot
-            if message.author == self.bot.user:
-                message_to_edit = message
-
-        # await rename_in_submission_list(self, ctx, old_display_name, new_name)
-        await generate_submission_list(message_to_edit)
-
-        await ctx.send(f"Name successfully set <@{user_id}>'s team name to **{new_name}**.")
+        await ctx.send(f"Successfully set <@{user_id}>'s team name to **{new_name}**.")
 
 
 async def setup(bot) -> None:

@@ -158,10 +158,18 @@ async def update_submission_list(last_message, id, name):
     return await last_message.edit(content=new_content)
 
 
-async def generate_submission_list(message):
+async def generate_submission_list(self):
     """ Edits the submission list in the submission channel.
-        Takes the mesage to edit as a parameter.
+        Takes bot (self) as an argument -- so that the bot may retrieve the channel & message.
     """
+    submission_channel = await get_submission_channel(DEFAULT)
+    channel = self.bot.get_channel(submission_channel)
+    async for message in channel.history(limit=3):
+        # Check if the message was sent by the bot
+        if message.author == self.bot.user:
+            message_to_edit = message
+
+
     async with get_session() as session:
 
         active_task = (await session.scalars(select(Submissions.task))).first()
@@ -185,7 +193,7 @@ async def generate_submission_list(message):
                     f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
                 )
 
-        return await message.edit(content=formatted_submissions)
+    return await message_to_edit.edit(content=formatted_submissions)
 
 
 
