@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from api.utils import has_host_role
 from api.db_classes import Submissions, get_session, Tasks
-from api.submissions import get_submission_channel, get_display_name
+from api.submissions import get_submission_channel, get_display_name, generate_submission_list
 from sqlalchemy import select, delete
 import os
 from dotenv import load_dotenv
@@ -54,8 +54,16 @@ class DeleteSubmission(commands.Cog):
             await session.execute(delete(Submissions).where(Submissions.user_id == user.id))
             await session.commit()
 
-        name = await get_display_name(user.id)
-        await remove_from_submission_list(self, name)
+
+
+        # Get the submission list channel, and update the submission list with the new name
+        submission_channel = await get_submission_channel(DEFAULT)
+        channel = self.bot.get_channel(submission_channel)
+        async for message in channel.history(limit=3):
+            # Check if the message was sent by the bot
+            if message.author == self.bot.user:
+                message_to_edit = message
+        await generate_submission_list(message_to_edit)
 
 
         await ctx.send(f"{user.display_name}'s submission has been deleted.")
