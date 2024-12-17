@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 from api.utils import is_task_currently_running, readable_to_float, has_host_role
-from api.submissions import first_time_submission
+from api.submissions import first_time_submission, generate_submission_list
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.db_classes import Submissions, get_session
 from sqlalchemy import insert, update
@@ -63,6 +63,8 @@ class Submit(commands.Cog):
                          .where(Submissions.user_id == user.id))
                 await session.execute(query)
                 await session.commit()
+
+        await generate_submission_list(self)
 
         await ctx.reply(f"A submission has been added for {user.name}!")
 
