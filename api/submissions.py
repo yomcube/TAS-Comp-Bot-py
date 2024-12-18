@@ -161,6 +161,44 @@ async def update_submission_list(last_message, id, name):
     return await last_message.edit(content=new_content)
 
 
+async def generate_submission_list(self):
+    """ Edits the submission list in the submission channel.
+        Takes bot (self) as an argument -- so that the bot may retrieve the channel & message.
+    """
+    submission_channel = await get_submission_channel(DEFAULT)
+    channel = self.bot.get_channel(submission_channel)
+    async for message in channel.history(limit=3):
+        # Check if the message was sent by the bot
+        if message.author == self.bot.user:
+            message_to_edit = message
+
+
+    async with get_session() as session:
+
+        active_task = (await session.scalars(select(Submissions.task))).first()
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task)))
+        formatted_submissions = "**__Current Submissions:__**"
+
+        # Update submission list for a solo submission
+        for submission in submissions:
+            if not await is_in_team(submission.user_id):
+                formatted_submissions += f"\n{submission.index}. {await get_display_name(submission.user_id)} ||<@{submission.user_id}>||"
+
+
+            # Generate submission list for a team submission
+            else:
+                ids = await get_team_ids(submission.user_id)
+                members = await get_team_members(ids)
+                team_name = await get_team_name(submission.user_id)
+                mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
+
+                formatted_submissions += (
+                    f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
+                )
+
+    return await message_to_edit.edit(content=formatted_submissions)
+
+
 
 async def handle_submissions(message, self):
     author = message.author
@@ -197,6 +235,7 @@ async def handle_submissions(message, self):
         author_id = await get_leader(author_id)
     author_display_name = await get_display_name(author_id)
 
+    # New entry to the list in #submissions
     if last_message:
 
         # Add a new line only if it's a new user ID submitting
@@ -204,9 +243,9 @@ async def handle_submissions(message, self):
 
                 await update_submission_list(last_message, author_id, author_display_name)
 
+
     else:
-        # There are no submissions (brand-new task); send a message on the first submission -> this is for blank
-        # channels
+        # There are no submissions (brand-new task); send a message on the first submission
         await post_submission_list(channel, author_id, author_display_name)
 
     ##################################################################

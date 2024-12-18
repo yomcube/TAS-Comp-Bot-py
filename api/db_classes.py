@@ -42,7 +42,8 @@ class Tasks(Base):
 
 class Submissions(Base):
     __tablename__ = "submissions"
-    user_id = Column('user_id', Integer, primary_key=True)
+    index = Column('index', Integer, autoincrement=True, primary_key=True)
+    user_id = Column('user_id', Integer)
     task = Column('task', Integer)
     name = Column('name', String)
     url = Column('url', String)

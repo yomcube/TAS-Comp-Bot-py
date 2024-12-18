@@ -247,6 +247,18 @@ class Collab(commands.Cog):
                                     user4=accepted_users[2] if len(accepted_users) > 2 else None
                                 )
                             )
+
+                            # Add any new users to Userbase db
+                            for id in accepted_users:
+                                if await new_competitor(id):
+                                    await session.execute(
+                                        insert(Userbase).values(
+                                            user_id=id,
+                                            user=self.bot.get_user(id).name,
+                                            display_name=self.bot.get_user(id).display_name
+                                        )
+                                    )
+
                             await session.commit()
 
                         await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
