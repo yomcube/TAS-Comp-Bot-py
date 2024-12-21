@@ -1,11 +1,18 @@
+import os
+
 from discord.ext import commands
 import discord
+from dotenv import load_dotenv
+
 from api.utils import is_task_currently_running, readable_to_float, has_host_role
-from api.submissions import first_time_submission, generate_submission_list
+from api.submissions import first_time_submission, generate_submission_list, new_competitor, post_submission_list, \
+    get_display_name, get_submission_channel
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
-from api.db_classes import Submissions, get_session
+from api.db_classes import Submissions, get_session, Userbase
 from sqlalchemy import insert, update
 
+load_dotenv()
+DEFAULT = os.getenv('DEFAULT')
 
 class Submit(commands.Cog):
 
@@ -53,6 +60,16 @@ class Submit(commands.Cog):
             return
 
         async with get_session() as session:
+            # If it's new competitor, add to userbase first
+            if await new_competitor(user.id):
+                await session.execute(
+                    insert(Userbase).values(user_id=user.id, user=user.name, display_name=user.display_name))
+
+                await session.commit()
+
+
+
+            # Check if user has already submitted
             if await first_time_submission(user.id):
                 query = insert(Submissions).values(task=current_task[0], name=user.name, user_id=user.id, url=url, time=time,
                                                    dq=0, dq_reason='', character=character, vehicle=vehicle)
@@ -64,7 +81,16 @@ class Submit(commands.Cog):
                 await session.execute(query)
                 await session.commit()
 
-        await generate_submission_list(self)
+        # If the submission list is already generated (most cases)
+        try:
+            await generate_submission_list(self)
+
+        # First submission of the task
+        except UnboundLocalError:
+            submission_channel = self.bot.get_channel(await get_submission_channel(DEFAULT))
+            display_name = await get_display_name(user.id)
+
+            await post_submission_list(submission_channel, user.id, display_name)
 
         await ctx.reply(f"A submission has been added for {user.name}!")
 
