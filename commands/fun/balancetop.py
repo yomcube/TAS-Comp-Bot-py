@@ -1,3 +1,4 @@
+from discord import AllowedMentions
 from discord.ext import commands
 from api.db_classes import Money, get_session
 from sqlalchemy import select
@@ -24,7 +25,8 @@ class Balancetop(commands.Cog):
                 name = f"User with ID {result[i].user_id} (left the server)"
             leaderboard += f"{i + 1}: {name} - {result[i].coins}\n"
 
-        await ctx.send(leaderboard)
+        await ctx.send(leaderboard,
+            allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
 
 
 async def setup(bot) -> None:

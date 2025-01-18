@@ -135,11 +135,13 @@ async def post_submission_list(channel, id, name):
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
         return await channel.send(
-            f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||")
+            f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
+            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
     # Case if solo
     return await channel.send(
-        f"**__Current Submissions:__**\n1. {name} ||<@{id}>||")
+        f"**__Current Submissions:__**\n1. {name} ||<@{id}>||",
+        allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
 async def update_submission_list(last_message, id, name):
@@ -288,7 +290,8 @@ async def handle_dms(message, self):
         attachments = message.attachments
         if channel:
             await channel.send(f"Message from {author_dn}: {message.content} " +
-                                " ".join([attachment.url for attachment in message.attachments if message.attachments]))
+                                " ".join([attachment.url for attachment in message.attachments if message.attachments]),
+                                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
         #########################
         # Recognizing submission

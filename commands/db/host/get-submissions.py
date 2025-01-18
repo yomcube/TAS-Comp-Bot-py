@@ -1,3 +1,4 @@
+from discord import AllowedMentions
 from discord.ext import commands
 from api.submissions import get_display_name, get_team_ids, get_team_members, get_team_name
 from api.utils import has_host_role, float_to_readable, is_in_team
@@ -64,12 +65,16 @@ class Get(commands.Cog):
             for i, part in enumerate(submissions_parts):
                 if i == 0:
                     if len(header + part) > msg_limit:
-                        await ctx.reply(header)
-                        await ctx.reply(part)
+                        await ctx.reply(header,
+                            allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
+                        await ctx.reply(part,
+                            allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
                     else:
-                        await ctx.reply(header + part)
+                        await ctx.reply(header + part,
+                            allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
                 else:
-                    await ctx.reply(part)
+                    await ctx.reply(part,
+                        allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
 
                 await asyncio.sleep(1)
 

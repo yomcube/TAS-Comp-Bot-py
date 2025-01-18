@@ -100,7 +100,8 @@ class Collab(commands.Cog):
         # Check if invited person is already in a team
         for user in users:
             if await is_in_team(user.id):
-                return await ctx.send(f"{user.display_name} is already in a team and cannot join another.")
+                return await ctx.send(f"{user.display_name} is already in a team and cannot join another.",
+                    allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
         # Check if the author is already in a team
         current_team = await self.get_current_team(author_id)
@@ -139,7 +140,7 @@ class Collab(commands.Cog):
             )
             message = await ctx.send(
                 f"{user.mention}, {ctx.author.display_name} wants you to collaborate with them. Do you accept?",
-                view=view
+                view=view, allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True
             )
             view.message = message  # Store the message in the view for later editing
 
