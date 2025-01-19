@@ -13,7 +13,8 @@ class Balance(commands.Cog):
             # TODO: probably search by ID
             user_handle = user.id
             balance = await get_balance(user_handle, ctx.message.guild.id)
-            await ctx.reply(f"{user.display_name} current balance is {balance} coins.")
+            await ctx.reply(f"{user.display_name} current balance is {balance} coins.",
+                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
         else:
             user_id = ctx.author.id
             balance = await get_balance(user_id, ctx.message.guild.id)

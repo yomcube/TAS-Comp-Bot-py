@@ -16,7 +16,8 @@ class Edit(commands.Cog):
             data = (await session.scalars(select(Submissions).where(Submissions.user_id == user.id))).first()
 
         if data is None:
-            return await ctx.reply(f"{user} has no submission.")
+            return await ctx.reply(f"{user} has no submission.",
+                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
         data_dq = None
         # was DQ or not
         if data.dq == 0:
@@ -38,9 +39,11 @@ class Edit(commands.Cog):
                 update(Submissions).values(time=time, dq=dq, dq_reason=dq_reason).where(Submissions.user_id == user.id))
             await session.commit()
 
-        await ctx.reply(server_text)
+        await ctx.reply(server_text,
+            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
         channel = await user.create_dm()
-        await channel.send(dm_text)
+        await channel.send(dm_text,
+            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
 

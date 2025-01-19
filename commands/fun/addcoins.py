@@ -13,7 +13,8 @@ class Addcoins(commands.Cog):
     async def addcoins(self, ctx, user: discord.Member, amount: int):
         user_id = user.id
         await add_balance(user_id, ctx.guild.id, amount)
-        await ctx.reply(f"Added {amount} coins to {user.display_name}'s balance.")
+        await ctx.reply(f"Added {amount} coins to {user.display_name}'s balance.",
+            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
 async def setup(bot) -> None:
