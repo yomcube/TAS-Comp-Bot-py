@@ -19,7 +19,7 @@ class Balancetop(commands.Cog):
         for i in range(0, min(10, len(result))):
             member = ctx.guild.get_member(result[i].user_id)
             if member:
-                name = member.display_name
+                name = member.name
             else:
                 name = f"User with ID {result[i].user_id} (left the server)"
             leaderboard += f"{i + 1}: {name} - {result[i].coins}\n"
