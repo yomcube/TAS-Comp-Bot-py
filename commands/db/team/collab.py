@@ -240,8 +240,7 @@ class Collab(commands.Cog):
                         async with get_session() as session:
                             await session.execute(
                                 insert(Teams).values(
-                                    team_name=" & ".join(
-                                        [self.bot.get_user(uid).display_name for uid in [author_id] + accepted_users]),
+                                    team_name=None,
                                     leader=author_id,
                                     user2=accepted_users[0] if len(accepted_users) > 0 else None,
                                     user3=accepted_users[1] if len(accepted_users) > 1 else None,
@@ -298,7 +297,7 @@ class Collab(commands.Cog):
                             else:
                                 member_name = self.bot.get_user(member).display_name
                             members.append(member_name)
-                        default_team_name = " & ".join(members)
+                        default_team_name = None
 
                         # Add team to Teams db
                         async with get_session() as session:
