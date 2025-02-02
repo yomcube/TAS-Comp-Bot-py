@@ -32,6 +32,7 @@ class Help(commands.Cog):
       **leaveteam** -- Leave your team during a collab task.
       **requesttask** -- Request the task (sent to your DMs) during a speed task.
       **setteamname** -- Changes your team's name in the submission channel. Only during collab tasks.
+      **task-info** -- View information about the current task, such as deadline and host.
       **teams** -- View the list of teams during a collab task.
     """
 
