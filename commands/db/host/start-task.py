@@ -22,6 +22,8 @@ class Start(commands.Cog):
     async def command(self, ctx, number: int, team_size: int = 1, multiple_tracks: int = 0,
                       speed_task: int = 0, year: int = None, deadline: int = None):
 
+        await ctx.defer()
+
         # auto set year
         if not year:
             year = date.today().year

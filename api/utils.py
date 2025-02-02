@@ -95,10 +95,13 @@ async def get_announcement_channel(comp):
 
 def has_host_role():
     async def predicate(ctx):
-        role = await get_host_role(ctx.message.guild.id)
-        # Check if the role is a name
-        has_role = discord.utils.get(ctx.author.roles, id=role) is not None
-        return has_role
+        if ctx.message.guild is not None:
+            role = await get_host_role(ctx.message.guild.id)
+            # Check if the role is a name
+            has_role = discord.utils.get(ctx.author.roles, id=role) is not None
+            return has_role
+        else:
+            return False
 
     return commands.check(predicate)
 

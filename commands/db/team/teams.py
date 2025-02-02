@@ -36,18 +36,22 @@ class TeamsCommand(commands.Cog):
             rows = result.scalars().all()
 
         # Write each line of content
-        teams = {}
         for row in rows:
             row_data = []
             for column in row.__table__.columns:
-                # value is discord account id
                 value = getattr(row, column.name)
+                if value is not None and column.name not in ["index", "team_name"]:
+                    user = self.bot.get_user(value)
+                    if user:
+                        row_data.append(user.display_name)
 
-                if value is not None and column.name != "index" and column.name != "team_name":
-                    display_name = self.bot.get_user(value).display_name
-                    row_data.append(display_name)
-            teams[row.index] = row_data
-            content += f"{row.index}. {', '.join(row_data)} \n"
+            display_names = " & ".join(row_data)
+            if row.team_name:
+                content += f"{row.index}. {row.team_name} ({display_names})\n"
+            else:
+                content += f"{row.index}. {display_names}\n"
+
+        return await ctx.send(content)
 
         return await ctx.send(content)
 

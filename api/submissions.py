@@ -134,9 +134,22 @@ async def post_submission_list(channel, id, name):
         team_name = await get_team_name(id)
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
+<<<<<<< Updated upstream
         return await channel.send(
             f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
             allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+=======
+        # No ( ) if no team name
+        if team_name == None:
+            return await channel.send(
+                f"**__Current Submissions:__**\n1. {' & '.join(members)} ||{mentions}||",
+                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+
+        else:
+            return await channel.send(
+                f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
+                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+>>>>>>> Stashed changes
 
     # Case if solo
     return await channel.send(
@@ -153,8 +166,17 @@ async def update_submission_list(last_message, id, name):
         team_name = await get_team_name(id)
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
-        new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
+        # No ( ) if no team name
+        if team_name == None:
+            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||")
+
+
+        # Case if they actually set a team name
+        else:
+            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
                        f" ||{mentions}||")
+
+
         return await last_message.edit(content=new_content)
 
     # solo submission
@@ -194,9 +216,16 @@ async def generate_submission_list(self):
                 team_name = await get_team_name(submission.user_id)
                 mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
-                formatted_submissions += (
-                    f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
-                )
+                # No ( ) if they have no special team name
+                if team_name == None:
+                    formatted_submissions += f"\n{submission.index}. {' & '.join(members)} ||{mentions}||"
+
+                # Case if they actually set a team name
+                else:
+                    formatted_submissions += (
+                        f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
+                    )
+
 
     return await message_to_edit.edit(content=formatted_submissions)
 
