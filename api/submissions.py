@@ -135,10 +135,16 @@ async def post_submission_list(channel, id, name):
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
         return await channel.send(
             f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
             allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 =======
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         # No ( ) if no team name
         if team_name == None:
             return await channel.send(
@@ -149,6 +155,12 @@ async def post_submission_list(channel, id, name):
             return await channel.send(
                 f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
                 allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     # Case if solo
