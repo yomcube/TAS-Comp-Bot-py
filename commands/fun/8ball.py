@@ -1,6 +1,7 @@
+import random
+
 import discord
 from discord.ext import commands
-import random
 
 class Eightball(commands.Cog):
     def __init__(self, bot) -> None:
@@ -98,7 +99,7 @@ class Eightball(commands.Cog):
 
         embed = discord.Embed(color=embed_color)
         embed.add_field(name=f":question: {ctx.author.display_name} asked...", value=question, inline=False)
-        embed.add_field(name=f":8ball: responds...", value=reply, inline=False)
+        embed.add_field(name=":8ball: responds...", value=reply, inline=False)
 
 
         await ctx.send(embed=embed)

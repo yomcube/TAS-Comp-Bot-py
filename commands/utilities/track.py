@@ -1,6 +1,8 @@
-from discord.ext import commands
-from api.mkwii.mkwii_utils import tracks, tracks_abbreviated
 import random
+
+from discord.ext import commands
+
+from api.mkwii.mkwii_utils import tracks, tracks_abbreviated
 
 
 class Tracks(commands.Cog):

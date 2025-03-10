@@ -1,9 +1,10 @@
-from discord.ext import commands
-import discord
 import os
-import requests
-from ratelimit import limits, sleep_and_retry
+
+import discord
+from discord.ext import commands
 from dotenv import load_dotenv
+from ratelimit import limits, sleep_and_retry
+import requests
 
 load_dotenv()
 key = os.getenv('WEATHER_API_KEY')
@@ -23,23 +24,23 @@ class Weather(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="weather", description="Checks the weather for a specific place", with_app_command=True)
-    async def command(self, ctx, *, city: str, country: str = None):
+    async def command(self, ctx, *, city: str):
         if key == "":
             await ctx.send("Could not find an OpenWeather API key.")
             return
         check_limit()
-        request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric")
+        request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric", timeout=60)
         response = request.json()
-        
+
         # Check if the response contains an error message or is missing expected keys
         if response.get('cod') != 200:
             await ctx.reply(f"Error: {response.get('message', 'Unable to retrieve weather data.')}")
             return
-        
+
         if 'name' not in response or 'sys' not in response or 'country' not in response['sys']:
             await ctx.reply("Error: Incomplete weather data received.")
             return
-        
+
         embed = discord.Embed(title=f"Weather for {response['name']}, {response['sys']['country']}", color=discord.Color.blue())
         embed.add_field(name="Temperature", value=f"{(response['main']['temp']):.1f}°C")
         embed.add_field(name="Description", value=f"{response['weather'][0]['description']}")

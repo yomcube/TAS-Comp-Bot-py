@@ -112,8 +112,7 @@ class Collab(commands.Cog):
         if current_team:
             if len(current_team) + len(users) > team_size:
                 return await ctx.send("You are trying to exceed the team size limit!")
-            else:
-                await ctx.send("Inviting new members to your existing team...")
+            await ctx.send("Inviting new members to your existing team...")
 
         # Make sure they don't try to collab with too many people (if not already in a team)
         elif len(users) + 1 > team_size:
@@ -251,7 +250,7 @@ class Collab(commands.Cog):
                             )
 
                             # Add any new users to Userbase db
-                            for id in accepted_users:
+                            for u_id in accepted_users:
                                 if await new_competitor(u_id):
                                     await session.execute(
                                         insert(Userbase).values(

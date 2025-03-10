@@ -1,16 +1,18 @@
-import discord
-import shared
-import time
 import asyncio
+import time
 import os
-from dotenv import load_dotenv
+
 from discord.ext import commands, tasks
+from dotenv import load_dotenv
+import shared
+from sqlalchemy import select, update, delete, insert
 
 from api.submissions import get_logs_channel
 from api.utils import is_task_currently_running, get_tasks_channel, get_announcement_channel, get_submitter_role
-from api.db_classes import get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, ReminderPings, SpeedTaskReminders, \
-    SpeedTask, Submissions
-from sqlalchemy import select, update, delete, insert
+from api.db_classes import (
+    get_session, Tasks, SpeedTaskDesc, SpeedTaskLength,
+    ReminderPings, SpeedTaskReminders, SpeedTask,
+)
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -114,9 +116,6 @@ async def check_task_deadline(bot):
         if ongoing_task[6] is None:
             return
 
-        load_dotenv()
-        DEFAULT = os.getenv('DEFAULT')
-
         log_channel = bot.get_channel(await get_logs_channel(DEFAULT))
         announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
 
@@ -125,7 +124,7 @@ async def check_task_deadline(bot):
 
         # Query for all active tasks with deadlines
         result = await session.execute(
-            select(Tasks).where(Tasks.deadline <= current_time, Tasks.is_active == True)
+            select(Tasks).where(Tasks.deadline <= current_time, bool(Tasks.is_active))
         )
         tasks_to_update = result.scalars().all()
 
@@ -133,7 +132,7 @@ async def check_task_deadline(bot):
         for _ in tasks_to_update:
             stmt = (
                 update(Tasks)
-                .where(Tasks.is_active == 1)
+                .where(bool(Tasks.is_active))
                 .values(is_active=0)
             )
 
@@ -142,7 +141,7 @@ async def check_task_deadline(bot):
             await session.commit()
 
             # Delete task
-            await session.execute(delete(Tasks).where(Tasks.is_active == 0))
+            await session.execute(delete(Tasks).where(not bool(Tasks.is_active)))
             await session.execute(delete(SpeedTaskDesc))
             await session.commit()
 
@@ -304,7 +303,7 @@ async def check_speed_task_deadlines(bot):
 
         # Query for all active tasks with deadlines
         result = await session.execute(
-            select(SpeedTask).where(SpeedTask.end_time <= current_time, SpeedTask.active == True)
+            select(SpeedTask).where(SpeedTask.end_time <= current_time, bool(SpeedTask.active))
         )
         tasks_to_update = result.scalars().all()
 

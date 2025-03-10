@@ -1,6 +1,7 @@
+import random
+
 from discord.ext import commands
 import requests
-import random
 
 class Quote(commands.Cog):
     def __init__(self, bot) -> None:
@@ -14,7 +15,7 @@ class Quote(commands.Cog):
 
         random_api = random.choice([api1, api2])
 
-        request = requests.get(random_api)
+        request = requests.get(random_api, timeout=60)
         formatted_request = dict(request.json())
 
         quote = formatted_request.get('quote')

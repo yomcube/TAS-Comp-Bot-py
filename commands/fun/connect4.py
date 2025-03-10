@@ -1,9 +1,9 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
 import typing
 import random
+
 import asyncio
+import discord
+from discord.ext import commands
 
 
 class Connect4(commands.Cog):
@@ -191,10 +191,10 @@ class Connect4(commands.Cog):
             self,
             interaction: discord.Interaction,
             current: str
-    ) -> typing.List[app_commands.Choice[str]]:
+    ) -> typing.List[discord.app_commands.Choice[str]]:
         modes = ["easy", "normal", "hard"]
         return [
-            app_commands.Choice(name=mode, value=mode)
+            discord.app_commands.Choice(name=mode, value=mode)
             for mode in modes if current.lower() in mode.lower()
         ]
 
@@ -203,7 +203,7 @@ class Connect4(commands.Cog):
         description="Play Connect 4 against MKWTASCompBot in easy, normal or hard mode, or against another player!",
         with_app_command=True
     )
-    @app_commands.autocomplete(mode=command_autocompletion)
+    @discord.app_commands.autocomplete(mode=command_autocompletion)
     async def command(self, ctx: commands.Context, mode: str = "easy", opponent: discord.Member = None, ):
         self.reset_game()
         self.mode = mode.lower()
@@ -241,10 +241,9 @@ class Connect4(commands.Cog):
             if is_terminal:
                 if self.winning_move('O'):
                     return (None, 100000000000000)
-                elif self.winning_move('X'):
+                if self.winning_move('X'):
                     return (None, -10000000000000)
-                else:
-                    return (None, 0)
+                return (None, 0)
             else:
                 return (None, self.score_position('O'))
         if maximizing_player:
@@ -262,25 +261,24 @@ class Connect4(commands.Cog):
                 if alpha >= beta:
                     break
             return column, value
-        else:
-            value = float('inf')
-            column = random.choice(valid_locations)
-            for col in valid_locations:
-                row = self.get_next_open_row(col)
-                self.drop_piece(row, col, 'X')
-                new_score = self.minimax(depth - 1, alpha, beta, True)[1]
-                self.board[row][col] = ' '  # Undo move
-                if new_score < value:
-                    value = new_score
-                    column = col
-                beta = min(beta, value)
-                if alpha >= beta:
-                    break
-            return column, value
+
+        value = float('inf')
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = self.get_next_open_row(col)
+            self.drop_piece(row, col, 'X')
+            new_score = self.minimax(depth - 1, alpha, beta, True)[1]
+            self.board[row][col] = ' '  # Undo move
+            if new_score < value:
+                value = new_score
+                column = col
+            beta = min(beta, value)
+            if alpha >= beta:
+                break
+        return column, value
 
     def score_position(self, piece):
         score = 0
-        opponent_piece = 'X' if piece == 'O' else 'O'
 
         # Score center column
         center_array = [self.board[r][self.columns // 2] for r in range(self.rows)]
@@ -358,4 +356,3 @@ class ChallengeView(discord.ui.View):
 
 async def setup(bot) -> None:
     await bot.add_cog(Connect4(bot))
-

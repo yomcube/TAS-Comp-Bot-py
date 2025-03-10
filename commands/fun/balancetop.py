@@ -1,7 +1,8 @@
 from discord import AllowedMentions
 from discord.ext import commands
-from api.db_classes import Money, get_session
 from sqlalchemy import select
+
+from api.db_classes import Money, get_session
 
 
 class Balancetop(commands.Cog):

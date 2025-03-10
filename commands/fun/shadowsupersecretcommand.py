@@ -1,7 +1,8 @@
+import random
+
+from bs4 import BeautifulSoup
 from discord.ext import commands
 import requests
-from bs4 import BeautifulSoup
-import random
 
 class Shadow(commands.Cog):
     def __init__(self, bot):
@@ -15,7 +16,7 @@ class Shadow(commands.Cog):
         # Send a request to the URL
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"}
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timout=60)
 
         # Parse the HTML content
         soup = BeautifulSoup(response.text, "html.parser")

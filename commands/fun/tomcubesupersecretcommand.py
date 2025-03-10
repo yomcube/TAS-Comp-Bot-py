@@ -1,7 +1,8 @@
+import random
+from json import loads
+
 from discord.ext import commands
 import requests
-from json import loads
-import random
 
 class TomCube(commands.Cog):
     def __init__(self, bot) -> None:
@@ -13,7 +14,7 @@ class TomCube(commands.Cog):
         url = "https://api.github.com/users/yomcube/repos"
 
         # Send a request to the URL with headers
-        response = requests.get(url)
+        response = requests.get(url, timout=60)
 
         # Extract valid image URLs
         repos = loads(response.text)

@@ -1,6 +1,7 @@
+import requests
+
 from discord.ext import commands
 import discord
-import requests
 
 class Urban(commands.Cog):
     def __init__(self, bot) -> None:
@@ -10,9 +11,9 @@ class Urban(commands.Cog):
     async def command(self, ctx, *, term: str):
         query_split = term.split(' ')
         query = '%20'.join(query_split) # replace spaces with %20 so that it can be used in the URL
-        def trim(str, max):
-            return f"{str[:max]}..." if len(str) > max else str
-        request = requests.get(f"https://api.urbandictionary.com/v0/define?term={query}")
+        def trim(st, mx):
+            return f"{st[:mx]}..." if len(st) > mx else st
+        request = requests.get(f"https://api.urbandictionary.com/v0/define?term={query}", timeout=60)
         response = request.json()
 
         if not response['list']:

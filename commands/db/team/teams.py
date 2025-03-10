@@ -1,8 +1,8 @@
 from discord.ext import commands
+from sqlalchemy import select
+
 from api.db_classes import Teams, get_session
-from api.utils import is_in_team, get_team_size
-from api.submissions import get_display_name
-from sqlalchemy import select, delete
+from api.utils import get_team_size
 
 
 class TeamsCommand(commands.Cog):

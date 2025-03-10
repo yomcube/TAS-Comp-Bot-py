@@ -1,5 +1,4 @@
 from discord.ext import commands
-import discord
 
 class Credits(commands.Cog):
     def __init__(self, bot) -> None:
@@ -7,9 +6,7 @@ class Credits(commands.Cog):
 
     @commands.hybrid_command(name="credits", description="View the authors of this bot", with_app_command=True)
     async def command(self, ctx):
-
-
-        credits = """**TASCompBot** is a multi TAS-Comp bot, that will be supporting both MKW, SM64 and NSMBW TAS Comp, and maybe even more in the future.\n
+        c ="""**TASCompBot** is a multi TAS-Comp bot, that will be supporting both MKW, SM64 and NSMBW TAS Comp, and maybe even more in the future.\n
 This bot is in continuous development, and as such, the credits may be expanded over time.
 Here is the list of contributors to this project, in alphabetical order:
 
@@ -25,7 +22,7 @@ Here is the list of contributors to this project, in alphabetical order:
   If you find any bugs, please [open an issue](https://github.com/crackhex/TAS-Comp-Bot-py/issues/new).
 """
 
-        await ctx.reply(credits)
+        await ctx.reply(c)
 
 
 async def setup(bot) -> None:

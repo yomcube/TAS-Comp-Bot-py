@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
+
 import discord
 from discord.ext import commands
-from datetime import datetime, timedelta
 
 class GiveQM(commands.Cog):
     def __init__(self, bot):
@@ -12,7 +13,7 @@ class GiveQM(commands.Cog):
         if user is None:
             await ctx.reply("Please mention a user")
             return
-        
+
         # Get the current time
         now = datetime.utcnow()
 
@@ -24,7 +25,7 @@ class GiveQM(commands.Cog):
 
         # Update the last used time
         self.last_used[ctx.author.id] = now
-        
+
         await ctx.reply(f"Gave {user.mention} good QM!")
 
 async def setup(bot):

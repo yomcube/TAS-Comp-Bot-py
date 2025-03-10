@@ -1,15 +1,7 @@
 from discord.ext import commands
 
-class Help(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.hybrid_command(name="help", description="List of commands", with_app_command=True)
-    async def help(self, ctx, category: str = ""):
-        try:
-            if category == "":
-
-                help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+HELP = {
+    default: """**MKWTASCompBot** - A Multi TAS Comp Bot
     List of commands\n
     **Commands**:
       **help** -- this
@@ -21,11 +13,9 @@ class Help(commands.Cog):
       **credits** -- View more info about the bot and its creators
           
     Write `$help <category>` to view help for a specific category. (Except credits, it has its standalone command.)
-    Note: Most commands are available using the prefix `$`, aswell as using `/`.
-        """
-
-            if category.lower() == "comp":
-                help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+    Note: Most commands are available using the prefix `$` or `/`.
+""",
+    comp: """**MKWTASCompBot** - A Multi TAS Comp Bot
     Competition commands\n
       **collab** -- Team up with someone during a collab task!
       **info** -- Shows information about the status of your submission. (DM only)
@@ -34,12 +24,8 @@ class Help(commands.Cog):
       **setteamname** -- Changes your team's name in the submission channel. Only during collab tasks.
       **task-info** -- View information about the current task, such as deadline and host.
       **teams** -- View the list of teams during a collab task.
-    """
-
-
-            elif category.lower() == "fun":
-
-                help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+""",
+    fun: """**MKWTASCompBot** - A Multi TAS Comp Bot
     Fun commands 👀\n
     **Commands**:
       **8ball** -- Have a question? Ask the bot for his wisdom! Only 'yes/no' and 'when' questions are supported. 
@@ -51,20 +37,15 @@ class Help(commands.Cog):
       **memory** -- Play a memory game! Default board size is 4x4. Be warned: board size 6 and up are way harder due to emoji size.
       **rps** -- Play rock paper scissors against the bot, or against another player. Coins are involved.
       **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
-    """
-
-            elif category.lower() == "misc":
-                help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+""",
+    misc: """**MKWTASCompBot** - A Multi TAS Comp Bot
     Miscellaneous commands\n
       **quote** -- Read an inspirational quote!
       **tracks** -- Picks a random track from the game!
       **urban** -- Search urban dictionary for a word or expression!
       **weather** -- Get the weather of a city!
-    """
-
-
-            elif category.lower() == "host":
-                help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+""",
+    host: """**MKWTASCompBot** - A Multi TAS Comp Bot
     Host commands :P\n
       **delete-submission** -- Delete someone's submission. 
       **/dm** -- Make the bot dm someone!
@@ -79,10 +60,8 @@ class Help(commands.Cog):
       **speed-task-reminders** -- Set the reminders for a speed task. Up to 4 reminders.
       **/start-task** -- Starts a new task. Warning: this deletes last task's stored submissions, results, and 'Current submission' message.
       **/submit** -- Submit a file for someone.
-    """
-
-            elif category.lower() == "admin":
-                help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
+""",
+    admin: """**MKWTASCompBot** - A Multi TAS Comp Bot
     Admin commands \n
       **addcoins** -- Adds coins to someone's balance (or remove, if a negative number is specified).
       **config** -- Configure the different roles and channels
@@ -96,9 +75,18 @@ class Help(commands.Cog):
       **set-tasks-channel** -- Set the tasks channel.
       **setname** -- Change someone's name for the submission channel.
       **toggle-reminder-pings** -- Toggle whether we want to ping @ everyone when doing speed task reminders. Default: False
-      """
+"""
+}
 
+class Help(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
+    @commands.hybrid_command(name="help", description="List of commands", with_app_command=True)
+    async def help(self, ctx, category: str = ""):
+        try:
+            low = category.lower()
+            help_menu = help[low] if low in help else help[default]
             await ctx.send(help_menu)
 
 
@@ -112,4 +100,3 @@ class Help(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(Help(bot))
-
