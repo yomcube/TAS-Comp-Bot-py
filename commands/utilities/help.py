@@ -1,7 +1,7 @@
 from discord.ext import commands
 
 HELP = {
-    default: """**MKWTASCompBot** - A Multi TAS Comp Bot
+    'default': """**MKWTASCompBot** - A Multi TAS Comp Bot
     List of commands\n
     **Commands**:
       **help** -- this
@@ -15,7 +15,7 @@ HELP = {
     Write `$help <category>` to view help for a specific category. (Except credits, it has its standalone command.)
     Note: Most commands are available using the prefix `$` or `/`.
 """,
-    comp: """**MKWTASCompBot** - A Multi TAS Comp Bot
+    'comp': """**MKWTASCompBot** - A Multi TAS Comp Bot
     Competition commands\n
       **collab** -- Team up with someone during a collab task!
       **info** -- Shows information about the status of your submission. (DM only)
@@ -25,7 +25,7 @@ HELP = {
       **task-info** -- View information about the current task, such as deadline and host.
       **teams** -- View the list of teams during a collab task.
 """,
-    fun: """**MKWTASCompBot** - A Multi TAS Comp Bot
+    'fun': """**MKWTASCompBot** - A Multi TAS Comp Bot
     Fun commands 👀\n
     **Commands**:
       **8ball** -- Have a question? Ask the bot for his wisdom! Only 'yes/no' and 'when' questions are supported. 
@@ -38,14 +38,14 @@ HELP = {
       **rps** -- Play rock paper scissors against the bot, or against another player. Coins are involved.
       **slots** -- Play the famous slot machine. Default number of emotes is 3. Coins are involved.
 """,
-    misc: """**MKWTASCompBot** - A Multi TAS Comp Bot
+    'misc': """**MKWTASCompBot** - A Multi TAS Comp Bot
     Miscellaneous commands\n
       **quote** -- Read an inspirational quote!
       **tracks** -- Picks a random track from the game!
       **urban** -- Search urban dictionary for a word or expression!
       **weather** -- Get the weather of a city!
 """,
-    host: """**MKWTASCompBot** - A Multi TAS Comp Bot
+    'host': """**MKWTASCompBot** - A Multi TAS Comp Bot
     Host commands :P\n
       **delete-submission** -- Delete someone's submission. 
       **/dm** -- Make the bot dm someone!
@@ -61,7 +61,7 @@ HELP = {
       **/start-task** -- Starts a new task. Warning: this deletes last task's stored submissions, results, and 'Current submission' message.
       **/submit** -- Submit a file for someone.
 """,
-    admin: """**MKWTASCompBot** - A Multi TAS Comp Bot
+    'admin': """**MKWTASCompBot** - A Multi TAS Comp Bot
     Admin commands \n
       **addcoins** -- Adds coins to someone's balance (or remove, if a negative number is specified).
       **config** -- Configure the different roles and channels
@@ -88,7 +88,6 @@ class Help(commands.Cog):
             low = category.lower()
             help_menu = HELP[low] if low in HELP else HELP['default']
             await ctx.send(help_menu)
-
 
         except UnboundLocalError:
             await ctx.send("Invalid argument.")

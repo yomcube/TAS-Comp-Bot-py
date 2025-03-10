@@ -18,4 +18,5 @@ jobs:
         pip install -r requirements.txt
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        dirs="./main.py ./video.py api commands events"
+        find $dirs -regex '.*\.py' | xargs pylint

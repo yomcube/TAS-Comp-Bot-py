@@ -44,7 +44,7 @@ class Errors(commands.Cog):
 
             case _ if isinstance(error, commands.PrivateMessageOnly):
                 msg = "This command is only usable in DMs with the bot."
-        
+
         if msg:
             return await ctx.send(msg)
 
