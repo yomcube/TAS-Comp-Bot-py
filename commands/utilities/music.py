@@ -1,10 +1,10 @@
-import discord
-from discord.ext import commands
-import yt_dlp
 import asyncio
 import os
+
+import discord
+from discord.ext import commands
 from dotenv import load_dotenv
-import asyncio
+import yt_dlp
 
 queues = {}
 voice_clients = {}
@@ -64,7 +64,7 @@ class Music(commands.Cog):
             player = discord.FFmpegPCMAudio(song, **ffmpeg_options)
 
             if not voice_clients[ctx.guild.id].is_playing():
-                voice_clients[ctx.guild.id].play(player, after=lambda e: print('Player error: %s' % e) if e else None)
+                voice_clients[ctx.guild.id].play(player, after=lambda e: print(f'Player error: {e}') if e else None)
                 await ctx.send(f'Now playing: {data["title"]}')
             else:
                 await ctx.send('Already playing a song! Use `$stop` to stop the current song first.')

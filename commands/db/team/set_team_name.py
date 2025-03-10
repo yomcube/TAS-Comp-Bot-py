@@ -1,15 +1,15 @@
-import discord
-from discord.ext import commands
-from api.db_classes import  Teams, get_session
-from api.submissions import get_submission_channel, generate_submission_list
-from api.utils import is_in_team
-from sqlalchemy import select, update, or_
 import os
+
+from discord.ext import commands
 from dotenv import load_dotenv
+from sqlalchemy import select, update, or_
+
+from api.db_classes import  Teams, get_session
+from api.submissions import generate_submission_list
+from api.utils import is_in_team
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
-
 
 
 class Setteamname(commands.Cog):

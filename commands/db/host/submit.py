@@ -3,13 +3,13 @@ import os
 from discord.ext import commands
 import discord
 from dotenv import load_dotenv
+from sqlalchemy import insert, update
 
 from api.utils import is_task_currently_running, readable_to_float, has_host_role
-from api.submissions import first_time_submission, generate_submission_list, new_competitor, post_submission_list, \
-    get_display_name, get_submission_channel
+from api.submissions import (first_time_submission, generate_submission_list,
+    new_competitor, post_submission_list, get_display_name, get_submission_channel)
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.db_classes import Submissions, get_session, Userbase
-from sqlalchemy import insert, update
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

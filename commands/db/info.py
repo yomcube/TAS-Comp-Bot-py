@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
+from sqlalchemy import select
+
 from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
 from api.mkwii.mkwii_utils import characters, vehicles
 from api.db_classes import Submissions, get_session
-from sqlalchemy import select
 
 
 class Info(commands.Cog):

@@ -12,10 +12,10 @@ def get_lap_time(rkg):
     nr_laps = rkg[0x10]
     lap_times = []
     for i in range(nr_laps):
-        min = rkg[0x11 + i * 3] >> 1
+        m = rkg[0x11 + i * 3] >> 1
         sec = ((rkg[0x11 + i * 3] & 0x1) << 6) | (rkg[0x12 + i * 3] >> 2)
         mil = ((rkg[0x12 + i * 3] & 0x3) << 8) | rkg[0x13 + i * 3]
-        lap_times.append(f"{min}:{sec:02}.{mil:03}")
+        lap_times.append(f"{m}:{sec:02}.{mil:03}")
     return lap_times
 
 

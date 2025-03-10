@@ -1,11 +1,13 @@
-import discord
 import os
-import shared
+
+import discord
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
+import shared
 from sqlalchemy import insert, select, or_
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
+
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from api.dm_handlers import handlers_dict, init_dm_handlers
+from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -30,10 +32,10 @@ async def get_submission_channel(comp):
 async def get_submission_channel_guild(channel_id):
     async with get_session() as session:
         query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
-        guild_id = (await session.scalars(query)).first()
-        if guild_id is None:
+        g_id = (await session.scalars(query)).first()
+        if g_id is None:
             return None
-        return guild_id
+        return g_id
 
 
 async def get_logs_channel(comp):
@@ -92,13 +94,13 @@ async def get_team_name(user_id):
 
         result = (await session.execute(stmt)).first()
         return result[0] if result else None
-async def get_team_ids(id):
+async def get_team_ids(u_id):
     """Takes list of IDs, and retrieves all the members of the team. Used for submission list"""
     async with get_session() as session:
         # Construct the query to find the team with the specified user ID
         result = await session.execute(
             select(Teams).where(
-                or_(Teams.leader == id, Teams.user2 == id, Teams.user3 == id, Teams.user4 == id)
+                or_(Teams.leader == u_id, Teams.user2 == u_id, Teams.user3 == u_id, Teams.user4 == u_id)
             )
         )
         team = result.scalars().first()
@@ -106,15 +108,14 @@ async def get_team_ids(id):
         if team:
             # Filter out None values and return the list of user IDs
             return [user for user in [team.leader, team.user2, team.user3, team.user4] if user is not None]
-        else:
-            return None
+        return None
 
 
 async def get_team_members(id_list):
     """Takes list of IDs, and retrieves all the members of the team. Used for submission list"""
     Members = []
-    for id in id_list:
-        name = await get_display_name(id)
+    for i in id_list:
+        name = await get_display_name(i)
         Members.append(name)
     return Members
 
@@ -126,43 +127,43 @@ async def count_submissions():
         result = (await session.scalars(query)).fetchall()
         return len(result)
 
-async def post_submission_list(channel, id, name):
+async def post_submission_list(channel, u_id, name):
     # Case if user is in team
-    if await is_in_team(id):
-        ids = await get_team_ids(id)
+    if await is_in_team(u_id):
+        ids = await get_team_ids(u_id)
         members = await get_team_members(ids)
-        team_name = await get_team_name(id)
+        team_name = await get_team_name(u_id)
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
         # No ( ) if no team name
-        if team_name == None:
+        if team_name is None:
             return await channel.send(
                 f"**__Current Submissions:__**\n1. {' & '.join(members)} ||{mentions}||",
                 allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
-        else:
-            return await channel.send(
-                f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
-                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+        return await channel.send(
+            f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
+            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True
+        )
 
     # Case if solo
     return await channel.send(
-        f"**__Current Submissions:__**\n1. {name} ||<@{id}>||",
+        f"**__Current Submissions:__**\n1. {name} ||<@{u_id}>||",
         allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
-async def update_submission_list(last_message, id, name):
+async def update_submission_list(last_message, u_id, name):
     """Handles updating the submission list message and renaming user submissions"""
     # Case if user is in team
-    if await is_in_team(id):
-        ids = await get_team_ids(id)
+    if await is_in_team(u_id):
+        ids = await get_team_ids(u_id)
         members = await get_team_members(ids)
-        team_name = await get_team_name(id)
+        team_name = await get_team_name(u_id)
         mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
         # No ( ) if no team name
-        if team_name == None:
-            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||")
+        if team_name is None:
+            new_content = f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||"
 
 
         # Case if they actually set a team name
@@ -175,7 +176,7 @@ async def update_submission_list(last_message, id, name):
 
     # solo submission
     new_content = (f"{last_message.content}\n{await count_submissions()}. {name}"
-                    f" ||<@{id}>||")
+                    f" ||<@{u_id}>||")
     return await last_message.edit(content=new_content)
 
 
@@ -185,6 +186,7 @@ async def generate_submission_list(self):
     """
     submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
+    message_to_edit = None
     async for message in channel.history(limit=3):
         # Check if the message was sent by the bot
         if message.author == self.bot.user:
@@ -211,7 +213,7 @@ async def generate_submission_list(self):
                 mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
 
                 # No ( ) if they have no special team name
-                if team_name == None:
+                if team_name is None:
                     formatted_submissions += f"\n{submission.index}. {' & '.join(members)} ||{mentions}||"
 
                 # Case if they actually set a team name
@@ -227,9 +229,9 @@ async def generate_submission_list(self):
 
 async def handle_submissions(message, self):
     author = message.author
-    author_name = message.author.name
-    author_id = message.author.id
-    author_dn = message.author.display_name
+    author_name = author.name
+    author_id = author.id
+    author_dn = author.display_name
 
     ##################################################
     # Adding submission to submission list channel
@@ -248,12 +250,11 @@ async def handle_submissions(message, self):
         print("Could not find the channel.")
         return
 
+    last_message = None
     async for msg in channel.history(limit=5):
         last_message = msg
         if last_message.author == self.bot.user:
             break
-    else:
-        last_message = None
 
     # Determine the correct author_id and display_name
     if await get_team_size() > 1 and await is_in_team(author_id):
@@ -262,12 +263,9 @@ async def handle_submissions(message, self):
 
     # New entry to the list in #submissions
     if last_message:
-
         # Add a new line only if it's a new user ID submitting
         if await first_time_submission(author_id):
-
-                await update_submission_list(last_message, author_id, author_display_name)
-
+            await update_submission_list(last_message, author_id, author_display_name)
 
     else:
         # There are no submissions (brand-new task); send a message on the first submission
@@ -278,28 +276,26 @@ async def handle_submissions(message, self):
     ##################################################################
     if not (await is_task_currently_running())[4]: # if not speed task
 
-        guild_id = shared.main_guild.id
-
-        if guild_id is None:
+        g_id = shared.main_guild.id
+        if g_id is None:
             print("Guild not detected yet.")
             return
 
         submitter_role = await get_submitter_role(DEFAULT)
 
         # Fetch the member from the detected guild
-        server = self.bot.get_guild(guild_id)
+        server = self.bot.get_guild(g_id)
         member = server.get_member(author_id)
 
         if member:
             role = server.get_role(submitter_role)
-            if role:
-                if role not in member.roles:
-                    await member.add_roles(role)
-                    print(f"Role {role.name} has been assigned to {member.display_name}.")
-            else:
-                await message.channel.send(f"Role with ID {submitter_role} not found in this server.")
-        else:
-            await message.channel.send(f"User with ID {author_id} not found in this server.")
+            if role and role not in member.roles:
+                await member.add_roles(role)
+                print(f"Role {role.name} has been assigned to {member.display_name}.")
+                return
+            await message.channel.send(f"Role with ID {submitter_role} not found in this server.")
+            return
+        await message.channel.send(f"User with ID {author_id} not found in this server.")
 
 
 async def handle_dms(message, self):
@@ -324,7 +320,7 @@ async def handle_dms(message, self):
             file_dict = get_file_types(attachments)
             try:
                 await handlers_dict[DEFAULT](message, attachments, file_dict, self)
-            
+
             except KeyError:
                 print(f"Could not find DM handler for '{DEFAULT}'.")
             except TimeoutError:

@@ -1,12 +1,11 @@
 import random
 
 import discord
-import shared
 from discord.ext import commands
+import shared
 
 from api.submissions import count_submissions
 from api.utils import is_task_currently_running, get_team_size, get_host_role
-from sqlalchemy import select
 
 
 class TaskInfo(commands.Cog):

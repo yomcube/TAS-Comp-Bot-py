@@ -1,9 +1,11 @@
+from struct import unpack
+
 import discord
 from discord.ext import commands
-from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
-from api.db_classes import Submissions, get_session
 from sqlalchemy import select
-from struct import unpack
+
+from api.utils import get_team_size, is_in_team, get_leader
+from api.db_classes import Submissions, get_session
 
 
 class Info(commands.Cog):
@@ -42,10 +44,10 @@ class Info(commands.Cog):
         dq = bool(submission[3])
         dq_reason = submission[4]
         dtm = submission[5]
-        
+
         def yesno(b):
             return "Yes" if bool(b) else "No"
-        
+
         embed = discord.Embed(title=f"Task {task_num} submission", color=discord.Color.from_rgb(0, 235, 0))
 
         embed.add_field(name="File", value=url, inline=True)
@@ -53,16 +55,16 @@ class Info(commands.Cog):
         embed.add_field(name="DQ", value=yesno(dq), inline=True)
         if dq:
             embed.add_field(name="DQ reason", value=dq_reason, inline=True)
-        
+
         # Separator
         embed.add_field(name="", value="", inline=False)
-        
+
         (gameId, isWii, controllers, savestate, vi, inputs, lag,
             rerecords, video, audio, md5, timestamp) = unpack("<6s3B3Q8xL32x16s16s16sq", dtm[4:0x89])
-        
+
         embed.add_field(name="Game ID", value=gameId.decode('utf-8'), inline=True)
         embed.add_field(name="Is Wii Game", value=yesno(isWii), inline=True)
-        
+
         controllers_str = ""
         first = True
         i = 0
@@ -71,7 +73,7 @@ class Info(commands.Cog):
                 controllers_str += ("" if first else ", ") + ("GC " if i/4 < 1 else "Wii ") + str((i % 4) + 1)
                 first = False
             i += 1
-        
+
         embed.add_field(name="Controllers Plugged", value=controllers_str, inline=True)
         embed.add_field(name="From Savestate", value=yesno(savestate), inline=True)
         embed.add_field(name="VI Count", value=vi, inline=True)

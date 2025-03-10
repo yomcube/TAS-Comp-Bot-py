@@ -1,8 +1,8 @@
-import discord
 from discord.ext import commands
+from sqlalchemy import select, delete
+
 from api.db_classes import Teams, get_session
-from sqlalchemy import select, delete, inspect
-from api.utils import get_team_size, is_in_team
+from api.utils import is_in_team
 
 async def reorder_primary_keys():
     async with get_session() as session:
@@ -69,6 +69,6 @@ class LeaveTeam(commands.Cog):
                 await session.commit()
 
 
-                
+
 async def setup(bot):
     await bot.add_cog(LeaveTeam(bot))

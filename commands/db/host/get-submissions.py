@@ -1,10 +1,11 @@
+import asyncio
 from discord import AllowedMentions
 from discord.ext import commands
+from sqlalchemy import select
+
 from api.submissions import get_display_name, get_team_ids, get_team_members, get_team_name
 from api.utils import has_host_role, float_to_readable, is_in_team
 from api.db_classes import Submissions, get_session
-from sqlalchemy import select
-import asyncio
 
 
 class Get(commands.Cog):
@@ -46,7 +47,8 @@ class Get(commands.Cog):
                 else:
                     name = await get_display_name(submission.user_id)
 
-                submission_text = f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
+                submission_text = \
+                    f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
 
                 # Check if adding this submission would exceed the message limit
                 if len(current_part) + len(submission_text) > (msg_limit - buffer):

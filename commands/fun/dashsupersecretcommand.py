@@ -1,7 +1,8 @@
+import random
+
+from bs4 import BeautifulSoup
 from discord.ext import commands
 import requests
-from bs4 import BeautifulSoup
-import random
 
 class Yoshi(commands.Cog):
     def __init__(self, bot) -> None:
@@ -18,7 +19,7 @@ class Yoshi(commands.Cog):
         }
 
         # Send a request to the URL with headers
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=60)
 
         # Parse the HTML content
         soup = BeautifulSoup(response.text, "html.parser")

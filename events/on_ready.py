@@ -1,16 +1,18 @@
-import discord
-import shared
-import time
 import asyncio
+import time
 import os
-from dotenv import load_dotenv
+
 from discord.ext import commands, tasks
+from dotenv import load_dotenv
+import shared
+from sqlalchemy import select, update, delete, insert
 
 from api.submissions import get_logs_channel
 from api.utils import is_task_currently_running, get_tasks_channel, get_announcement_channel, get_submitter_role
-from api.db_classes import get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, ReminderPings, SpeedTaskReminders, \
-    SpeedTask, Submissions
-from sqlalchemy import select, update, delete, insert
+from api.db_classes import (
+    get_session, Tasks, SpeedTaskDesc, SpeedTaskLength,
+    ReminderPings, SpeedTaskReminders, SpeedTask,
+)
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -49,14 +51,9 @@ async def release_speed_task(bot):
         query = await session.execute(select(SpeedTaskLength).where(SpeedTaskLength.comp == DEFAULT))
         length = query.scalars().first()
 
-
         task_length_seconds = length.time * 3600
 
-        # Get the current time rounded to the nearest minute
-        current_time = int(time.time())
-
-
-        if (current_time >= (deadline - task_length_seconds)) and not is_released:
+        if (int(time.time()) >= (deadline - task_length_seconds)) and not is_released:
             # Get tasks channel
             tasks_channel = await get_tasks_channel(DEFAULT)
             channel = bot.get_channel(tasks_channel)
@@ -114,9 +111,6 @@ async def check_task_deadline(bot):
         if ongoing_task[6] is None:
             return
 
-        load_dotenv()
-        DEFAULT = os.getenv('DEFAULT')
-
         log_channel = bot.get_channel(await get_logs_channel(DEFAULT))
         announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
 
@@ -125,7 +119,7 @@ async def check_task_deadline(bot):
 
         # Query for all active tasks with deadlines
         result = await session.execute(
-            select(Tasks).where(Tasks.deadline <= current_time, Tasks.is_active == True)
+            select(Tasks).where(Tasks.deadline <= current_time, bool(Tasks.is_active))
         )
         tasks_to_update = result.scalars().all()
 
@@ -133,7 +127,7 @@ async def check_task_deadline(bot):
         for _ in tasks_to_update:
             stmt = (
                 update(Tasks)
-                .where(Tasks.is_active == 1)
+                .where(bool(Tasks.is_active))
                 .values(is_active=0)
             )
 
@@ -142,7 +136,7 @@ async def check_task_deadline(bot):
             await session.commit()
 
             # Delete task
-            await session.execute(delete(Tasks).where(Tasks.is_active == 0))
+            await session.execute(delete(Tasks).where(not bool(Tasks.is_active)))
             await session.execute(delete(SpeedTaskDesc))
             await session.commit()
 
@@ -165,6 +159,39 @@ async def before_check_deadline():
 ####################################################
 # Check for reminders in speed tasks
 ####################################################
+async def send_reminder(session, reminder, time_left, channel, public):
+    if reminder is not None and time_left == reminder * 60:  # Convert reminder from minutes to seconds
+        hours = reminder // 60
+        minutes = reminder % 60
+
+        # Handle exactly 60 minutes as 1 hour
+        if reminder == 60:
+            time_str = "1 hour"
+        else:
+            time_str = ""
+            if hours > 0:
+                hour_unit = "hour" if hours == 1 else "hours"
+                time_str = f"{hours} {hour_unit}"
+
+            if minutes > 0:
+                minute_unit = "minute" if minutes == 1 else "minutes"
+                if time_str:
+                    time_str += f" and {minutes} {minute_unit}"
+                else:
+                    time_str = f"{minutes} {minute_unit}"
+
+        if public:
+            # Send reminder (with @everyone ping depending on setting)
+            ping_query = select(ReminderPings.ping).where(ReminderPings.guild_id == shared.main_guild.id)
+            result = (await session.execute(ping_query)).first()
+
+            if result is None or result[0] == 0:
+                await channel.send(f"Reminder: You have {time_str} remaining to submit!")
+            else:
+                await channel.send(f"@everyone Reminder: You have {time_str} remaining to submit!")
+            return
+        await channel.send(f"You have {time_str} remaining to submit!")
+
 @tasks.loop(seconds=60)
 async def check_speed_task_reminders(bot):
     async with get_session() as session:
@@ -182,7 +209,7 @@ async def check_speed_task_reminders(bot):
         current_time = int(time.time())
 
         # Query all users with active tasks
-        result = await session.execute(select(SpeedTask).where(SpeedTask.active == True))
+        result = await session.execute(select(SpeedTask).where(bool(SpeedTask.active)))
         active_tasks = result.scalars().all()
 
         for task in active_tasks:
@@ -196,29 +223,9 @@ async def check_speed_task_reminders(bot):
                 time_left = task.end_time - current_time
 
                 # Send reminders based on the time left
+                user = bot.get_user(task.user_id)
                 for reminder in [reminders.reminder1, reminders.reminder2, reminders.reminder3, reminders.reminder4]:
-                    if reminder is not None and time_left == reminder * 60:  # Convert reminder from minutes to seconds
-                        hours = reminder // 60
-                        minutes = reminder % 60
-
-                        # Handle exactly 60 minutes as 1 hour
-                        if reminder == 60:
-                            time_str = "1 hour"
-                        else:
-                            time_str = ""
-                            if hours > 0:
-                                hour_unit = "hour" if hours == 1 else "hours"
-                                time_str = f"{hours} {hour_unit}"
-
-                            if minutes > 0:
-                                minute_unit = "minute" if minutes == 1 else "minutes"
-                                if time_str:
-                                    time_str += f" and {minutes} {minute_unit}"
-                                else:
-                                    time_str = f"{minutes} {minute_unit}"
-                        user = bot.get_user(task.user_id)
-                        if user:
-                            await user.send(f"You have {time_str} remaining to submit!")
+                    await send_reminder(session, reminder, time_left, user, False)
 
         # Also do public reminders is task is released
         if ongoing_task[7]:
@@ -232,36 +239,8 @@ async def check_speed_task_reminders(bot):
                 time_left = deadline - current_time
 
                 if announcement_channel:
-                    for reminder in [reminders.reminder1, reminders.reminder2, reminders.reminder3,
-                                     reminders.reminder4]:
-                        if reminder is not None and time_left == reminder * 60:  # Convert reminder from minutes to seconds
-                            hours = reminder // 60
-                            minutes = reminder % 60
-
-                            # Handle exactly 60 minutes as 1 hour
-                            if reminder == 60:
-                                time_str = "1 hour"
-                            else:
-                                time_str = ""
-                                if hours > 0:
-                                    hour_unit = "hour" if hours == 1 else "hours"
-                                    time_str = f"{hours} {hour_unit}"
-
-                                if minutes > 0:
-                                    minute_unit = "minute" if minutes == 1 else "minutes"
-                                    if time_str:
-                                        time_str += f" and {minutes} {minute_unit}"
-                                    else:
-                                        time_str = f"{minutes} {minute_unit}"
-
-                            # Send reminder (with @everyone ping depending on setting)
-                            ping_query = select(ReminderPings.ping).where(ReminderPings.guild_id == shared.main_guild.id)
-                            result = (await session.execute(ping_query)).first()
-
-                            if result is None or result[0] == 0:
-                                await announcement_channel.send(f"Reminder: You have {time_str} remaining to submit!")
-                            else:
-                                await announcement_channel.send(f"@everyone Reminder: You have {time_str} remaining to submit!")
+                    for reminder in [reminders.reminder1, reminders.reminder2, reminders.reminder3, reminders.reminder4]:
+                        await send_reminder(session, reminder, time_left, announcement_channel, True)
 
 
 @check_speed_task_reminders.before_loop
@@ -293,10 +272,8 @@ async def check_speed_task_deadlines(bot):
         result = await session.execute(select(SpeedTask))
         user_list = result.scalars().all()  # Fetch all users in a list
 
-        user_count = len(user_list)  # Get the count of users
-
         # Only check deadlines once people have started requesting tasks
-        if user_count == 0:
+        if not user_list:
             return
 
         # Get the current time rounded to the nearest minute
@@ -304,7 +281,7 @@ async def check_speed_task_deadlines(bot):
 
         # Query for all active tasks with deadlines
         result = await session.execute(
-            select(SpeedTask).where(SpeedTask.end_time <= current_time, SpeedTask.active == True)
+            select(SpeedTask).where(SpeedTask.end_time <= current_time, bool(SpeedTask.active))
         )
         tasks_to_update = result.scalars().all()
 
@@ -357,8 +334,6 @@ async def before_check_deadlines():
 class Ready(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        global detected_guild
-        detected_guild = None
 
     @commands.Cog.listener()
     async def on_ready(self):

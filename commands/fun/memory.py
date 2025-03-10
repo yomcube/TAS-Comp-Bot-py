@@ -1,7 +1,8 @@
+import random
+
+import asyncio
 import discord
 from discord.ext import commands
-import random
-import asyncio
 
 class MemoryGameView(discord.ui.View):
     def __init__(self, bot, ctx, size):
@@ -57,7 +58,7 @@ class Memory(commands.Cog):
         # Create the embed for game instructions
         embed = discord.Embed(
             title="Memory Game Instructions",
-            description=f"Welcome to the memory game!\n\n"
+            description="Welcome to the memory game!\n\n"
                         "In this game, a board is presented to you and you need to match all pairs of emojis to win! "
                         "To select a tile, you need to send a message in the following format: row, column\n",
             color=discord.Color.blue()

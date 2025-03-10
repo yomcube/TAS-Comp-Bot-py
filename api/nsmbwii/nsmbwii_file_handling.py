@@ -1,9 +1,11 @@
-from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, is_task_currently_running
-from commands.db.requesttask import has_requested_already, is_time_over
-from api.db_classes import get_session, Submissions, Teams, Userbase
-from sqlalchemy import insert, update, select
 from struct import unpack
+
+from sqlalchemy import insert, update, select
+
+from api.db_classes import get_session, Submissions, Userbase
+from api.submissions import handle_submissions, first_time_submission
+from api.utils import is_task_currently_running, get_team_size, is_in_team, get_leader
+from commands.db.requesttask import has_requested_already, is_time_over
 
 
 async def handle_nsmbwii_files(message, attachments, file_dict, self):
@@ -33,8 +35,8 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
 
 
                         if result is None:
-                            message_to_send = (f"You can't submit, your time is up! If you wish to send in a late submission, "
-                                       f"please DM the current host so they can add your submission manually.")
+                            message_to_send = ("You can't submit, your time is up! If you wish to send in a late submission, "
+                                       "please DM the current host so they can add your submission manually.")
 
                         else:
                             message_to_send = "You can't submit, your time is up!"
@@ -56,6 +58,7 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
 
             try:
                 dtm = bytearray(dtm_data)
+                vi_count = 0
                 if dtm[:4] == b'DTM\x1A':
                     vi_count = unpack("<Q", dtm[0xD:0x15])[0]
 
@@ -82,12 +85,12 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             ####################
             # Adding submission
             ####################
-            
+
             url = " ".join(a.url for a in attachments)
-            
+
             # Hacky, but the character is set with the DTM bytes so
             # another field doesn't have to be added to the DB
-            
+
             # first time submission (within the task)
             if await first_time_submission(submitter_id):
                 async with get_session() as session:

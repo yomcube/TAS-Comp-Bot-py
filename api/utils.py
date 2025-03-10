@@ -1,13 +1,15 @@
 import hashlib
 import os
+from urllib.parse import urlparse
+
 import aiohttp
 import discord
-from urllib.parse import urlparse
 from discord.ext import commands
-from sqlalchemy import select, insert, update, inspect, or_
-from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel
 from dotenv import load_dotenv
+from sqlalchemy import select, insert, update, inspect, or_
+
+from api.db_classes import (Money, Tasks, Teams, HostRole,SubmitterRole,
+    get_session, TasksChannel, AnnouncementsChannel)
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -56,20 +58,22 @@ async def get_host_role(guild_id):
 
         if host_role:
             return host_role
-        else:
-            return None
-        
-        
+        return None
+
+
 async def get_submitter_role(guild_id):
     default = DEFAULT
     # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
     async with get_session() as session:
-        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
+        submitter_role = (
+            await session.scalars(
+                select(SubmitterRole.role_id).where(
+                    SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id
+                    )
+                )
+        ).first()
 
-        if submitter_role:
-            return submitter_role
-        else:
-            return None
+        return submitter_role if submitter_role else None
 
 
 async def get_tasks_channel(comp):
@@ -100,8 +104,7 @@ def has_host_role():
             # Check if the role is a name
             has_role = discord.utils.get(ctx.author.roles, id=role) is not None
             return has_role
-        else:
-            return False
+        return False
 
     return commands.check(predicate)
 
@@ -115,12 +118,13 @@ async def download_from_url(url) -> str:
         async with aiohttp.get(url) as file:
             if not file.ok:
                 return None
-            open(file_path, 'wb').write(file.content)
+            with open(file_path, 'wb') as f:
+                f.write(file.content)
+                f.close()
 
             return file_path
 
-    except:
-
+    except: # pylint: disable=bare-except
         return None
 
 
@@ -134,6 +138,7 @@ def readable_to_float(time_str):
         return total_seconds
     except ValueError:
         print("Invalid time format. Expected 'MM:SS.mmm'.")
+        return None
 
 
 def float_to_readable(seconds):
@@ -143,7 +148,7 @@ def float_to_readable(seconds):
 
     if seconds < 0:
         print("Seconds cannot be negative.")
-        return
+        return None
 
     minutes = int(seconds // 60)
     remaining_seconds = seconds % 60
@@ -164,28 +169,25 @@ async def is_task_currently_running():
 async def get_team_size():
     """Retrieves the team size of the running task. Over 1 means it is a collab task"""
     current_task = await is_task_currently_running()
-    if current_task is not None:
-        return current_task[3]
-    else:
-        return None
+    return current_task[3]
 
-async def is_in_team(id):
+async def is_in_team(u_id):
     """Returns if a certain id is in a team (found in the Teams db)"""
     async with get_session() as session:
         inspector = inspect(Teams)
         columns = inspector.columns
-        conditions = [getattr(Teams, column.name) == id for column in columns if
+        conditions = [getattr(Teams, column.name) == u_id for column in columns if
                       column.type.python_type == int]
         stmt = select(Teams).filter(or_(*conditions))
         result = await session.execute(stmt)
         results = result.scalars().all()
         return results
 
-async def get_leader(id):
+async def get_leader(u_id):
     """Takes the id and returns the leader of id's team. Used for collab tasks. Returns none if not found."""
     async with get_session() as session:
         stmt = select(Teams.leader).filter(
-            (Teams.leader == id) | (Teams.user2 == id) |(Teams.user3 == id) | (Teams.user4 == id))
+            (Teams.leader == u_id) | (Teams.user2 == u_id) |(Teams.user3 == u_id) | (Teams.user4 == u_id))
         result = await session.execute(stmt)
         leader = result.scalars().first()
         return leader
@@ -223,6 +225,3 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
-
-
-

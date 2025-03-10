@@ -1,0 +1,19 @@
+[MAIN]
+exit-zero=y
+
+[MESSAGES CONTROL]
+disable=missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        broad-exception-caught,
+        invalid-name,
+        fixme,
+        too-few-public-methods,
+        too-many-instance-attributes,
+        too-many-statements,
+
+[REPORTS]
+output-format=colorized
+
+[FORMAT]
+max-line-length=150

@@ -2,9 +2,9 @@ import asyncio
 import os
 import traceback
 import sys
-from dotenv import load_dotenv
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from api.db_classes import db_connect
 
@@ -14,7 +14,7 @@ TOKEN = os.getenv('TOKEN')
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 DEFAULT = os.getenv('DEFAULT')
 
-os.makedirs(DB_DIR) if not os.path.exists(DB_DIR) else None
+_ = os.makedirs(DB_DIR) if not os.path.exists(DB_DIR) else None
 activity = discord.Game(name="Dolphin Emulator")
 
 commands_ext = ['commands.db.host.start-task',
@@ -97,7 +97,7 @@ class Bot(commands.Bot):
         for command in commands_ext:
             try:
                 await self.load_extension(command)
-            except Exception as e:
+            except Exception:
                 print(f'Failed to load {command}.', file=sys.stderr)
                 traceback.print_exc()
 
@@ -105,7 +105,7 @@ class Bot(commands.Bot):
         for event in events_ext:
             try:
                 await self.load_extension(event)
-            except Exception as e:
+            except Exception:
                 print(f'Failed to load {event}.', file=sys.stderr)
                 traceback.print_exc()
 

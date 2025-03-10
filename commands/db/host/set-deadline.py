@@ -1,12 +1,13 @@
 import os
-import discord
 import time
 import math
+
 from discord.ext import commands
+from dotenv import load_dotenv
+from sqlalchemy import select, update
+
 from api.db_classes import get_session, Tasks
 from api.utils import has_host_role
-from sqlalchemy import select, update
-from dotenv import load_dotenv
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -24,8 +25,8 @@ class Setdeadline(commands.Cog):
         if deadline < int(time.time()):
             return await ctx.send("This deadline is in the past! Retry again.")
 
-        else: # if deadline is valid, round it up to nearest minute
-            deadline = math.ceil(deadline / 60) * 60
+        # if deadline is valid, round it up to nearest minute
+        deadline = math.ceil(deadline / 60) * 60
 
 
         async with get_session() as session:
@@ -34,9 +35,8 @@ class Setdeadline(commands.Cog):
             if result is None:
                 return await ctx.send("There is no active task.")
 
-            else:
-                stmt = update(Tasks).values(deadline=deadline).where(Tasks.is_active == 1)
-                await session.execute(stmt)
+            stmt = update(Tasks).values(deadline=deadline).where(Tasks.is_active == 1)
+            await session.execute(stmt)
 
             await session.commit()
 

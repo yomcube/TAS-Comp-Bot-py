@@ -1,9 +1,11 @@
 import os
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, SubmitterRole, TasksChannel, AnnouncementsChannel
 from sqlalchemy import select, insert, update
+
+from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, SubmitterRole, TasksChannel, AnnouncementsChannel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -37,7 +39,7 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
-            
+
 
         ### LOGS CHANNEL ###
         async with get_session() as session:
@@ -56,7 +58,7 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
-            
+
 
         ### SUBMISSION CHANNEL ###
         async with get_session() as session:
@@ -75,7 +77,7 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
-            
+
 
         ### SEEK CHANNEL ###
         async with get_session() as session:
@@ -94,8 +96,8 @@ class Config(commands.Cog):
                 await session.execute(stmt)
 
             await session.commit()
-            
-            
+
+
         ### SUBMITTER ROLE ###
         async with get_session() as session:
             submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
@@ -158,8 +160,15 @@ class Config(commands.Cog):
 
 
 
-        await ctx.send(
-            f"The current host role has been set! {set_host_role.mention}\nThe log channel has been set! {set_logs_channel.mention}\nThe submission channel has been set! {set_submission_channel.mention}\nThe seek channel has been set! {set_seeking_channel.mention}\nThe submitter role has been set! {set_submitter_role.mention}\nThe tasks channel has been set! {set_tasks_channel.mention}\nThe announcement channel has been set! {set_announcement_channel.mention}")
+        await ctx.send("\n".join([
+            f"The current host role has been set! {set_host_role.mention}",
+            f"The log channel has been set! {set_logs_channel.mention}",
+            f"The submission channel has been set! {set_submission_channel.mention}",
+            f"The seek channel has been set! {set_seeking_channel.mention}",
+            f"The submitter role has been set! {set_submitter_role.mention}",
+            f"The tasks channel has been set! {set_tasks_channel.mention}",
+            f"The announcement channel has been set! {set_announcement_channel.mention}"
+        ]))
 
 
 async def setup(bot) -> None:

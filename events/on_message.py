@@ -36,7 +36,9 @@ class Message(commands.Cog):
             await message.add_reaction("✈️")
         elif msg_list[3] in lower_content:
             await message.reply(
-                "A confirmed date and time of the stream will be announced by the current host or the streamer after the deadline in <#657107735720230922>")
+                "A confirmed date and time of the stream will be announced by the current "
+                "host or the streamer after the deadline in <#657107735720230922>"
+            )
 
 
     async def wait_crazy(self, message):

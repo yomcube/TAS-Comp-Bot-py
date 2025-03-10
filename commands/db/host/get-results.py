@@ -1,8 +1,9 @@
 from discord.ext import commands
+from sqlalchemy import select
+
 from api.utils import float_to_readable, has_host_role
 from api.submissions import get_display_name, is_in_team, get_team_ids, get_team_members, get_team_name
 from api.db_classes import Submissions, get_session
-from sqlalchemy import select
 
 
 class Results(commands.Cog):

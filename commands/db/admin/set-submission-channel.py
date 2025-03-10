@@ -1,9 +1,11 @@
 import os
+
 import discord
 from discord.ext import commands
-from api.db_classes import get_session, SubmissionChannel
-from sqlalchemy import select, insert, update
 from dotenv import load_dotenv
+from sqlalchemy import select, insert, update
+
+from api.db_classes import get_session, SubmissionChannel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64

@@ -1,14 +1,15 @@
-import os
-import discord
-import shared
-from discord.ext import commands, tasks
-from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel, get_tasks_channel
-from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, SpeedTask, get_session, ReminderPings
-from sqlalchemy import select, insert, update
-from dotenv import load_dotenv
 import math
+import os
 import time
-import asyncio
+
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+import shared
+from sqlalchemy import select, insert
+
+from api.utils import is_task_currently_running, get_tasks_channel
+from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTask, get_session
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -17,17 +18,17 @@ DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 # Credits to original sm64 / mkw tas comp bot (by Xander) for messages
 
 
-async def has_requested_already(id):
+async def has_requested_already(u_id):
     async with get_session() as session:
         result = (await session.execute(select(SpeedTask)
-                                        .where(SpeedTask.user_id == id))).first()
+                                        .where(SpeedTask.user_id == u_id))).first()
         return result
 
 
-async def is_time_over(id):
+async def is_time_over(u_id):
     async with get_session() as session:
         result = (await session.execute(select(SpeedTask.active)
-                                        .where(SpeedTask.user_id == id))).first()
+                                        .where(SpeedTask.user_id == u_id))).first()
 
         if result is None: # this happens when they are doing the task after it has been revealed; towards the end
             return False

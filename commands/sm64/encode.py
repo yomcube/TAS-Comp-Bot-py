@@ -1,16 +1,17 @@
 import asyncio
 from dataclasses import dataclass
-import datetime
+from datetime import datetime, timezone
 import math
 import os
 from typing import List
 import uuid
+
 import discord
 from discord.ext import commands
-from video import FFmpegBuilder, ffprobe
 import humanize
+
 from api.utils import download_from_url, get_file_types
-from datetime import datetime, timezone
+from video import FFmpegBuilder, ffprobe
 
 DOWNLOAD_DIR = os.path.abspath(os.getenv("DOWNLOAD_DIR"))
 ENC_MUPEN_DIR = os.path.abspath(os.getenv("ENC_MUPEN_DIR"))
@@ -43,7 +44,7 @@ class QueueEntry:
 # Back-to-front vector of recent tasks
 encode_queue: List[QueueEntry] = []
 
-# Thread which is currently encoding a movie 
+# Thread which is currently encoding a movie
 encode_thread = None
 
 
@@ -60,10 +61,10 @@ async def cancel_encode(ctx):
 
 async def send_queue(ctx):
     # Sends the current encoding queue into the chat
-    str = f"The encoding queue currently contains {len(encode_queue)} movie(s).\n\n"
+    s = f"The encoding queue currently contains {len(encode_queue)} movie(s).\n\n"
     for i, entry in enumerate(encode_queue):
-        str += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
-    await ctx.reply(content=str)
+        s += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
+    await ctx.reply(content=s)
 
 
 async def process_queue_front(ctx, entry: QueueEntry):
@@ -168,8 +169,8 @@ class Encode(commands.Cog):
 
         if len(encode_queue) >= ENC_MAX_QUEUE:
             await ctx.reply(
-                content="The encode queue is currently full. Please try again later.".format(len(encode_queue),
-                                                                                             ENC_MAX_QUEUE))
+                content="The encode queue is currently full. Please try again later."
+            )
             return
 
         attachments = ctx.message.attachments
