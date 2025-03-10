@@ -1,7 +1,8 @@
 from discord.ext import commands
+from sqlalchemy import select, delete
+
 from api.db_classes import Teams, get_session
 from api.utils import has_host_role
-from sqlalchemy import select, delete
 
 async def reorder_primary_keys():
     async with get_session() as session:

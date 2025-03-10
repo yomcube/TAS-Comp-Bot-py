@@ -1,17 +1,20 @@
-from discord.ext import commands
-import discord
 import os
-import time
-from dotenv import load_dotenv
 from datetime import date
+import math
+import time
+
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+from sqlalchemy import insert, delete, select
+
 from api.utils import is_task_currently_running, has_host_role, get_submitter_role
 from api.submissions import get_submission_channel
 from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session, SpeedTaskLength, SpeedTaskDesc, SpeedTaskReminders
-from sqlalchemy import insert, delete, select
-import math
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
 
 class Start(commands.Cog):
     def __init__(self, bot) -> None:

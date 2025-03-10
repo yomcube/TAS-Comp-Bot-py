@@ -25,7 +25,7 @@ class TeamsCommand(commands.Cog):
             return await ctx.send("There is no task running currently.")
 
         # Verify if it's indeed a collab task
-        elif self.team_size < 2:
+        if self.team_size < 2:
             return await ctx.send("This is a solo task. You may **not** collaborate!")
 
         content = "__**Confirmed teams:**__\n"
@@ -50,8 +50,6 @@ class TeamsCommand(commands.Cog):
                 content += f"{row.index}. {row.team_name} ({display_names})\n"
             else:
                 content += f"{row.index}. {display_names}\n"
-
-        return await ctx.send(content)
 
         return await ctx.send(content)
 

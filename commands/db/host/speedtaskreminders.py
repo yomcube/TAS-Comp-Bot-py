@@ -1,7 +1,10 @@
 import os
+
 from discord.ext import commands
 from discord.ext.commands import Greedy
 from dotenv import load_dotenv
+from sqlalchemy import select
+
 from api.db_classes import get_session, SpeedTaskReminders
 from api.utils import has_host_role
 

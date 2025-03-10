@@ -118,12 +118,13 @@ async def download_from_url(url) -> str:
         async with aiohttp.get(url) as file:
             if not file.ok:
                 return None
-            open(file_path, 'wb').write(file.content)
+            with open(file_path, 'wb') as f:
+                f.write(file.content)
+                f.close()
 
             return file_path
 
     except:
-
         return None
 
 
@@ -137,6 +138,7 @@ def readable_to_float(time_str):
         return total_seconds
     except ValueError:
         print("Invalid time format. Expected 'MM:SS.mmm'.")
+        return None
 
 
 def float_to_readable(seconds):
@@ -146,7 +148,7 @@ def float_to_readable(seconds):
 
     if seconds < 0:
         print("Seconds cannot be negative.")
-        return
+        return None
 
     minutes = int(seconds // 60)
     remaining_seconds = seconds % 60
@@ -169,12 +171,12 @@ async def get_team_size():
     current_task = await is_task_currently_running()
     return current_task[3]
 
-async def is_in_team(id):
+async def is_in_team(u_id):
     """Returns if a certain id is in a team (found in the Teams db)"""
     async with get_session() as session:
         inspector = inspect(Teams)
         columns = inspector.columns
-        conditions = [getattr(Teams, column.name) == id for column in columns if
+        conditions = [getattr(Teams, column.name) == u_id for column in columns if
                       column.type.python_type == int]
         stmt = select(Teams).filter(or_(*conditions))
         result = await session.execute(stmt)

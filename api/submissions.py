@@ -1,6 +1,6 @@
-import discord
 import os
 
+import discord
 from dotenv import load_dotenv
 import shared
 from sqlalchemy import insert, select, or_
@@ -141,10 +141,10 @@ async def post_submission_list(channel, u_id, name):
                 f"**__Current Submissions:__**\n1. {' & '.join(members)} ||{mentions}||",
                 allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
-        else:
-            return await channel.send(
-                f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
-                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+        return await channel.send(
+            f"**__Current Submissions:__**\n1. {team_name} ({' & '.join(members)}) ||{mentions}||",
+            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True
+        )
 
     # Case if solo
     return await channel.send(
@@ -229,9 +229,9 @@ async def generate_submission_list(self):
 
 async def handle_submissions(message, self):
     author = message.author
-    author_name = message.author.name
-    author_id = message.author.id
-    author_dn = message.author.display_name
+    author_name = author.name
+    author_id = author.id
+    author_dn = author.display_name
 
     ##################################################
     # Adding submission to submission list channel
@@ -279,16 +279,16 @@ async def handle_submissions(message, self):
     ##################################################################
     if not (await is_task_currently_running())[4]: # if not speed task
 
-        guild_id = shared.main_guild.id
+        g_id = shared.main_guild.id
 
-        if guild_id is None:
+        if g_id is None:
             print("Guild not detected yet.")
             return
 
         submitter_role = await get_submitter_role(DEFAULT)
 
         # Fetch the member from the detected guild
-        server = self.bot.get_guild(guild_id)
+        server = self.bot.get_guild(g_id)
         member = server.get_member(author_id)
 
         if member:
@@ -325,7 +325,7 @@ async def handle_dms(message, self):
             file_dict = get_file_types(attachments)
             try:
                 await handlers_dict[DEFAULT](message, attachments, file_dict, self)
-            
+
             except KeyError:
                 print(f"Could not find DM handler for '{DEFAULT}'.")
             except TimeoutError:

@@ -1,12 +1,14 @@
+import os
+
 import discord
 from discord.ext import commands
 from discord.ext.commands import Greedy
+from dotenv import load_dotenv
+from sqlalchemy import select, insert, update
+
 from api.utils import get_team_size, is_in_team
 from api.db_classes import Teams, Userbase, get_session
-from api.submissions import new_competitor, get_display_name, get_seeking_channel
-from sqlalchemy import select, insert, update, delete
-import os
-from dotenv import load_dotenv
+from api.submissions import new_competitor, get_display_name
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -90,7 +92,7 @@ class Collab(commands.Cog):
             return await ctx.send("There is no task running currently.")
 
         # Verify if it's indeed a collab task
-        elif team_size < 2:
+        if team_size < 2:
             return await ctx.send("This is a solo task. You may **not** collaborate!")
 
         # Check for invalid users
@@ -250,12 +252,12 @@ class Collab(commands.Cog):
 
                             # Add any new users to Userbase db
                             for id in accepted_users:
-                                if await new_competitor(id):
+                                if await new_competitor(u_id):
                                     await session.execute(
                                         insert(Userbase).values(
-                                            user_id=id,
-                                            user=self.bot.get_user(id).name,
-                                            display_name=self.bot.get_user(id).display_name
+                                            user_id=u_id,
+                                            user=self.bot.get_user(u_id).name,
+                                            display_name=self.bot.get_user(u_id).display_name
                                         )
                                     )
 
@@ -277,61 +279,61 @@ class Collab(commands.Cog):
 
 
     async def cancel_collab(self, ctx, author_id, invited_user, cancelling_user):
-            if author_id in self.pending_collabs and invited_user.id in self.pending_collabs[author_id]:
-                self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
+        if author_id in self.pending_collabs and invited_user.id in self.pending_collabs[author_id]:
+            self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
 
 
-                # Check if this cancellation resolves the pending state
-                if all(resp is not None for resp in self.pending_collabs[author_id].values()):
-                    accepted_users = [uid for uid, resp in self.pending_collabs[author_id].items() if resp]
-                    if accepted_users:
-                        user_mentions = ", ".join(f"<@{uid}>" for uid in accepted_users)
-                        await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
+            # Check if this cancellation resolves the pending state
+            if all(resp is not None for resp in self.pending_collabs[author_id].values()):
+                accepted_users = [uid for uid, resp in self.pending_collabs[author_id].items() if resp]
+                if accepted_users:
+                    user_mentions = ", ".join(f"<@{uid}>" for uid in accepted_users)
+                    await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
 
-                        members = []
-                        members.append(await get_display_name(author_id))
+                    members = []
+                    members.append(await get_display_name(author_id))
 
-                        for member in accepted_users:
-                            if await get_display_name(member) is not None:
-                                member_name = await get_display_name(member)
-                            else:
-                                member_name = self.bot.get_user(member).display_name
-                            members.append(member_name)
-                        default_team_name = None
-
-                        # Add team to Teams db
-                        async with get_session() as session:
-                            await session.execute(
-                                insert(Teams).values(
-                                    team_name=default_team_name,
-                                    leader=author_id,
-                                    user2=accepted_users[0] if len(accepted_users) > 0 else None,
-                                    user3=accepted_users[1] if len(accepted_users) > 1 else None,
-                                    user4=accepted_users[2] if len(accepted_users) > 2 else None
-                                )
-                            )
-
-                            # Add any new users to Userbase db
-                            for id in accepted_users:
-                                if await new_competitor(id):
-                                    await session.execute(
-                                        insert(Userbase).values(
-                                            user_id=id,
-                                            user=self.bot.get_user(id).name,
-                                            display_name=self.bot.get_user(id).display_name
-                                        )
-                                    )
-                            await session.commit()
-
-                        del self.pending_collabs[author_id]  # Clear the collaboration state
-                    else:
-                        if await is_in_team(author_id):
-                            message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                    for member in accepted_users:
+                        if await get_display_name(member) is not None:
+                            member_name = await get_display_name(member)
                         else:
-                            message = "No team was formed as all invitations were declined, cancelled or timed out."
+                            member_name = self.bot.get_user(member).display_name
+                        members.append(member_name)
+                    default_team_name = None
 
-                        await ctx.send(message)
-                        del self.pending_collabs[author_id]  # Clear the collaboration state
+                    # Add team to Teams db
+                    async with get_session() as session:
+                        await session.execute(
+                            insert(Teams).values(
+                                team_name=default_team_name,
+                                leader=author_id,
+                                user2=accepted_users[0] if len(accepted_users) > 0 else None,
+                                user3=accepted_users[1] if len(accepted_users) > 1 else None,
+                                user4=accepted_users[2] if len(accepted_users) > 2 else None
+                            )
+                        )
+
+                        # Add any new users to Userbase db
+                        for u_id in accepted_users:
+                            if await new_competitor(u_id):
+                                await session.execute(
+                                    insert(Userbase).values(
+                                        user_id=u_id,
+                                        user=self.bot.get_user(u_id).name,
+                                        display_name=self.bot.get_user(u_id).display_name
+                                    )
+                                )
+                        await session.commit()
+
+                    del self.pending_collabs[author_id]  # Clear the collaboration state
+                else:
+                    if await is_in_team(author_id):
+                        message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                    else:
+                        message = "No team was formed as all invitations were declined, cancelled or timed out."
+
+                    await ctx.send(message)
+                    del self.pending_collabs[author_id]  # Clear the collaboration state
 
 
 async def setup(bot):

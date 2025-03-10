@@ -25,8 +25,8 @@ class Setdeadline(commands.Cog):
         if deadline < int(time.time()):
             return await ctx.send("This deadline is in the past! Retry again.")
 
-        else: # if deadline is valid, round it up to nearest minute
-            deadline = math.ceil(deadline / 60) * 60
+        # if deadline is valid, round it up to nearest minute
+        deadline = math.ceil(deadline / 60) * 60
 
 
         async with get_session() as session:

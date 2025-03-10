@@ -1,9 +1,11 @@
 import os
-from dotenv import load_dotenv
+
 from discord.ext import commands
+from dotenv import load_dotenv
+from sqlalchemy import select, update, delete
+
 from api.utils import has_host_role
 from api.db_classes import Tasks, get_session, SpeedTaskDesc
-from sqlalchemy import select, update, delete
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
