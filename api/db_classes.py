@@ -101,8 +101,8 @@ class HostRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
-    
-    
+
+
 class SubmitterRole(Base):
     __tablename__ = "submitter_role"
     index = Column(Integer, primary_key=True)
@@ -110,7 +110,7 @@ class SubmitterRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
-    
+
 class SeekingChannel(Base):
     __tablename__ = "seeking_channel"
     index = Column(Integer, primary_key=True)
@@ -120,11 +120,11 @@ class SeekingChannel(Base):
 
 
 class TasksChannel(Base):
-        __tablename__ = "tasks_channel"
-        index = Column(Integer, primary_key=True)
-        comp = Column('comp', String)
-        channel_id = Column('channel_id', Integer)
-        guild_id = Column('guild_id', Integer)
+    __tablename__ = "tasks_channel"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    channel_id = Column('channel_id', Integer)
+    guild_id = Column('guild_id', Integer)
 
 class AnnouncementsChannel(Base):
     __tablename__ = "announcements_channel"

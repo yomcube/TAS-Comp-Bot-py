@@ -8,6 +8,9 @@ disable=missing-module-docstring,
         broad-exception-caught,
         invalid-name,
         fixme,
+        too-few-public-methods,
+        too-many-instance-attributes,
+        too-many-statements,
 
 [REPORTS]
 output-format=colorized
