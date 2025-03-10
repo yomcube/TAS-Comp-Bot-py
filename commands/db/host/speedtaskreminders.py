@@ -1,13 +1,9 @@
 import os
-import discord
 from discord.ext import commands
 from discord.ext.commands import Greedy
-from api.db_classes import get_session, SpeedTaskLength, SpeedTaskReminders
-from api.utils import has_host_role
-from sqlalchemy import select, insert, update
-from sqlalchemy.exc import NoResultFound
 from dotenv import load_dotenv
-from typing import List
+from api.db_classes import get_session, SpeedTaskReminders
+from api.utils import has_host_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64

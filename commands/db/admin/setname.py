@@ -1,14 +1,15 @@
+import os
+
 import discord
 from discord.ext import commands
-from api.db_classes import Userbase, get_session
-from api.submissions import get_submission_channel, generate_submission_list
-from sqlalchemy import select, update
-import os
 from dotenv import load_dotenv
+from sqlalchemy import select, update
+
+from api.db_classes import Userbase, get_session
+from api.submissions import  generate_submission_list
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
-
 
 
 class Setname(commands.Cog):
@@ -37,15 +38,15 @@ class Setname(commands.Cog):
             if old_display_name is None:
                 return await ctx.send("This person has never submitted. Please submit first!")
 
-            else:
-                # Detect illegal name change (2 identical names)
-                if (await session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
-                    return await ctx.reply("The name is already in use by another user.")
 
-                # Update name in database
-                stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == user_id)
-                await session.execute(stmt)
-                await session.commit()
+            # Detect illegal name change (2 identical names)
+            if (await session.scalars(select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
+                return await ctx.reply("The name is already in use by another user.")
+
+            # Update name in database
+            stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == user_id)
+            await session.execute(stmt)
+            await session.commit()
 
         # Update submission list
         await generate_submission_list(self)

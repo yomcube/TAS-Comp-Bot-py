@@ -18,7 +18,7 @@ class End(commands.Cog):
     async def command(self, ctx):
         async with get_session() as session:
             currently_running = (await session.execute(select(Tasks.task, Tasks.year).where(Tasks.is_active == 1))).first()
-            
+
         # Is a task running?
         if currently_running:
             async with get_session() as session:
@@ -26,17 +26,17 @@ class End(commands.Cog):
                 number = currently_running.task
                 year = currently_running.year
                 await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
-                
+
                 # Delete the task -- we don't really need to keep, and delete speed task desc
                 await session.execute(delete(Tasks).where(Tasks.is_active == 0))
                 await session.execute(delete(SpeedTaskDesc))
-                
+
                 await session.commit()
 
 
             await ctx.send(f"Successfully ended **Task {number} - {year}**!")
         else:
-            await ctx.send(f"There is already no ongoing task!")
+            await ctx.send("There is already no ongoing task!")
 
 
 async def setup(bot) -> None:

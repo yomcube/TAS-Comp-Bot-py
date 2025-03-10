@@ -1,11 +1,13 @@
+import os
+
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
+from sqlalchemy import select, delete
+
 from api.utils import has_host_role
 from api.db_classes import Submissions, get_session, Tasks
-from api.submissions import get_submission_channel, get_display_name, generate_submission_list
-from sqlalchemy import select, delete
-import os
-from dotenv import load_dotenv
+from api.submissions import generate_submission_list
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

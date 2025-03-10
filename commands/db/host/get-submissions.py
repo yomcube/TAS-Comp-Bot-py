@@ -46,7 +46,8 @@ class Get(commands.Cog):
                 else:
                     name = await get_display_name(submission.user_id)
 
-                submission_text = f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
+                submission_text = \
+                    f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
 
                 # Check if adding this submission would exceed the message limit
                 if len(current_part) + len(submission_text) > (msg_limit - buffer):

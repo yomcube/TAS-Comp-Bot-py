@@ -1,13 +1,15 @@
 import hashlib
 import os
+from urllib.parse import urlparse
+
 import aiohttp
 import discord
-from urllib.parse import urlparse
 from discord.ext import commands
-from sqlalchemy import select, insert, update, inspect, or_
-from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel
 from dotenv import load_dotenv
+from sqlalchemy import select, insert, update, inspect, or_
+
+from api.db_classes import (Money, Tasks, Teams, HostRole,SubmitterRole,
+    get_session, TasksChannel, AnnouncementsChannel)
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -56,20 +58,22 @@ async def get_host_role(guild_id):
 
         if host_role:
             return host_role
-        else:
-            return None
-        
-        
+        return None
+
+
 async def get_submitter_role(guild_id):
     default = DEFAULT
     # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
     async with get_session() as session:
-        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
+        submitter_role = (
+            await session.scalars(
+                select(SubmitterRole.role_id).where(
+                    SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id
+                    )
+                )
+        ).first()
 
-        if submitter_role:
-            return submitter_role
-        else:
-            return None
+        return submitter_role if submitter_role else None
 
 
 async def get_tasks_channel(comp):
@@ -100,8 +104,7 @@ def has_host_role():
             # Check if the role is a name
             has_role = discord.utils.get(ctx.author.roles, id=role) is not None
             return has_role
-        else:
-            return False
+        return False
 
     return commands.check(predicate)
 
@@ -164,10 +167,7 @@ async def is_task_currently_running():
 async def get_team_size():
     """Retrieves the team size of the running task. Over 1 means it is a collab task"""
     current_task = await is_task_currently_running()
-    if current_task is not None:
-        return current_task[3]
-    else:
-        return None
+    return current_task[3]
 
 async def is_in_team(id):
     """Returns if a certain id is in a team (found in the Teams db)"""
@@ -223,6 +223,3 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
-
-
-

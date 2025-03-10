@@ -4,8 +4,8 @@ import os
 import time
 from dotenv import load_dotenv
 from datetime import date
-from api.utils import is_task_currently_running, has_host_role, get_team_size, get_submitter_role
-from api.submissions import get_submission_channel, get_seeking_channel
+from api.utils import is_task_currently_running, has_host_role, get_submitter_role
+from api.submissions import get_submission_channel
 from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session, SpeedTaskLength, SpeedTaskDesc, SpeedTaskReminders
 from sqlalchemy import insert, delete, select
 import math
@@ -39,8 +39,8 @@ class Start(commands.Cog):
                     if deadline < int(time.time()):
                         return await ctx.send("This deadline is in the past! Retry again.")
 
-                    else:  # if deadline is valid, round it up to nearest minute
-                        deadline = math.ceil(deadline / 60) * 60
+                    # if deadline is valid, round it up to nearest minute
+                    deadline = math.ceil(deadline / 60) * 60
 
                 # Don't start speed task if no description is set
                 if speed_task == 1:
@@ -52,7 +52,9 @@ class Start(commands.Cog):
                             return await ctx.send("Please set a speed task description with `$speed-task-desc`!")
 
                     if deadline is None:
-                        return await ctx.send("Speed tasks require a general deadline in order to function properly. Please set one (with a UNIX timestamp).")
+                        return await ctx.send(
+                            "Speed tasks require a general deadline in order to function properly. Please set one (with a UNIX timestamp)."
+                        )
 
                 #########################################
                 #
@@ -159,11 +161,11 @@ class Start(commands.Cog):
 
         else:
             # if a task is already ongoing...
-            await ctx.send(f"A task is already ongoing.\nPlease use `/end-task` to end the current task.")
+            await ctx.send("A task is already ongoing.\nPlease use `/end-task` to end the current task.")
             return
-        
-        
-        
+
+
+
         ######################
         #### TEAMS SYSTEM ####
         ######################

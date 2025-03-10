@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
+from sqlalchemy import select, update
+
 from api.utils import float_to_readable, has_host_role
 from api.db_classes import Submissions, get_session
-from sqlalchemy import select, update
 
 
 class Edit(commands.Cog):
