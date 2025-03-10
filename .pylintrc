@@ -1,0 +1,16 @@
+[MAIN]
+output-format=colorized
+
+[MESSAGES CONTROL]
+disable=missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        broad-exception-caught,
+        invalid-name,
+        fixme,
+
+[REPORTS]
+output-format=colorized
+
+[FORMAT]
+max-line-length=150
