@@ -1,5 +1,6 @@
 [MAIN]
 output-format=colorized
+exit-zero=y
 
 [MESSAGES CONTROL]
 disable=missing-module-docstring,

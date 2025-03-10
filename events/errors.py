@@ -15,34 +15,38 @@ class Errors(commands.Cog):
             return
         ignored = ()
         error = getattr(error, 'original', error)
+        msg = None
         match error:
             case _ if isinstance(error, ignored):
                 return
 
             case _ if isinstance(error, commands.MissingPermissions):
                 print("missing perms\n")
-                return await ctx.send(f'You lack permissions to execute `{self.bot.command_prefix}{ctx.command}`.')
+                msg = f'You lack permissions to execute `{self.bot.command_prefix}{ctx.command}`.'
 
             case _ if isinstance(error, commands.NotOwner):
                 print("not owner\n")
-                return await ctx.send(f'Only the bot owner has permission to execute `{ctx.command}`.')
+                msg = f'Only the bot owner has permission to execute `{ctx.command}`.'
 
             case _ if isinstance(error, commands.CommandNotFound):
                 # separate out everything before the first occurrence of a space, which is the command itself
-                return await ctx.send("That is not a valid command.")
+                msg = "That is not a valid command."
 
             case _ if isinstance(error, commands.MemberNotFound):
-                return await ctx.send("The member specified does not exist.")
+                msg = "The member specified does not exist."
 
             case _ if isinstance(error, commands.MissingRequiredArgument):
-                return await ctx.send(f'Missing arguments in {ctx.command}.')
+                msg = f'Missing arguments in {ctx.command}.'
 
             # Use checks to verify for permissions (if someone has the correct role for X command)
-            case _ if isinstance(error, commands.CheckFailure): 
-                return await ctx.send("You may not use this command!")
+            case _ if isinstance(error, commands.CheckFailure):
+                msg = "You may not use this command!"
 
             case _ if isinstance(error, commands.PrivateMessageOnly):
-                return await ctx.send("This command is only usable in DMs with the bot.")
+                msg = "This command is only usable in DMs with the bot."
+        
+        if msg:
+            return await ctx.send(msg)
 
         print(f'Ignoring exception in command {ctx.command}:', file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

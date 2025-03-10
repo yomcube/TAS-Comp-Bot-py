@@ -14,7 +14,7 @@ class TomCube(commands.Cog):
         url = "https://api.github.com/users/yomcube/repos"
 
         # Send a request to the URL with headers
-        response = requests.get(url, timout=60)
+        response = requests.get(url, timeout=60)
 
         # Extract valid image URLs
         repos = loads(response.text)

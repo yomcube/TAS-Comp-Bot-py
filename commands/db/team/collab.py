@@ -227,8 +227,7 @@ class Collab(commands.Cog):
                                     await session.commit()
 
                                 # Prepare the mentions before popping elements from new_members
-                                new_member_mentions = ", ".join(
-                                    f"<@{uid}>" for uid in [updates[key] for key in updates])
+                                new_member_mentions = ", ".join(f"<@{uid}>" for _, uid in updates.items())
 
                                 if new_member_mentions:
                                     await ctx.send(f"{new_member_mentions} has been added to your team!")

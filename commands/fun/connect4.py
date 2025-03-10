@@ -244,8 +244,7 @@ class Connect4(commands.Cog):
                 if self.winning_move('X'):
                     return (None, -10000000000000)
                 return (None, 0)
-            else:
-                return (None, self.score_position('O'))
+            return (None, self.score_position('O'))
         if maximizing_player:
             value = -float('inf')
             column = random.choice(valid_locations)

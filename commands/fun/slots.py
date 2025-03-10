@@ -40,7 +40,7 @@ class Slots(commands.Cog):
         if number <= 0:
             await ctx.reply("What did you think would happen uh?")
             return
-        
+
         await ctx.reply(result)
 
         result_text = play_again_text

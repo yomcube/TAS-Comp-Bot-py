@@ -183,11 +183,11 @@ async def is_in_team(u_id):
         results = result.scalars().all()
         return results
 
-async def get_leader(id):
+async def get_leader(u_id):
     """Takes the id and returns the leader of id's team. Used for collab tasks. Returns none if not found."""
     async with get_session() as session:
         stmt = select(Teams.leader).filter(
-            (Teams.leader == id) | (Teams.user2 == id) |(Teams.user3 == id) | (Teams.user4 == id))
+            (Teams.leader == u_id) | (Teams.user2 == u_id) |(Teams.user3 == u_id) | (Teams.user4 == u_id))
         result = await session.execute(stmt)
         leader = result.scalars().first()
         return leader

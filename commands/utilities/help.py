@@ -86,16 +86,12 @@ class Help(commands.Cog):
     async def help(self, ctx, category: str = ""):
         try:
             low = category.lower()
-            help_menu = help[low] if low in help else help[default]
+            help_menu = HELP[low] if low in HELP else HELP['default']
             await ctx.send(help_menu)
 
 
         except UnboundLocalError:
             await ctx.send("Invalid argument.")
-
-
-
-
 
 
 async def setup(bot):

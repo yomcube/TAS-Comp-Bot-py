@@ -42,8 +42,8 @@ class FFmpegBuilder:
         for param in self._preparams:
             command.append(f"-{param}")
 
-        for input in self._inputs:
-            command.extend(["-i", input])
+        for inp in self._inputs:
+            command.extend(["-i", inp])
 
         if self._vfilter != "":
             command.extend(["-vf", f"{self._vfilter},format={self._pix_fmt}"])
@@ -54,7 +54,7 @@ class FFmpegBuilder:
             command.extend(["-af", self._afilter])
 
         command.extend(["-c:v", self._vcodec])
-        if self._vcodec != "copy" and self._vcodec != "vn":
+        if not self._vcodec in [ "copy", "vn" ]:
             if self._vmode == "crf":
                 command.extend(["-crf", str(self._crf)])
             elif self._vmode == "cbr":
@@ -83,7 +83,7 @@ class FFmpegBuilder:
         return command
 
     def run(self):
-        return subprocess.run(self.build())
+        return subprocess.run(self.build(), check=False)
 
     async def run_async(self):
         proc = await asyncio.create_subprocess_exec(*self.build())
@@ -122,8 +122,8 @@ class FFmpegBuilder:
         self._vbv_bufsize = bufsize
         return self
 
-    def vfilter(self, filter: str):
-        self._vfilter = filter
+    def vfilter(self, filtr: str):
+        self._vfilter = filtr
         return self
 
     def pix_fmt(self, pix_fmt: str):
@@ -147,8 +147,8 @@ class FFmpegBuilder:
         self._abr = bitrate
         return self
 
-    def afilter(self, filter: str):
-        self._afilter = filter
+    def afilter(self, filtr: str):
+        self._afilter = filtr
         return self
 
     def maxsize(self, size: int):

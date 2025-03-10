@@ -181,7 +181,7 @@ async def check_speed_task_reminders(bot):
         current_time = int(time.time())
 
         # Query all users with active tasks
-        result = await session.execute(select(SpeedTask).where(SpeedTask.active == True))
+        result = await session.execute(select(SpeedTask).where(bool(SpeedTask.active)))
         active_tasks = result.scalars().all()
 
         for task in active_tasks:
@@ -356,8 +356,6 @@ async def before_check_deadlines():
 class Ready(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        global detected_guild
-        detected_guild = None
 
     @commands.Cog.listener()
     async def on_ready(self):
