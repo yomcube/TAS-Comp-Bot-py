@@ -54,6 +54,7 @@ class Memory(commands.Cog):
             return await ctx.send("Board size is too small!")
 
         lives = int(size - 1)
+        size_squared = size * size
 
         # Create the embed for game instructions
         embed = discord.Embed(
@@ -98,7 +99,7 @@ class Memory(commands.Cog):
         try:
             # Get list of emojis from the server
             guild_emojis = ctx.guild.emojis
-            num_emojis_needed = (size * size - 1) // 2 if size & 1 else (size * size) // 2
+            num_emojis_needed = (size_squared - 1) // 2 if size & 1 else (size_squared) // 2
             if len(guild_emojis) < num_emojis_needed:
                 await ctx.send(f"Not enough emojis on the server for a {size}x{size} board!")
                 return
@@ -182,7 +183,7 @@ class Memory(commands.Cog):
                     return False
 
             # Main game loop with timeout handling
-            while lives > 0 and len(found_pairs) < size * size - (1 if middle_pos else 0):  # Adjust for missing middle tile
+            while lives > 0 and len(found_pairs) < size_squared - (1 if middle_pos else 0):  # Adjust for missing middle tile
                 try:
                     # Get first choice from the user with a 40-second timeout
                     await ctx.send(f"Select first tile! Lives remaining: {lives}")
@@ -240,7 +241,7 @@ class Memory(commands.Cog):
             # End game messages
             if lives == 0:
                 await ctx.send("Game over! You're out of lives.")
-            elif len(found_pairs) == size * size - (1 if middle_pos else 0):  # Adjust for missing middle tile
+            elif len(found_pairs) == size_squared - (1 if middle_pos else 0):  # Adjust for missing middle tile
                 await ctx.send("Congratulations! You found all pairs!")
             else:
                 await ctx.send("The game has ended due to inactivity.")
