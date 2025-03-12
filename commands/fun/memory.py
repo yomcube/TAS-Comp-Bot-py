@@ -98,7 +98,7 @@ class Memory(commands.Cog):
         try:
             # Get list of emojis from the server
             guild_emojis = ctx.guild.emojis
-            num_emojis_needed = (size * size - 1) // 2 if size % 2 != 0 else (size * size) // 2
+            num_emojis_needed = (size * size - 1) // 2 if size & 1 else (size * size) // 2
             if len(guild_emojis) < num_emojis_needed:
                 await ctx.send(f"Not enough emojis on the server for a {size}x{size} board!")
                 return
@@ -109,10 +109,10 @@ class Memory(commands.Cog):
             random.shuffle(board_emojis)
 
             # Create hidden board with ? placeholders
-            hidden_board = [['❓' for _ in range(size)] for _ in range(size)]
+            hidden_board = [['❓'] * size] * size
 
             # Handle odd-sized board middle tile (❌)
-            middle_pos = (size // 2, size // 2) if size % 2 != 0 else None
+            middle_pos = (size // 2, size // 2) if size & 1 else None
 
             # Create the display board and leave the middle tile as '❌' if board size is odd
             display_board = [
