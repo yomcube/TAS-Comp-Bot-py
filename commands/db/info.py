@@ -15,7 +15,7 @@ async def get_submission_id(ctx, session):
     submission_id = ctx.author.id
     if team_size is not None and team_size > 1 and await is_in_team(ctx.author.id):
         submission_id = await get_leader(ctx.author.id)
-    
+
     return submission_id
 
 class Info(commands.Cog):
