@@ -119,11 +119,8 @@ class Collab(commands.Cog):
             return await ctx.send("You are trying to collab with too many people!")
 
         # Make sure they are not collaborating with themselves: absurd
-        for user in users:
-            if user.id == author_id:
-                return await ctx.send("Collaborating with... yourself? sus")
-
-
+        if author_id in users:
+            return await ctx.send("Collaborating with... yourself? sus")
 
 
         #####################
