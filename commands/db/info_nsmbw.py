@@ -16,7 +16,7 @@ class Info(commands.Cog):
     async def info(self, ctx):
         async with get_session() as session:
             # Get submission
-            submission_id = await get_submission_id(ctx, session)
+            submission_id = await get_submission_id(ctx)
             submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time,
                                                 Submissions.dq, Submissions.dq_reason, Submissions.character)
                                                 .where(Submissions.user_id == submission_id))).fetchone()

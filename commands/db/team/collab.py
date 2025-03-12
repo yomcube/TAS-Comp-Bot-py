@@ -137,7 +137,7 @@ class Collab(commands.Cog):
             view = AcceptDeclineButtons(
                 user, ctx.author,
                 lambda u, a: self.user_response(ctx, author_id, u, a),
-                lambda u, cu: self.cancel_collab(ctx, author_id, u, cu)  # Ensure correct parameters are being passed
+                lambda u, cu: self.cancel_collab(ctx, author_id, u)  # Ensure correct parameters are being passed
             )
             message = await ctx.send(
                 f"{user.mention}, {ctx.author.display_name} wants you to collaborate with them. Do you accept?",
@@ -276,7 +276,7 @@ class Collab(commands.Cog):
 
 
 
-    async def cancel_collab(self, ctx, author_id, invited_user, cancelling_user):
+    async def cancel_collab(self, ctx, author_id, invited_user):
         if author_id in self.pending_collabs and invited_user.id in self.pending_collabs[author_id]:
             self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
 

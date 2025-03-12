@@ -6,7 +6,7 @@ from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
 from api.mkwii.mkwii_utils import characters, vehicles
 from api.db_classes import Submissions, get_session
 
-async def get_submission_id(ctx, session):
+async def get_submission_id(ctx):
     # Verify if collab task, and if author is in a team
     team_size = await get_team_size()
 
@@ -26,7 +26,7 @@ class Info(commands.Cog):
     @commands.dm_only()
     async def info(self, ctx):
         async with get_session() as session:
-            submission_id = await get_submission_id(ctx, session)
+            submission_id = await get_submission_id(ctx)
 
             # Get submission
             submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,
