@@ -6,6 +6,17 @@ from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
 from api.mkwii.mkwii_utils import characters, vehicles
 from api.db_classes import Submissions, get_session
 
+async def get_submission_id(ctx, session):
+    # Verify if collab task, and if author is in a team
+    team_size = await get_team_size()
+
+    # TODO: Temporary fix for a bug where you can't use $info after task has ended; currently only will work for
+    #  solo tasks after task has ended
+    submission_id = ctx.author.id
+    if team_size is not None and team_size > 1 and await is_in_team(ctx.author.id):
+        submission_id = await get_leader(ctx.author.id)
+    
+    return submission_id
 
 class Info(commands.Cog):
     def __init__(self, bot):
@@ -15,15 +26,7 @@ class Info(commands.Cog):
     @commands.dm_only()
     async def info(self, ctx):
         async with get_session() as session:
-            # Verify if collab task, and if author is in a team
-            team_size = await get_team_size()
-
-
-            if team_size is not None and team_size > 1 and await is_in_team(ctx.author.id):
-                submission_id = await get_leader(ctx.author.id)
-            else:
-                submission_id = ctx.author.id
-
+            submission_id = await get_submission_id(ctx, session)
 
             # Get submission
             submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time, Submissions.dq,

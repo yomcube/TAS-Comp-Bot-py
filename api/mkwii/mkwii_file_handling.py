@@ -3,7 +3,7 @@ from sqlalchemy import insert, update, select
 from api.db_classes import get_session, Submissions, Userbase
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader
+from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, check_speed_task
 from commands.db.requesttask import has_requested_already, is_time_over
 
 
@@ -19,32 +19,12 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
             ##################################################
 
             # Speed task: Has not requested task, or time is over
-            is_speed_task = (await is_task_currently_running())[4]
-            is_released = (await is_task_currently_running())[7]
-            is_multiple_tracks = (await is_task_currently_running())[5]
+            is_speed_task = current_task[4]
+            is_released = current_task[7]
+            is_multiple_tracks = current_task[5]
 
             if is_speed_task:
-                if not (await has_requested_already(message.author.id)) and not is_released:
-                    await message.channel.send("You may not submit yet! Use `$requesttask` first.")
-                    return
-
-                if await is_time_over(message.author.id):
-                    # If they have not submitted, they get a different message.
-                    async with get_session() as session:
-                        query = select(Submissions.user_id).where(Submissions.user_id == message.author.id)
-                        result = (await session.execute(query)).first()
-
-
-                        if result is None:
-                            message_to_send = ("You can't submit, your time is up! If you wish to send in a late submission, "
-                                       "please DM the current host so they can add your submission manually.")
-
-                        else:
-                            message_to_send = "You can't submit, your time is up!"
-
-
-                    await message.channel.send(message_to_send)
-                    return
+                await check_speed_task(message, is_released)
 
             if is_multiple_tracks:
                 await message.channel.send("You must send an rksys.dat file!")
@@ -141,9 +121,9 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 ##################################################
 
                 # Speed task: Has not requested task, or time is over
-                is_speed_task = (await is_task_currently_running())[4]
-                is_released = (await is_task_currently_running())[7]
-                is_multiple_tracks = (await is_task_currently_running())[5]
+                is_speed_task = current_task[4]
+                is_released = current_task[7]
+                is_multiple_tracks = current_task[5]
 
                 if is_speed_task:
                     if not await has_requested_already(message.author.id) and not is_released:

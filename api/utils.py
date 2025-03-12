@@ -8,8 +8,9 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
-from api.db_classes import (Money, Tasks, Teams, HostRole,SubmitterRole,
-    get_session, TasksChannel, AnnouncementsChannel)
+from api.db_classes import (Money, Tasks, Teams, HostRole, SubmitterRole,
+    get_session, TasksChannel, AnnouncementsChannel, Submissions)
+from commands.db.requesttask import has_requested_already, is_time_over
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -225,3 +226,23 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
+
+async def check_speed_task(message, is_released):
+    if not (await has_requested_already(message.author.id)) and not is_released:
+        await message.channel.send("You may not submit yet! Use `$requesttask` first.")
+        return
+
+    if await is_time_over(message.author.id):
+        # If they have not submitted, they get a different message.
+        message_to_send = "You can't submit, your time is up!"
+
+        async with get_session() as session:
+            query = select(Submissions.user_id).where(Submissions.user_id == message.author.id)
+            result = (await session.execute(query)).first()
+
+            if result is None:
+                message_to_send = ("You can't submit, your time is up! If you wish to send in a late submission, "
+                    "please DM the current host so they can add your submission manually.")
+
+        await message.channel.send(message_to_send)
+        return

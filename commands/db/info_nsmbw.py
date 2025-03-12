@@ -4,9 +4,8 @@ import discord
 from discord.ext import commands
 from sqlalchemy import select
 
-from api.utils import get_team_size, is_in_team, get_leader
 from api.db_classes import Submissions, get_session
-
+from commands.db.info import get_submission_id
 
 class Info(commands.Cog):
     def __init__(self, bot):
@@ -16,19 +15,8 @@ class Info(commands.Cog):
     @commands.dm_only()
     async def info(self, ctx):
         async with get_session() as session:
-            # Verify if collab task, and if author is in a team
-            team_size = await get_team_size()
-
-            # TODO: Temporary fix for a bug where you can't use $info after task has ended; currently only will work for
-            #  solo tasks after task has ended
-
-            if team_size is not None and team_size > 1 and await is_in_team(ctx.author.id):
-                submission_id = await get_leader(ctx.author.id)
-            else:
-                submission_id = ctx.author.id
-
-
             # Get submission
+            submission_id = await get_submission_id(ctx, session)
             submission = (await session.execute(select(Submissions.task, Submissions.url, Submissions.time,
                                                 Submissions.dq, Submissions.dq_reason, Submissions.character)
                                                 .where(Submissions.user_id == submission_id))).fetchone()
