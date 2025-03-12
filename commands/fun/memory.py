@@ -113,7 +113,7 @@ class Memory(commands.Cog):
             hidden_board = [['❓'] * size] * size
 
             # Handle odd-sized board middle tile (❌)
-            middle_pos = (size // 2, size // 2) if size & 1 else None
+            middle_pos = (size // 2, size // 2) if size & 1 else (None, None)
 
             # Create the display board and leave the middle tile as '❌' if board size is odd
             display_board = [
