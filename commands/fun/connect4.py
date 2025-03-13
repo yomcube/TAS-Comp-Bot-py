@@ -46,6 +46,7 @@ class Connect4(commands.Cog):
         for r in range(self.rows - 1, -1, -1):
             if self.board[r][col] == ' ':
                 return r
+        return None
 
     def drop_piece(self, row, col, piece):
         self.board[row][col] = piece

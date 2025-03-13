@@ -29,12 +29,12 @@ class Slots(commands.Cog):
         emojis_list = [str(emoji) for emoji in emojis]
         random_emojis = random.choices(emojis_list, k=number)
         result = " ".join(random_emojis)
-        play_again_text = f"{user_balance} coins left in your account\nPlease Play Again"
+        result_text = f"{user_balance} coins left in your account\nPlease Play Again"
 
         while len(result) > 2000:
             random_emojis.pop()
             result = " ".join(random_emojis)
-            play_again_text = (f"*(message above was truncated since {number} exceeds the max length of 2000"
+            result_text = (f"*(message above was truncated since {number} exceeds the max length of 2000"
                                f" characters)*\n{user_balance} coins left in your account\nPlease Play Again")
 
         if number <= 0:
@@ -43,10 +43,9 @@ class Slots(commands.Cog):
 
         await ctx.reply(result)
 
-        result_text = play_again_text
-
         if number == 1:
             await ctx.send("You won! wait...")
+        
         elif all(emoji == random_emojis[0] for emoji in random_emojis):
             probability = 1 / (len(emojis_list) ** (number - 1))
             percentage = probability * 100
