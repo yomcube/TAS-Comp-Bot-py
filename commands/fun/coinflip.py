@@ -14,7 +14,6 @@ class ChallengeView(discord.ui.View):
         self.opponent = opponent
         self.bet_amount = bet_amount
         self.response = None
-        self.message = ""
 
     async def on_timeout(self):
         if self.response is None:
@@ -50,6 +49,7 @@ class CoinFlipView(discord.ui.View):
         if opponent:
             self.choices[opponent.id] = None
         self.interaction_event = False
+        self.message = ""
 
     async def on_timeout(self):
         if not self.interaction_event:
