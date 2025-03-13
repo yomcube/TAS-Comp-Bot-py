@@ -21,6 +21,7 @@ class Connect4(commands.Cog):
         self.timeout_task = None
         self.last_board_message = None
         self.is_bot_game = False
+        self.mode = ""
 
     def reset_game(self):
         self.board = [[' ' for _ in range(self.columns)] for _ in range(self.rows)]

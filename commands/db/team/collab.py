@@ -23,6 +23,7 @@ class AcceptDeclineButtons(discord.ui.View):
         self.cancel_callback = cancel_callback
         self.value = None
         self.handled = False
+        self.message = ""
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):

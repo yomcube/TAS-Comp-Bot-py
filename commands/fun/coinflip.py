@@ -3,6 +3,7 @@ import random
 import discord
 from discord.ext import commands
 from discord import ButtonStyle
+
 from api.utils import get_balance, add_balance, deduct_balance
 
 
@@ -13,6 +14,7 @@ class ChallengeView(discord.ui.View):
         self.opponent = opponent
         self.bet_amount = bet_amount
         self.response = None
+        self.message = ""
 
     async def on_timeout(self):
         if self.response is None:
