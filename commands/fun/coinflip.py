@@ -87,8 +87,9 @@ class CoinFlip(commands.Cog):
 
     @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"],
                              with_app_command=True)
-    async def command(self, ctx, opponent: discord.Member = self.bot.user, bet_amount: int = 10):
-        if opponent == self.bot.user and bet_amount != 10:  # You can only play for 10 coins when vs bot
+    async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
+        if opponent in [None, self.bot.user] and bet_amount != 10:  # You can only play for 10 coins when vs bot
+            opponent = self.bot.user
             await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted"
                            " when playing against other people.")
 

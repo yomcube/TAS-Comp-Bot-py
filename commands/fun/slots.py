@@ -45,7 +45,7 @@ class Slots(commands.Cog):
 
         if number == 1:
             await ctx.send("You won! wait...")
-        
+
         elif all(emoji == random_emojis[0] for emoji in random_emojis):
             probability = 1 / (len(emojis_list) ** (number - 1))
             percentage = probability * 100
