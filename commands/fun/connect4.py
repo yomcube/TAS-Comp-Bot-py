@@ -189,6 +189,8 @@ class Connect4(commands.Cog):
             col = self.minimax(6, -float('inf'), float('inf'), True)[0]  # Reduce depth for faster moves
         return col
 
+    # `interaction` is unused
+    # pylint: disable-next=unused-argument
     async def command_autocompletion(
             self,
             interaction: discord.Interaction,
@@ -335,6 +337,8 @@ class ChallengeView(discord.ui.View):
         self.ctx = ctx
         self.opponent = opponent
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green, custom_id="accept")
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.opponent:
@@ -344,6 +348,8 @@ class ChallengeView(discord.ui.View):
         await interaction.response.send_message(f"{interaction.user.mention} accepted the challenge!")
         await self.cog.handle_button_click(interaction, self.ctx, self.opponent)
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red, custom_id="decline")
     async def decline(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.opponent:

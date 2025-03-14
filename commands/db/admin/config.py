@@ -11,7 +11,7 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, nsmbw, sm64
 
 ### HOST ROLE ###
-async def set_host_role(session, role, comp):
+async def set_host_role(ctx, session, role, comp):
     host_role = (await session.scalars(select(HostRole.comp).where(HostRole.comp == comp))).first()
     name = role.name
     role_id = role.id
@@ -28,25 +28,25 @@ async def set_host_role(session, role, comp):
     await session.commit()
 
 ### LOGS CHANNEL ###
-async def set_logs_channel(session, channel, comp):
+async def set_logs_channel(ctx, session, channel, comp):
     query = select(LogChannel.channel_id).where(LogChannel.guild_id == ctx.guild.id)
     result = (await session.execute(query)).first()
 
     if result is None:
-        stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=logs_channel.id,
+        stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,
                                             comp=comp)
         await session.execute(stmt)
-    elif logs_channel.id == result[0]:
+    elif channel.id == result[0]:
         pass
     else:
-        stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=logs_channel.id,
+        stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,
                                             comp=comp)
         await session.execute(stmt)
 
     await session.commit()
 
 ### SUBMISSION CHANNEL ###
-async def set_submission_channel(session, channel, comp):
+async def set_submission_channel(ctx, session, channel, comp):
     query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
     result = (await session.execute(query)).first()
     if result is None:
@@ -61,7 +61,7 @@ async def set_submission_channel(session, channel, comp):
     await session.commit()
 
 ### SEEK CHANNEL ###
-async def set_seek_channel(session, channel, comp):
+async def set_seek_channel(ctx, session, channel, comp):
     query = select(SeekingChannel.channel_id).where(SeekingChannel.guild_id == ctx.guild.id)
     result = (await session.execute(query)).first()
 
@@ -92,13 +92,13 @@ class Config(commands.Cog):
 
         async with get_session() as session:
             ### HOST ROLE ###
-            await set_host_role(session, host_role, comp)
+            await set_host_role(ctx, session, host_role, comp)
             ### LOGS CHANNEL ###
-            await set_logs_channel(session, logs_channel, comp)
+            await set_logs_channel(ctx, session, logs_channel, comp)
             ### SUBMISSION CHANNEL ###
-            await set_submission_channel(session, submission_channel, comp)
+            await set_submission_channel(ctx, session, submission_channel, comp)
             ### SEEK CHANNEL ###
-            await set_seek_channel(session, seeking_channel, comp)
+            await set_seek_channel(ctx, session, seeking_channel, comp)
 
 
         ### SUBMITTER ROLE ###

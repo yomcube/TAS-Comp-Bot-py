@@ -25,6 +25,8 @@ class AcceptDeclineButtons(discord.ui.View):
         self.handled = False
         self.message = ""
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green)
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.user:
@@ -35,6 +37,8 @@ class AcceptDeclineButtons(discord.ui.View):
         await interaction.response.edit_message(content=f"{self.user.mention} has accepted the collaboration!", view=self)
         await self.callback(self.user, True)
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red)
     async def decline(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.user:
@@ -46,6 +50,8 @@ class AcceptDeclineButtons(discord.ui.View):
         await self.callback(self.user, False)
 
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.inviter:

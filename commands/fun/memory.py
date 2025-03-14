@@ -12,6 +12,8 @@ class MemoryGameView(discord.ui.View):
         self.size = size
         self.game_started = False
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Start", style=discord.ButtonStyle.green)
     async def start_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
@@ -22,6 +24,8 @@ class MemoryGameView(discord.ui.View):
         await interaction.response.edit_message(content="Starting the memory game!", view=None)
         self.stop()  # Ends the button interaction
 
+    # `button` is unused
+    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
