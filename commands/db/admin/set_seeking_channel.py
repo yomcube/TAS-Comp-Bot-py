@@ -35,7 +35,7 @@ class SetSeekchannel(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
         async with get_session() as session:
-            await set_seeking_channel(ctx, session, channel, comp)
+            await set_seek_channel(ctx, session, channel, comp)
 
         await ctx.send(f"The seek channel has been set! {channel.mention}")
 
