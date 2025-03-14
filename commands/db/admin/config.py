@@ -76,6 +76,63 @@ async def set_seek_channel(ctx, session, channel, comp):
 
     await session.commit()
 
+### TASKS CHANNEL ###
+async def set_tasks_channel(ctx, session, channel, comp):
+    query = select(TasksChannel.channel_id).where(TasksChannel.guild_id == ctx.guild.id)
+    result = (await session.execute(query)).first()
+
+    if result is None:
+        stmt = insert(TasksChannel).values(guild_id=ctx.message.guild.id,
+                                                channel_id=channel.id,
+                                                comp=comp)
+        await session.execute(stmt)
+    elif channel.id == result[0]:
+        pass
+    else:
+        stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id,
+                                                channel_id=channel.id,
+                                                comp=comp)
+        await session.execute(stmt)
+
+    await session.commit()
+
+### SUBMITTER ROLE ###
+async def set_submitter_role(ctx, session, role, comp):
+    submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
+    name = role.name
+    role_id = role.id
+
+    # Check if submitter_role doesn't exist yet for the comp
+    if role is None:
+        stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
+        await session.execute(stmt)
+    else:
+
+        stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
+        await session.execute(stmt)
+
+    await session.commit()
+
+### ANNOUNCEMENTS CHANNEL ###
+async def set_announcements_channel(ctx, session, channel, comp):
+    query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.guild_id == ctx.guild.id)
+    result = (await session.execute(query)).first()
+
+    if result is None:
+        stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
+                                            channel_id=channel.id,
+                                            comp=comp)
+        await session.execute(stmt)
+    elif channel.id == result[0]:
+        pass
+    else:
+        stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
+                                            channel_id=channel.id,
+                                            comp=comp)
+        await session.execute(stmt)
+
+    await session.commit()
+
 
 ### CONFIG COMMAND ###
 class Config(commands.Cog):
@@ -91,77 +148,13 @@ class Config(commands.Cog):
                       comp: str = DEFAULT):
 
         async with get_session() as session:
-            ### HOST ROLE ###
             await set_host_role(ctx, session, host_role, comp)
-            ### LOGS CHANNEL ###
             await set_logs_channel(ctx, session, logs_channel, comp)
-            ### SUBMISSION CHANNEL ###
             await set_submission_channel(ctx, session, submission_channel, comp)
-            ### SEEK CHANNEL ###
             await set_seek_channel(ctx, session, seeking_channel, comp)
-
-
-        ### SUBMITTER ROLE ###
-        async with get_session() as session:
-            submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
-            name = submitter_role.name
-            role_id = submitter_role.id
-
-            # Check if submitter_role doesn't exist yet for the comp
-            if submitter_role is None:
-                stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
-                await session.execute(stmt)
-            else:
-
-                stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
-                await session.execute(stmt)
-
-            await session.commit()
-
-        ### Tasks CHANNEL ###
-        async with get_session() as session:
-            query = select(TasksChannel.channel_id).where(TasksChannel.guild_id == ctx.guild.id)
-            result = (await session.execute(query)).first()
-
-            if result is None:
-                stmt = insert(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                     channel_id=tasks_channel.id,
-                                                     comp=comp)
-                await session.execute(stmt)
-            elif tasks_channel.id == result[0]:
-                pass
-            else:
-                stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                     channel_id=tasks_channel.id,
-                                                     comp=comp)
-                await session.execute(stmt)
-
-            await session.commit()
-
-            ### Announcements CHANNEL ###
-            async with get_session() as session:
-                query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.guild_id == ctx.guild.id)
-                result = (await session.execute(query)).first()
-
-                if result is None:
-                    stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                                       channel_id=announcement_channel.id,
-                                                       comp=comp)
-                    await session.execute(stmt)
-                elif announcement_channel.id == result[0]:
-                    pass
-                else:
-                    stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                                       channel_id=announcement_channel.id,
-                                                       comp=comp)
-                    await session.execute(stmt)
-
-                await session.commit()
-
-
-
-
-
+            await set_submitter_role(ctx, session, submitter_role, comp)
+            await set_tasks_channel(ctx, session, tasks_channel, comp)
+            await set_announcements_channel(ctx, session, announcement_channel, comp)
 
         await ctx.send("\n".join([
             f"The current host role has been set! {host_role.mention}",
