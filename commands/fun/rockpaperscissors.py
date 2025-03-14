@@ -27,8 +27,6 @@ class ChallengeView(discord.ui.View):
         if hasattr(self, 'message'):
             await self.message.edit(view=self)
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Accept", style=ButtonStyle.success)
     async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.opponent:
@@ -39,8 +37,6 @@ class ChallengeView(discord.ui.View):
         await interaction.response.send_message("Challenge accepted!", ephemeral=True)
         self.stop()
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Decline", style=ButtonStyle.danger)
     async def decline_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.opponent:
@@ -92,20 +88,15 @@ class GameView(discord.ui.View):
             self.stop()
         else:
             await self.ctx.send(f"{interaction.user.mention} has made their choice. Waiting for the other player.")
-    # `button` is unused
-    # pylint: disable-next=unused-argument
+
     @discord.ui.button(label="🪨 Rock", style=ButtonStyle.secondary)
     async def rock_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.button_callback(interaction, "rock")
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="📰 Paper", style=ButtonStyle.success)
     async def paper_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.button_callback(interaction, "paper")
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="✂️ Scissors", style=ButtonStyle.danger)
     async def scissors_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.button_callback(interaction, "scissors")

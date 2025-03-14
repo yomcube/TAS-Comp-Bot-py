@@ -20,8 +20,6 @@ class ChallengeView(discord.ui.View):
             await self.ctx.send(f"{self.opponent.mention} did not respond in time. Challenge cancelled.")
             self.stop()
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Accept", style=ButtonStyle.success)
     async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.opponent:
@@ -31,8 +29,6 @@ class ChallengeView(discord.ui.View):
         await interaction.response.send_message("Challenge accepted!", ephemeral=True)
         self.stop()
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Decline", style=ButtonStyle.danger)
     async def decline_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.opponent:
@@ -76,14 +72,10 @@ class CoinFlipView(discord.ui.View):
         else:
             await self.ctx.send(f"{interaction.user.mention} has made their choice. Waiting for the other player.")
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Heads", style=ButtonStyle.primary)
     async def heads_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.button_callback(interaction, "heads")
 
-    # `button` is unused
-    # pylint: disable-next=unused-argument
     @discord.ui.button(label="Tails", style=ButtonStyle.secondary)
     async def tails_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.button_callback(interaction, "tails")
