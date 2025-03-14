@@ -8,7 +8,7 @@ from api.db_classes import get_session
 from commands.db.admin.set_announcements_channel import set_announcements_channel
 from commands.db.admin.set_host_role import set_host_role
 from commands.db.admin.set_logs_channel import set_logs_channel
-from commands.db.admin.set_seeking_channel import set_seeking_channel
+from commands.db.admin.set_seeking_channel import set_seek_channel
 from commands.db.admin.set_submission_channel import set_submission_channel
 from commands.db.admin.set_submitter_role import set_submitter_role
 from commands.db.admin.set_tasks_channel import set_tasks_channel
