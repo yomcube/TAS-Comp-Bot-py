@@ -16,14 +16,12 @@ async def set_logs_channel(ctx, session, channel, comp):
     result = (await session.execute(query)).first()
 
     if result is None:
-        stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,
-                                            comp=comp)
+        stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)
     elif channel.id == result[0]:
         pass
     else:
-        stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,
-                                            comp=comp)
+        stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)
 
     await session.commit()

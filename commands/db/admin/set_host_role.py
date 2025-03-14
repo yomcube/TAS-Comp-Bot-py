@@ -20,7 +20,6 @@ async def set_host_role(ctx, session, role, comp):
         stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
         await session.execute(stmt)
     else:
-
         stmt = (update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp))
         await session.execute(stmt)
 

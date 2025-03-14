@@ -12,7 +12,6 @@ DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
 async def set_submitter_role(ctx, session, role, comp):
-    submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
     name = role.name
     role_id = role.id
 
@@ -21,7 +20,6 @@ async def set_submitter_role(ctx, session, role, comp):
         stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
         await session.execute(stmt)
     else:
-
         stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
         await session.execute(stmt)
 

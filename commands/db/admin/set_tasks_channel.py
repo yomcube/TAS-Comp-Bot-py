@@ -16,9 +16,7 @@ async def set_tasks_channel(ctx, session, channel, comp):
     result = (await session.execute(query)).first()
 
     if result is None:
-        stmt = insert(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                channel_id=channel.id,
-                                                comp=comp)
+        stmt = insert(TasksChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)
     elif channel.id == result[0]:
         pass

@@ -14,6 +14,7 @@ DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 async def set_submission_channel(ctx, session, channel, comp):
     query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
     result = (await session.execute(query)).first()
+    
     if result is None:
         stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)

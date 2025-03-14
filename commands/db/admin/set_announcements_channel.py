@@ -16,16 +16,12 @@ async def set_announcements_channel(ctx, session, channel, comp):
     result = (await session.execute(query)).first()
 
     if result is None:
-        stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                            channel_id=channel.id,
-                                            comp=comp)
+        stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)
     elif channel.id == result[0]:
         pass
     else:
-        stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                            channel_id=channel.id,
-                                            comp=comp)
+        stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)
 
     await session.commit()
