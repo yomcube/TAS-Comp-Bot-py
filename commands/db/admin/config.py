@@ -5,136 +5,19 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from sqlalchemy import select, insert, update
 
-from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel, SeekingChannel, SubmitterRole, TasksChannel, AnnouncementsChannel
+from api.db_classes import get_session
+from commands.db.admin.set_announcements_channel import set_announcements_channel
+from commands.db.admin.set_host_role import set_host_role
+from commands.db.admin.set_logs_channel import set_logs_channel
+from commands.db.admin.set_seeking_channel import set_seeking_channel
+from commands.db.admin.set_submission_channel import set_submission_channel
+from commands.db.admin.set_submitter_role import set_submitter_role
+from commands.db.admin.set_tasks_channel import set_tasks_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, nsmbw, sm64
 
-### HOST ROLE ###
-async def set_host_role(ctx, session, role, comp):
-    host_role = (await session.scalars(select(HostRole.comp).where(HostRole.comp == comp))).first()
-    name = role.name
-    role_id = role.id
 
-    # Check if host_role doesn't exist yet for the comp
-    if host_role is None:
-        stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
-        await session.execute(stmt)
-    else:
-
-        stmt = (update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp))
-        await session.execute(stmt)
-
-    await session.commit()
-
-### LOGS CHANNEL ###
-async def set_logs_channel(ctx, session, channel, comp):
-    query = select(LogChannel.channel_id).where(LogChannel.guild_id == ctx.guild.id)
-    result = (await session.execute(query)).first()
-
-    if result is None:
-        stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,
-                                            comp=comp)
-        await session.execute(stmt)
-    elif channel.id == result[0]:
-        pass
-    else:
-        stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id,
-                                            comp=comp)
-        await session.execute(stmt)
-
-    await session.commit()
-
-### SUBMISSION CHANNEL ###
-async def set_submission_channel(ctx, session, channel, comp):
-    query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
-    result = (await session.execute(query)).first()
-    if result is None:
-        stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-        await session.execute(stmt)
-    elif channel.id == result[0]:
-        pass
-    else:
-        stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-        await session.execute(stmt)
-
-    await session.commit()
-
-### SEEK CHANNEL ###
-async def set_seek_channel(ctx, session, channel, comp):
-    query = select(SeekingChannel.channel_id).where(SeekingChannel.guild_id == ctx.guild.id)
-    result = (await session.execute(query)).first()
-
-    if result is None:
-        stmt = insert(SeekingChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-        await session.execute(stmt)
-    elif channel.id == result[0]:
-        pass
-    else:
-        stmt = update(SeekingChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-        await session.execute(stmt)
-
-    await session.commit()
-
-### TASKS CHANNEL ###
-async def set_tasks_channel(ctx, session, channel, comp):
-    query = select(TasksChannel.channel_id).where(TasksChannel.guild_id == ctx.guild.id)
-    result = (await session.execute(query)).first()
-
-    if result is None:
-        stmt = insert(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                channel_id=channel.id,
-                                                comp=comp)
-        await session.execute(stmt)
-    elif channel.id == result[0]:
-        pass
-    else:
-        stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                channel_id=channel.id,
-                                                comp=comp)
-        await session.execute(stmt)
-
-    await session.commit()
-
-### SUBMITTER ROLE ###
-async def set_submitter_role(ctx, session, role, comp):
-    submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
-    name = role.name
-    role_id = role.id
-
-    # Check if submitter_role doesn't exist yet for the comp
-    if role is None:
-        stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
-        await session.execute(stmt)
-    else:
-
-        stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
-        await session.execute(stmt)
-
-    await session.commit()
-
-### ANNOUNCEMENTS CHANNEL ###
-async def set_announcements_channel(ctx, session, channel, comp):
-    query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.guild_id == ctx.guild.id)
-    result = (await session.execute(query)).first()
-
-    if result is None:
-        stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                            channel_id=channel.id,
-                                            comp=comp)
-        await session.execute(stmt)
-    elif channel.id == result[0]:
-        pass
-    else:
-        stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                            channel_id=channel.id,
-                                            comp=comp)
-        await session.execute(stmt)
-
-    await session.commit()
-
-
-### CONFIG COMMAND ###
 class Config(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot

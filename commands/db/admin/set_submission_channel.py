@@ -11,6 +11,20 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
+async def set_submission_channel(ctx, session, channel, comp):
+    query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
+    result = (await session.execute(query)).first()
+    if result is None:
+        stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+        await session.execute(stmt)
+    elif channel.id == result[0]:
+        pass
+    else:
+        stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
+        await session.execute(stmt)
+
+    await session.commit()
+
 class Setsubmissionchannel(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -22,18 +36,7 @@ class Setsubmissionchannel(commands.Cog):
 
         # TODO: detect which server you are in, so the comp argument is no longer needed
         async with get_session() as session:
-            query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == ctx.guild.id)
-            result = (await session.execute(query)).first()
-            if result is None:
-                stmt = insert(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-                await session.execute(stmt)
-            elif channel.id == result[0]:
-                pass
-            else:
-                stmt = update(SubmissionChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-                await session.execute(stmt)
-
-            await session.commit()
+            await set_submission_channel(ctx, session, channel, comp)
 
         await ctx.send(f"The public submission display channel has been set! {channel.mention}")
 

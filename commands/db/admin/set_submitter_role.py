@@ -5,11 +5,27 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from sqlalchemy import insert, update, select
 
-from api.db_classes import SubmitterRole, get_session
+from api.db_classes import get_session, SubmitterRole
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
+
+async def set_submitter_role(ctx, session, role, comp):
+    submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
+    name = role.name
+    role_id = role.id
+
+    # Check if submitter_role doesn't exist yet for the comp
+    if role is None:
+        stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
+        await session.execute(stmt)
+    else:
+
+        stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
+        await session.execute(stmt)
+
+    await session.commit()
 
 class SetSubmitterrole(commands.Cog):
     def __init__(self, bot) -> None:
@@ -20,20 +36,7 @@ class SetSubmitterrole(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, role: discord.Role, comp: str = DEFAULT):
         async with get_session() as session:
-            submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
-            name = role.name
-            role_id = role.id
-
-            # Check if submitter_role doesn't exist yet for the comp
-            if submitter_role is None:
-                stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
-                await session.execute(stmt)
-            else:
-
-                stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
-                await session.execute(stmt)
-
-            await session.commit()
+            await set_submitter_role(ctx, session, role, comp)
 
         await ctx.send(f"The submitter role has been set! {role.mention}")
 
