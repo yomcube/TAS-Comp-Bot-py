@@ -104,8 +104,8 @@ class Config(commands.Cog):
         ### SUBMITTER ROLE ###
         async with get_session() as session:
             submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
-            name = set_submitter_role.name
-            role_id = set_submitter_role.id
+            name = submitter_role.name
+            role_id = submitter_role.id
 
             # Check if submitter_role doesn't exist yet for the comp
             if submitter_role is None:
@@ -125,14 +125,14 @@ class Config(commands.Cog):
 
             if result is None:
                 stmt = insert(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                     channel_id=set_tasks_channel.id,
+                                                     channel_id=tasks_channel.id,
                                                      comp=comp)
                 await session.execute(stmt)
-            elif set_tasks_channel.id == result[0]:
+            elif tasks_channel.id == result[0]:
                 pass
             else:
                 stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                     channel_id=set_tasks_channel.id,
+                                                     channel_id=tasks_channel.id,
                                                      comp=comp)
                 await session.execute(stmt)
 
@@ -145,14 +145,14 @@ class Config(commands.Cog):
 
                 if result is None:
                     stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                                       channel_id=set_announcement_channel.id,
+                                                       channel_id=announcement_channel.id,
                                                        comp=comp)
                     await session.execute(stmt)
-                elif set_announcement_channel.id == result[0]:
+                elif announcement_channel.id == result[0]:
                     pass
                 else:
                     stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id,
-                                                       channel_id=set_announcement_channel.id,
+                                                       channel_id=announcement_channel.id,
                                                        comp=comp)
                     await session.execute(stmt)
 
@@ -164,13 +164,13 @@ class Config(commands.Cog):
 
 
         await ctx.send("\n".join([
-            f"The current host role has been set! {set_host_role.mention}",
-            f"The log channel has been set! {set_logs_channel.mention}",
-            f"The submission channel has been set! {set_submission_channel.mention}",
-            f"The seek channel has been set! {set_seeking_channel.mention}",
-            f"The submitter role has been set! {set_submitter_role.mention}",
-            f"The tasks channel has been set! {set_tasks_channel.mention}",
-            f"The announcement channel has been set! {set_announcement_channel.mention}"
+            f"The current host role has been set! {host_role.mention}",
+            f"The log channel has been set! {logs_channel.mention}",
+            f"The submission channel has been set! {submission_channel.mention}",
+            f"The seek channel has been set! {seeking_channel.mention}",
+            f"The submitter role has been set! {submitter_role.mention}",
+            f"The tasks channel has been set! {tasks_channel.mention}",
+            f"The announcement channel has been set! {announcement_channel.mention}"
         ]))
 
 
