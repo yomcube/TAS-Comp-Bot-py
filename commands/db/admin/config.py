@@ -3,7 +3,6 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from sqlalchemy import select, insert, update
 
 from api.db_classes import get_session
 from commands.db.admin.set_announcements_channel import set_announcements_channel
