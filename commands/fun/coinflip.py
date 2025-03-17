@@ -120,14 +120,14 @@ class CoinFlip(BetCommand):
 
                 flip_result = random.choice(['heads', 'tails'])
                 if user_choice == flip_result and opponent_choice != flip_result:
-                    await add_balance(user_id, guild, bet_amount)
-                    await deduct_balance(opponent_id, guild, bet_amount)
+                    await add_balance(user_id, guild_id, bet_amount)
+                    await deduct_balance(opponent_id, guild_id, bet_amount)
                     msg = (f"{ctx.author.mention} wins! The coin landed on {flip_result}.\n"
                            f"Added {bet_amount} coins to {ctx.author.mention}, {user_bal + bet_amount} left in their account.\n"
                            f"Deducted {bet_amount} coins from {opponent.mention}, {opponent_bal - bet_amount} left in their account.")
                 elif opponent_choice == flip_result and user_choice != flip_result:
-                    await deduct_balance(user_id, guild, bet_amount)
-                    await add_balance(opponent_id, guild, bet_amount)
+                    await deduct_balance(user_id, guild_id, bet_amount)
+                    await add_balance(opponent_id, guild_id, bet_amount)
                     msg = (f"{opponent.mention} wins! The coin landed on {flip_result}.\n"
                            f"Added {bet_amount} coins to {opponent.mention}, {opponent_bal + bet_amount} left in their account.\n"
                            f"Deducted {bet_amount} coins from {ctx.author.mention}, {opponent_bal - bet_amount} left in their account.")
@@ -152,10 +152,10 @@ class CoinFlip(BetCommand):
         flip_result = random.choice(['heads', 'tails'])
 
         if user_choice == flip_result:
-            await add_balance(user_id, guild, 10)
+            await add_balance(user_id, guild_id, 10)
             msg = f"You win! The coin landed on {flip_result}.\nAdded 10 coins, {user_bal + 10} left in your account."
         else:
-            await deduct_balance(user_id, guild, 10)
+            await deduct_balance(user_id, guild_id, 10)
             msg = f"You lose! The coin landed on {flip_result}.\nDeducted 10 coins, {user_bal - 10} left in your account."
 
         await ctx.send(msg)
