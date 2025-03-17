@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord import ButtonStyle
 
 from api.utils import get_balance, add_balance, deduct_balance
+from commands.fun.BetCommand import BetCommand
 
 
 class ChallengeView(discord.ui.View):
@@ -102,49 +103,28 @@ class GameView(discord.ui.View):
         await self.button_callback(interaction, "scissors")
 
 
-class RPS(commands.Cog):
+class RPS(BetCommand):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.hybrid_command(name="rockpaperscissors", description="Play Rock Paper Scissors", aliases=["rps"],
                              with_app_command=True)
     async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
-
-        if opponent is None:
-            opponent = self.bot.user
-
-        if opponent == self.bot.user and bet_amount != 10:  # You can only play for 10 coins when vs bot
-            await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted"
-                           " when playing against other people.")
-
+        default_bet_amount = 10
+        
+        res = self.check(self, ctx, opponent, bet_amount, default_bet_amount)
+        if res is None:
+            return
+        
+        (user_id, guild_id, opponent_id, user_bal, opponent_bal, bet_amount) = res
         choices = ['rock', 'paper', 'scissors']
-        user_id = ctx.author.id
-        guild_id = ctx.message.guild.id
-        opponent_id = opponent.id if opponent else None
-        user_bal = await get_balance(user_id, guild_id)
-        opponent_bal = await get_balance(opponent_id, guild_id)
         wins = [
             ('rock', 'scissors'),
             ('paper', 'rock'),
             ('scissors', 'paper')
         ]
+
         if opponent != self.bot.user:
-            if bet_amount <= 0:
-                await ctx.send("Nice try! Please enter a positive bet amount.")
-                return
-
-            if user_bal < bet_amount:
-                await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
-                return
-
-            if opponent_bal < bet_amount:
-                await ctx.send(f"{opponent.mention} does not have enough coins to place this bet.")
-                return
-
-            if ctx.author.id == opponent.id:
-                await ctx.send("You can't play against yourself.")
-                return
-
             challenge_view = ChallengeView(ctx, opponent, bet_amount)
             challenge_message = await ctx.send(
                 f"{opponent.mention}, you have been challenged to a game of Rock Paper Scissors "
@@ -191,12 +171,6 @@ class RPS(commands.Cog):
                 await ctx.send(msg)
             else:
                 await ctx.send(f"{opponent.mention} declined the challenge.")
-            return
-
-
-        bet_amount = 10  # Force bet amount to 10 coins when playing against the bot
-        if user_bal < bet_amount:
-            await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
             return
 
         view = GameView(ctx, bet_amount=bet_amount)
