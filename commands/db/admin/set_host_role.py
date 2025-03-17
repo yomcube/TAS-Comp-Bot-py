@@ -17,10 +17,10 @@ async def set_host_role(ctx, session, role, comp):
 
     # Check if host_role doesn't exist yet for the comp
     if host_role is None:
-        stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
+        stmt = insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id)
         await session.execute(stmt)
     else:
-        stmt = (update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp))
+        stmt = update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp)
         await session.execute(stmt)
 
     await session.commit()

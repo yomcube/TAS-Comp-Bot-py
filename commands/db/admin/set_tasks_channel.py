@@ -21,9 +21,7 @@ async def set_tasks_channel(ctx, session, channel, comp):
     elif channel.id == result[0]:
         pass
     else:
-        stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id,
-                                                channel_id=channel.id,
-                                                comp=comp)
+        stmt = update(TasksChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
         await session.execute(stmt)
 
     await session.commit()

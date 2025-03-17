@@ -3,7 +3,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from sqlalchemy import insert, update, select
+from sqlalchemy import insert, update
 
 from api.db_classes import get_session, SubmitterRole
 
@@ -17,10 +17,10 @@ async def set_submitter_role(ctx, session, role, comp):
 
     # Check if submitter_role doesn't exist yet for the comp
     if role is None:
-        stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id))
+        stmt = insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=ctx.guild.id)
         await session.execute(stmt)
     else:
-        stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
+        stmt = update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp)
         await session.execute(stmt)
 
     await session.commit()

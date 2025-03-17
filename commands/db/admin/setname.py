@@ -51,7 +51,7 @@ class Setname(commands.Cog):
         # Update submission list
         await generate_submission_list(self)
 
-        await ctx.send(f"Sucessfully set <@{user_id}>'s name to **{new_name}**.",
+        await ctx.send(f"Sucessfully set {user.mention}'s name to **{new_name}**.",
             allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
