@@ -112,7 +112,7 @@ class RPS(BetCommand):
     async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
         default_bet_amount = 10
         
-        res = self.check(self, ctx, opponent, bet_amount, default_bet_amount)
+        res = self.check(ctx, opponent, bet_amount, default_bet_amount)
         if res is None:
             return
         
