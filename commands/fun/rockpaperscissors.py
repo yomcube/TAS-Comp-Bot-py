@@ -213,7 +213,7 @@ class RPS(commands.Cog):
         msg = ""
         if user_choice == opponent_choice:
             msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added or deducted."
-    
+
         elif (user_choice, opponent_choice) in wins:
             await add_balance(user_id, guild_id, bet_amount)
             msg = (

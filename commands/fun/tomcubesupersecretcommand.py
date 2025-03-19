@@ -9,17 +9,17 @@ class TomCube(commands.Cog):
         self.bot = bot
 
     @commands.command(name="tomcubesupersecretcommand", aliases=['tomcubecmd'])
-    async def tomcube(self, ctx):
+    async def command(self, ctx):
         # GitHub API endpoint
-        url = "https://api.github.com/users/yomcube/repos"
+        url = "https://api.github.com/users/yomcube/starred"
 
-        # Send a request to the URL with headers
+        # Send a request to the URL
         response = requests.get(url, timeout=60)
 
         # Extract valid image URLs
-        repos = loads(response.text)
+        starred = loads(response.text)
 
-        if repos:
+        if starred:
             # Select a random repository
             random_repo = random.choice(repos)
 
