@@ -166,7 +166,7 @@ class RPS(commands.Cog):
                 if user_choice is None or opponent_choice is None:
                     return
 
-
+                msg = ""
                 if user_choice == opponent_choice:
                     msg = "It's a tie! Both players chose {user_choice}.\nNo coins added."
 
@@ -210,19 +210,22 @@ class RPS(commands.Cog):
 
         bot_choice = random.choice(choices)
 
+        msg = ""
         if user_choice == opponent_choice:
             msg = f"It's a tie! Both players chose {user_choice}.\nNo coins added or deducted."
+    
+        elif (user_choice, opponent_choice) in wins:
+            await add_balance(user_id, guild_id, bet_amount)
+            msg = (
+                f"You win! Your {user_choice} beats Bot's {bot_choice}.\n"
+                f"Added {bet_amount} coins, {user_bal + bet_amount} left in your account."
+            )
         else:
-            if (user_choice, opponent_choice) in wins:
-                await add_balance(user_id, guild_id, bet_amount)
-                msg = (f"You win! Your {user_choice} beats Bot's {bot_choice}.\nAdded {bet_amount} coins, "
-                        f"{user_bal + bet_amount} left in your account."
-                )
-            else:
-                await deduct_balance(user_id, guild_id, bet_amount)
-                msg = (f"You lose! Bot's {bot_choice} beats your {user_choice}.\nDeducted {bet_amount} coins, "
-                        f"{user_bal - bet_amount} left in your account."
-                )
+            await deduct_balance(user_id, guild_id, bet_amount)
+            msg = (
+                f"You lose! Bot's {bot_choice} beats your {user_choice}.\n"
+                f"Deducted {bet_amount} coins, {user_bal - bet_amount} left in your account."
+            )
 
         await ctx.send(msg)
         return
