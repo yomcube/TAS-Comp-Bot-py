@@ -94,9 +94,9 @@ class CoinFlip(BetCommand):
         res = self.check(ctx, opponent, bet_amount, default_bet_amount)
         if res is None:
             return
-        
+
         (user_id, guild_id, opponent_id, user_bal, opponent_bal, bet_amount) = res
-        
+
         if opponent != self.bot.user:
             challenge_view = ChallengeView(ctx, opponent, bet_amount)
             challenge_message = await ctx.send(
