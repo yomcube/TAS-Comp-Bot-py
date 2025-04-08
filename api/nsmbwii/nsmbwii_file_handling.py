@@ -3,11 +3,10 @@ from struct import unpack
 from sqlalchemy import insert, update, select
 
 from api.db_classes import get_session, Submissions, Userbase
-from api.submissions import handle_submissions, first_time_submission
 from api.utils import is_task_currently_running, get_team_size, is_in_team, get_leader, check_speed_task
 
 
-async def handle_nsmbwii_files(message, attachments, file_dict, self):
+async def handle_nsmbwii_files(message, attachments, file_dict, self, handle_submissions, first_time_submission):
     current_task = await is_task_currently_running()
 
     if file_dict.get("dtm") is not None:

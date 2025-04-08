@@ -319,7 +319,7 @@ async def handle_dms(message, self):
         if len(attachments) > 0:
             file_dict = get_file_types(attachments)
             try:
-                await handlers_dict[DEFAULT](message, attachments, file_dict, self)
+                await handlers_dict[DEFAULT](message, attachments, file_dict, self, handle_submissions, first_time_submission)
 
             except KeyError:
                 print(f"Could not find DM handler for '{DEFAULT}'.")

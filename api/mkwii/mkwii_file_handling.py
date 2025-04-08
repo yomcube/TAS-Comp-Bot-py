@@ -2,12 +2,11 @@ from sqlalchemy import insert, update, select
 
 from api.db_classes import get_session, Submissions, Userbase
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
-from api.submissions import handle_submissions, first_time_submission
 from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, check_speed_task
 from commands.db.requesttask import has_requested_already, is_time_over
 
 
-async def handle_mkwii_files(message, attachments, file_dict, self):
+async def handle_mkwii_files(message, attachments, file_dict, self, handle_submissions, first_time_submission):
     current_task = await is_task_currently_running()
 
     if file_dict.get("rkg") is not None:
