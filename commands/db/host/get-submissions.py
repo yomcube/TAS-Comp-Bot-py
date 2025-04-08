@@ -17,18 +17,15 @@ class Get(commands.Cog):
     @has_host_role()
     async def command(self, ctx):
         # Get current task by taking random submission, and extracting task number
+        active_task = None
         async with get_session() as session:
             active_task = (await session.scalars(select(Submissions.task).limit(1))).first()
+            if active_task is None:
+                await ctx.send("There were no submissions.")
+                return
 
-        if active_task is None:
-            await ctx.send("There were no submissions.")
-            return
-
-        # Get submissions from current task
-        async with get_session() as session:
             submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
             total_submissions = len(submissions)
-        # Count submissions from current task
 
         # Send all submissions and truncate if > 2000
         try:
