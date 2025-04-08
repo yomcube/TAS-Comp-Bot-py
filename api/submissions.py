@@ -6,7 +6,7 @@ import shared
 from sqlalchemy import insert, select, or_
 
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
-from api.file_handlers import handlers_dict, init_file_handlers
+from api.dm_handlers import handlers_dict, init_dm_handlers
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
 
 load_dotenv()
