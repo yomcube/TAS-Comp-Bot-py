@@ -21,7 +21,7 @@ class TomCube(commands.Cog):
 
         if starred:
             # Select a random repository
-            random_repo = random.choice(repos)
+            random_repo = random.choice(starred)
 
             # Send the random repository
             await ctx.send(random_repo['html_url'])
