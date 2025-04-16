@@ -5,185 +5,63 @@ from discord.ext import commands
 from discord import ButtonStyle
 
 from api.utils import get_balance, add_balance, deduct_balance
+from commands.fun.choice_bet_command import ChoiceBetCommand
 
-
-class ChallengeView(discord.ui.View):
-    def __init__(self, ctx, opponent, bet_amount):
-        super().__init__(timeout=10)
-        self.ctx = ctx
-        self.opponent = opponent
-        self.bet_amount = bet_amount
-        self.response = None
-
-    async def on_timeout(self):
-        if self.response is None:
-            await self.ctx.send(f"{self.opponent.mention} did not respond in time. Challenge cancelled.")
-            self.stop()
-
-    @discord.ui.button(label="Accept", style=ButtonStyle.success)
-    async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.opponent:
-            await interaction.response.send_message("You are not the challenged user.", ephemeral=True)
-            return
-        self.response = "accepted"
-        await interaction.response.send_message("Challenge accepted!", ephemeral=True)
-        self.stop()
-
-    @discord.ui.button(label="Decline", style=ButtonStyle.danger)
-    async def decline_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.opponent:
-            await interaction.response.send_message("You are not the challenged user.", ephemeral=True)
-            return
-        self.response = "declined"
-        await interaction.response.send_message("Challenge declined!", ephemeral=True)
-        self.stop()
-
-
-class CoinFlipView(discord.ui.View):
-    def __init__(self, ctx, opponent=None, bet_amount=5):
-        super().__init__(timeout=10)
-        self.ctx = ctx
-        self.opponent = opponent
-        self.bet_amount = bet_amount
-        self.choices = {ctx.author.id: None}
-        if opponent:
-            self.choices[opponent.id] = None
-        self.interaction_event = False
-        self.message = ""
-
-    async def on_timeout(self):
-        if not self.interaction_event:
-            await self.disable_btns()
-            await self.ctx.send("Time's up! No response was received from one or both players within 10 seconds.")
-
-    async def disable_btns(self):
-        for item in self.children:
-            item.disabled = True
-        await self.message.edit(view=self)
-
-    async def button_callback(self, interaction: discord.Interaction, choice: str):
-        self.choices[interaction.user.id] = choice
-        self.interaction_event = True
-        await interaction.response.defer()
-        if all(self.choices.values()):
-            await self.disable_btns()
-            await self.ctx.send("Both players have made their choices. Calculating the result...")
-            self.stop()
-        else:
-            await self.ctx.send(f"{interaction.user.mention} has made their choice. Waiting for the other player.")
-
-    @discord.ui.button(label="Heads", style=ButtonStyle.primary)
-    async def heads_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.button_callback(interaction, "heads")
-
-    @discord.ui.button(label="Tails", style=ButtonStyle.secondary)
-    async def tails_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.button_callback(interaction, "tails")
-
-
-class CoinFlip(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+class CoinFlip(commands.Cog, ChoiceBetCommand):
+    def __init__(
+        self, bot,
+        game = "Heads or Tails",
+        choices = ['heads', 'tails'],
+        default_bet = 10
+    ):
+        super().__init__(bot, game, choices, default_bet)
 
     @commands.hybrid_command(name="coinflip", description="Play a game of Head or Tail", aliases=["cf"],
                              with_app_command=True)
     async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
-        if opponent in [None, self.bot.user] and bet_amount != 10:  # You can only play for 10 coins when vs bot
+        if opponent in [None, self.bot.user] and bet_amount != self.default_bet:
             opponent = self.bot.user
-            await ctx.send("The only possible bet against the bot is 10 coins. That limit is lifted"
-                           " when playing against other people.")
+            await ctx.send(
+                f"The only possible bet against the bot is {self.default_bet} coins."
+                " That limit is lifted when playing against other people."
+            )
 
         guild = ctx.message.guild.id
-        user_id = ctx.author.id
-        opponent_id = opponent.id if opponent else None
-        user_bal = await get_balance(user_id, guild)
-        opponent_bal = await get_balance(opponent_id, guild)
-        if bet_amount <= 0:
-            await ctx.send("Nice try! Please enter a positive bet amount.")
-            return
 
-        if user_bal < bet_amount:
-            await ctx.send(f"{ctx.author.mention}, you do not have enough coins to place this bet.")
-            return
+        if err := self.check(guild, ctx.author.id, opponent.id, user_bal, opponent_bal, bet_amount):
+            await ctx.send(err)
 
         if opponent != self.bot.user:
-            if opponent_bal < bet_amount:
-                await ctx.send(f"{opponent.mention} does not have enough coins to place this bet.")
-                return
+            if await self.challenge_wait():
+                choices = self.vs_choices_wait()
 
-            if ctx.author.id == opponent.id:
-                await ctx.send("You can't play against yourself.")
-                return
-
-            challenge_view = ChallengeView(ctx, opponent, bet_amount)
-            challenge_message = await ctx.send(
-                f"{opponent.mention}, you have been challenged to a game of Head or Tail by "
-                f"{ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?",
-                view=challenge_view)
-            await challenge_view.wait()
-
-            if challenge_view.response == "accepted":
-                await challenge_message.delete()
-                view = CoinFlipView(ctx, opponent, bet_amount)
-                message = await ctx.send(f"{ctx.author.mention} and {opponent.mention}, choose either Heads or Tails!",
-                                         view=view)
-                view.message = message
-                await view.wait()
-
-                user_choice = view.choices[ctx.author.id]
-                opponent_choice = view.choices[opponent.id]
-                if user_choice is None or opponent_choice is None:
+                user_choice = choices[ctx.author.id]
+                opponent_choice = choices[opponent.id]
+                if None in [user_choice, opponent_choice]:
                     return
 
-                flip_result = random.choice(['heads', 'tails'])
-                if user_choice == flip_result and opponent_choice != flip_result:
-                    await add_balance(user_id, guild, bet_amount)
-                    await deduct_balance(opponent_id, guild, bet_amount)
-                    msg = (
-                        f"{ctx.author.mention} wins! The coin landed on {flip_result}.\n"
-                        f"Added {bet_amount} coins to {ctx.author.mention},"
-                        f" {user_bal + bet_amount} left in their account.\n"
-                        f"Deducted {bet_amount} coins from {opponent.mention},"
-                        f" {opponent_bal - bet_amount} left in their account."
-                    )
-                elif opponent_choice == flip_result and user_choice != flip_result:
-                    await deduct_balance(user_id, guild, bet_amount)
-                    await add_balance(opponent_id, guild, bet_amount)
-                    msg = (
-                        f"{opponent.mention} wins! The coin landed on {flip_result}.\n"
-                        f"Added {bet_amount} coins to {opponent.mention},"
-                        f" {opponent_bal + bet_amount} left in their account.\n"
-                        f"Deducted {bet_amount} coins from {ctx.author.mention},"
-                        f" {opponent_bal - bet_amount} left in their account."
-                    )
-                else:
-                    msg = f"It's a tie! The coin landed on {flip_result}.\nNo coins added."
-
-                await ctx.send(msg)
+                flip_result = random.choice(self.choices)
+                win = (
+                    None if user_choice == opponent_choice
+                    else user_choice == flip_result != opponent_choice
+                )
+                winner = None if win is None else ctx.author if win else opponent
+                loser = None if win is None else opponent if win else ctx.author
+                vs_result(ctx, winner, loser, guild, bet_amount, f"The coin landed on {flip_result}")
             else:
                 await ctx.send(f"{opponent.mention} declined the challenge.")
             return
 
         # vs bot
-        view = CoinFlipView(ctx)
-        message = await ctx.reply(f"{ctx.author.mention}, choose either Heads or Tails!", view=view)
-        view.message = message
-        await view.wait()
+        choices = bot_choices_wait(ctx)
 
-        user_choice = view.choices[user_id]
+        user_choice = choices[user_id]
         if user_choice is None:
             return
 
-        flip_result = random.choice(['heads', 'tails'])
+        flip_result = random.choice(self.choices)
 
-        if user_choice == flip_result:
-            await add_balance(user_id, guild, 10)
-            msg = f"You win! The coin landed on {flip_result}.\nAdded 10 coins, {user_bal + 10} left in your account."
-        else:
-            await deduct_balance(user_id, guild, 10)
-            msg = f"You lose! The coin landed on {flip_result}.\nDeducted 10 coins, {user_bal - 10} left in your account."
-
-        await ctx.send(msg)
+        await bot_result(ctx, user_choice == flip_result, guild, f"The coin landed on {flip_result}")
 
 
 async def setup(bot):

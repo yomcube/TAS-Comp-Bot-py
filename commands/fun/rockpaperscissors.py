@@ -8,11 +8,10 @@ from api.utils import get_balance, add_balance, deduct_balance
 
 
 class ChallengeView(discord.ui.View):
-    def __init__(self, ctx, opponent, bet_amount):
+    def __init__(self, ctx, opponent):
         super().__init__(timeout=10)
         self.ctx = ctx
         self.opponent = opponent
-        self.bet_amount = bet_amount
         self.response = None
 
     async def on_timeout(self):
@@ -49,11 +48,10 @@ class ChallengeView(discord.ui.View):
 
 
 class GameView(discord.ui.View):
-    def __init__(self, ctx, opponent=None, bet_amount=5):
+    def __init__(self, ctx, opponent=None):
         super().__init__(timeout=10)
         self.ctx = ctx
         self.opponent = opponent
-        self.bet_amount = bet_amount
         self.choices = {ctx.author.id: None}
         if opponent:
             self.choices[opponent.id] = None
@@ -61,13 +59,11 @@ class GameView(discord.ui.View):
         self.message = ""
 
     async def on_timeout(self):
-        print("Timeout triggered")
         await self.disable_btns()
         await self.ctx.send("Time's up! No response was received from one or both players within 10 seconds.")
         self.stop()
 
     async def disable_btns(self):
-        print("Disabling buttons")
         for item in self.children:
             item.disabled = True
         if hasattr(self, 'message'):
@@ -82,7 +78,6 @@ class GameView(discord.ui.View):
         self.interaction_event = True
         await interaction.response.defer()
         if all(self.choices.values()):
-            print("All choices made")
             await self.disable_btns()
             await self.ctx.send("Both players have made their choices. Calculating the result...")
             self.stop()
@@ -145,7 +140,7 @@ class RPS(commands.Cog):
                 await ctx.send("You can't play against yourself.")
                 return
 
-            challenge_view = ChallengeView(ctx, opponent, bet_amount)
+            challenge_view = ChallengeView(ctx, opponent)
             challenge_message = await ctx.send(
                 f"{opponent.mention}, you have been challenged to a game of Rock Paper Scissors "
                 f"by {ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?",
