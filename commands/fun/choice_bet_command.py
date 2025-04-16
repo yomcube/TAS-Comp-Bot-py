@@ -14,6 +14,7 @@ class ChallengeView(discord.ui.View):
         self.opponent = opponent
         self.bet_amount = bet_amount
         self.response = None
+        self.message = None
 
     async def on_timeout(self):
         if self.response is None:
@@ -80,7 +81,7 @@ class GameView(discord.ui.View):
         else:
             await self.ctx.send(f"{interaction.user.mention} has made their choice. Waiting for the other player.")
 
-    async def add_button(label: str, style: discord.ButtonStyle, choice: str):
+    async def add_button(self, label: str, style: discord.ButtonStyle, choice: str):
         @discord.ui.button(label=label, style=style)
         async def callback(self, interaction: discord.Interaction, button: discord.ui.Button):
             await self.button_callback(interaction, choice)
@@ -93,7 +94,7 @@ class ChoiceBetCommand(commands.Cog):
         self.choices = choices
         self.default_bet = default_bet
 
-    async def check(self,
+    async def check(self, ctx,
         guild_id: int, user_id: int, opponent_id: int,
         user_bal: int, opponent_bal: int, bet_amount: int
     ) -> str | None:
@@ -113,13 +114,13 @@ class ChoiceBetCommand(commands.Cog):
 
     async def challenge_wait(self, ctx, opponent: discord.Member, bet_amount: int) -> bool:
         challenge_view = ChallengeView(ctx, opponent, bet_amount)
-        challenge_message = await ctx.send(
+        challenge_view.message = await ctx.send(
             f"{opponent.mention}, you have been challenged to a game of {self.game} by"
             f" {ctx.author.mention} with a bet of {bet_amount} coins. Do you accept?",
             view=challenge_view)
         res = await challenge_view.wait()
         if res:
-            await challenge_message.delete()
+            await challenge_view.message.delete()
         return res
 
     async def vs_choices_wait(self, ctx, opponent: discord.Member, bet_amount: int):
