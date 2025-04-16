@@ -63,7 +63,10 @@ async def send_queue(ctx):
     # Sends the current encoding queue into the chat
     s = f"The encoding queue currently contains {len(encode_queue)} movie(s).\n\n"
     for i, entry in enumerate(encode_queue):
-        s += f"#{i + 1} - {entry.filename}, {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
+        s += (
+            f"#{i + 1} - {entry.filename},"
+            f" {humanize.naturaldelta(float((datetime.now(timezone.utc) - entry.timestamp).seconds))}\n"
+        )
     await ctx.reply(content=s)
 
 
@@ -187,22 +190,22 @@ class Encode(commands.Cog):
             # Pull the urls from attachments
             file_dict = get_file_types(attachments)
 
-            if file_dict.get("m64") is None:
+            if "m64" in file_dict:
                 await ctx.reply("Please provide a movie to encode.")
                 return
 
-            m64_idx = file_dict.get("m64")
+            m64_idx = file_dict["m64"]
             movie_path = f"{DOWNLOAD_DIR}/{attachments[m64_idx].filename}"
             print(movie_path)
             movie_bytes = await attachments[m64_idx].save(movie_path)
 
-            if file_dict.get("st") is not None:
-                st_idx = file_dict.get("st")
+            if "st" in file_dict:
+                st_idx = file_dict["st"]
                 st_path = f"{DOWNLOAD_DIR}/{attachments[st_idx].filename}"
                 await attachments[st_idx].save(st_path)
 
-            if file_dict.get("savestate") is not None:
-                st_idx = file_dict.get("savestate")
+            if "savestate" in file_dict:
+                st_idx = file_dict["savestate"]
                 st_path = f"{DOWNLOAD_DIR}/{attachments[st_idx].filename}"
                 await attachments[st_idx].save(st_path)
 

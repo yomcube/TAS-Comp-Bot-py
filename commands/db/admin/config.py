@@ -24,10 +24,10 @@ class Config(commands.Cog):
     @commands.hybrid_command(name="config", aliases=['conf'], description="Set all the channel and stuff",
                              with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, host_role: discord.Role, logs_channel: discord.TextChannel, submission_channel: discord.TextChannel,
-                      seeking_channel: discord.TextChannel, submitter_role: discord.Role,
-                      announcement_channel: discord.TextChannel, tasks_channel: discord.TextChannel,
-                      comp: str = DEFAULT):
+    async def command(self, ctx, host_role: discord.Role, logs_channel: discord.TextChannel,
+                      submission_channel: discord.TextChannel, seeking_channel: discord.TextChannel,
+                      submitter_role: discord.Role, announcement_channel: discord.TextChannel,
+                      tasks_channel: discord.TextChannel, comp: str = DEFAULT):
 
         async with get_session() as session:
             await set_host_role(ctx, session, host_role, comp)

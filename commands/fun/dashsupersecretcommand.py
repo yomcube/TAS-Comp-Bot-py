@@ -10,7 +10,10 @@ async def random_image_search(ctx, query):
 
     # Headers to mimic a real browser request
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            " (KHTML, like Gecko)Chrome/58.0.3029.110 Safari/537.3"
+        )
     }
 
     # Send a request to the URL with headers

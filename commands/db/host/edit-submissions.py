@@ -27,8 +27,14 @@ class Edit(commands.Cog):
             data_dq = True
 
         readable_time = float_to_readable(time)
-        server_text = f"Succesfully edited {user}'s submission with:\nTime: from {data.time} to {time}\nDQ: from {data_dq} to {dq}"
-        dm_text = f"Your submission has been edited:\nTime: from {float_to_readable(data.time)} to {readable_time}\nDQ: from {data_dq} to {dq}"
+        server_text = (
+            f"Succesfully edited {user}'s submission with:\nTime: "
+            f"from {data.time} to {time}\nDQ: from {data_dq} to {dq}"
+        )
+        dm_text = (
+            f"Your submission has been edited:\nTime: from {float_to_readable(data.time)}"
+            f"to {readable_time}\nDQ: from {data_dq} to {dq}"
+        )
 
         if dq:
             server_text += f" ({dq_reason})"

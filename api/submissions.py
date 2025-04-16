@@ -5,9 +5,13 @@ from dotenv import load_dotenv
 import shared
 from sqlalchemy import insert, select, or_
 
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
+from api.db_classes import (
+    SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
+)
 from api.file_handlers import handlers_dict, init_file_handlers
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
+from api.utils import (
+    get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
+)
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -21,7 +25,7 @@ elif DEFAULT == 'nsmbw':
 async def get_submission_channel(comp):
     async with get_session() as session:
         query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        channel = (await session.execute(query)).first()
         # Handle case where no rows are found in the database
         if channel is None or channel[0] is None:
             print(f"No submission channel found for competition '{comp}'.")
@@ -41,7 +45,7 @@ async def get_submission_channel_guild(channel_id):
 async def get_logs_channel(comp):
     async with get_session() as session:
         query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        channel = (await session.execute(query)).first()
         # Handle case where no rows are found in the database
         if channel is None or channel[0] is None:
             print(f"No logging channel found for '{comp}'.")
@@ -52,7 +56,7 @@ async def get_logs_channel(comp):
 async def get_seeking_channel(comp):
     async with get_session() as session:
         query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        channel = (await session.execute(query)).first()
         # Handle case where no rows are found in the database
         if channel is None or channel[0] is None:
             print(f"No seeking channel found for '{comp}'.")
@@ -82,7 +86,9 @@ async def new_competitor(user_id):
 async def get_display_name(user_id):
     """Returns the display name of a certain user ID."""
     async with get_session() as session:
-        result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
+        result = (
+            await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))
+        ).first()
         return result
 
 async def get_team_name(user_id):
@@ -152,31 +158,20 @@ async def post_submission_list(channel, u_id, name):
         allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
+async def format_submission_list(content: str, placement: int, user_id: int, display_name: str) -> str:
+    if await is_in_team(user_id):
+        ids = await get_team_ids(user_id)
+        members = ' & '.join(await get_team_members(ids))
+        team_name = await get_team_name(user_id)
+        mentions = ' '.join([f'<@{u_id}>' for u_id in ids])
+        team_formatted = members if team_name is None else f"{team_name} ({members})"
+
+        return f"{content}\n{(placement) + 1}. {team_formatted} ||{mentions}||"
+    return f"{content}\n{placement}. {display_name} ||<@{user_id}>||"
+
 async def update_submission_list(last_message, u_id, name):
     """Handles updating the submission list message and renaming user submissions"""
-    # Case if user is in team
-    if await is_in_team(u_id):
-        ids = await get_team_ids(u_id)
-        members = await get_team_members(ids)
-        team_name = await get_team_name(u_id)
-        mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
-
-        # No ( ) if no team name
-        if team_name is None:
-            new_content = f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||"
-
-
-        # Case if they actually set a team name
-        else:
-            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
-                       f" ||{mentions}||")
-
-
-        return await last_message.edit(content=new_content)
-
-    # solo submission
-    new_content = (f"{last_message.content}\n{await count_submissions()}. {name}"
-                    f" ||<@{u_id}>||")
+    new_content = await format_submission_list(last_message.content, await count_submissions(), u_id, name)
     return await last_message.edit(content=new_content)
 
 
@@ -192,36 +187,16 @@ async def generate_submission_list(self):
         if message.author == self.bot.user:
             message_to_edit = message
 
-
     async with get_session() as session:
-
         active_task = (await session.scalars(select(Submissions.task))).first()
-        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task)))
+        submissions = await session.scalars(select(Submissions).where(Submissions.task == active_task))
         formatted_submissions = "**__Current Submissions:__**"
 
         # Update submission list for a solo submission
         for submission in submissions:
-            if not await is_in_team(submission.user_id):
-                formatted_submissions += f"\n{submission.index}. {await get_display_name(submission.user_id)} ||<@{submission.user_id}>||"
-
-
-            # Generate submission list for a team submission
-            else:
-                ids = await get_team_ids(submission.user_id)
-                members = await get_team_members(ids)
-                team_name = await get_team_name(submission.user_id)
-                mentions = ' '.join([f'<@{user_id}>' for user_id in ids])
-
-                # No ( ) if they have no special team name
-                if team_name is None:
-                    formatted_submissions += f"\n{submission.index}. {' & '.join(members)} ||{mentions}||"
-
-                # Case if they actually set a team name
-                else:
-                    formatted_submissions += (
-                        f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
-                    )
-
+            formatted_submissions = await format_submission_list(formatted_submissions,
+                submission.index, submission.user_id, await get_display_name(submission.user_id)
+            )
 
     return await message_to_edit.edit(content=formatted_submissions)
 
@@ -319,11 +294,13 @@ async def handle_dms(message, self):
         if len(attachments) > 0:
             file_dict = get_file_types(attachments)
             try:
-                await handlers_dict[DEFAULT](message, attachments, file_dict, self, handle_submissions, first_time_submission)
+                await handlers_dict[DEFAULT](
+                    message, attachments, file_dict, self, handle_submissions, first_time_submission
+                )
 
             except KeyError:
                 print(f"Could not find DM handler for '{DEFAULT}'.")
             except TimeoutError:
-                await channel.send("Could not process Files!")
+                await channel.send("Could not process files!")
 
 init_file_handlers()

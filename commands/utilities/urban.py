@@ -24,7 +24,11 @@ class Urban(commands.Cog):
         embed = discord.Embed(title=response['list'][0]['word'], color=discord.Color.blue())
         embed.add_field(name="Definition", value=trim(response['list'][0]['definition'], 1024), inline=False)
         embed.add_field(name="Example", value=trim(response['list'][0]['example'], 1024), inline=False)
-        embed.add_field(name="Rating", value=f"{response['list'][0]['thumbs_up']} 👍\n{response['list'][0]['thumbs_down']} 👎", inline=False)
+        embed.add_field(
+            name="Rating",
+            value=f"{response['list'][0]['thumbs_up']} 👍\n{response['list'][0]['thumbs_down']} 👎",
+            inline=False
+        )
         embed.set_footer(text="Powered by Urban Dictionary API")
         await ctx.reply(embed=embed)
 

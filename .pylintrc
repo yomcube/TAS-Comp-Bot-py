@@ -12,4 +12,4 @@ disable=missing-module-docstring,
 output-format=colorized
 
 [FORMAT]
-max-line-length=150
+max-line-length=125

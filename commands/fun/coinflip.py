@@ -139,15 +139,23 @@ class CoinFlip(commands.Cog):
                 if user_choice == flip_result and opponent_choice != flip_result:
                     await add_balance(user_id, guild, bet_amount)
                     await deduct_balance(opponent_id, guild, bet_amount)
-                    msg = (f"{ctx.author.mention} wins! The coin landed on {flip_result}.\n"
-                           f"Added {bet_amount} coins to {ctx.author.mention}, {user_bal + bet_amount} left in their account.\n"
-                           f"Deducted {bet_amount} coins from {opponent.mention}, {opponent_bal - bet_amount} left in their account.")
+                    msg = (
+                        f"{ctx.author.mention} wins! The coin landed on {flip_result}.\n"
+                        f"Added {bet_amount} coins to {ctx.author.mention},"
+                        f" {user_bal + bet_amount} left in their account.\n"
+                        f"Deducted {bet_amount} coins from {opponent.mention},"
+                        f" {opponent_bal - bet_amount} left in their account."
+                    )
                 elif opponent_choice == flip_result and user_choice != flip_result:
                     await deduct_balance(user_id, guild, bet_amount)
                     await add_balance(opponent_id, guild, bet_amount)
-                    msg = (f"{opponent.mention} wins! The coin landed on {flip_result}.\n"
-                           f"Added {bet_amount} coins to {opponent.mention}, {opponent_bal + bet_amount} left in their account.\n"
-                           f"Deducted {bet_amount} coins from {ctx.author.mention}, {opponent_bal - bet_amount} left in their account.")
+                    msg = (
+                        f"{opponent.mention} wins! The coin landed on {flip_result}.\n"
+                        f"Added {bet_amount} coins to {opponent.mention},"
+                        f" {opponent_bal + bet_amount} left in their account.\n"
+                        f"Deducted {bet_amount} coins from {ctx.author.mention},"
+                        f" {opponent_bal - bet_amount} left in their account."
+                    )
                 else:
                     msg = f"It's a tie! The coin landed on {flip_result}.\nNo coins added."
 

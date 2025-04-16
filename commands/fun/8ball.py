@@ -7,7 +7,9 @@ class Eightball(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="8ball", description="Ask the bot what he thinks about your question!", with_app_command=True)
+    @commands.hybrid_command(
+        name="8ball", description="Ask the bot what he thinks about your question!",
+        with_app_command=True)
     async def command(self, ctx, *, question):
         if question.split()[0].lower() == "when":
             when = [

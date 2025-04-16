@@ -176,15 +176,18 @@ class RPS(commands.Cog):
                         await deduct_balance(opponent_id, guild_id, bet_amount)
                         msg = (f"{ctx.author.mention} wins! Their {user_choice} beats their {opponent_choice}.\nAdded "
                             f"{bet_amount} coins to {ctx.author.mention}, {user_bal + bet_amount} left in their account.\n"
-                            f"Deducted {bet_amount} coins from {opponent.mention}, {opponent_bal - bet_amount} left in their account."
+                            f"Deducted {bet_amount} coins from {opponent.mention},"
+                            f" {opponent_bal - bet_amount} left in their account."
                         )
                     else:
                         await deduct_balance(user_id, guild_id, bet_amount)
                         await add_balance(opponent_id, guild_id, bet_amount)
                         msg = (
-                            f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\nAdded {bet_amount} "
-                            f"coins to {opponent.mention}, {opponent_bal + bet_amount} left in their account.\nDeducted "
-                            f"{bet_amount} coins from {ctx.author.mention}, {user_bal - bet_amount} left in their account."
+                            f"{opponent.mention} wins! Their {opponent_choice} beats their {user_choice}.\n"
+                            f"Added {bet_amount} coins to {opponent.mention},"
+                            f" {opponent_bal + bet_amount} left in their account.\n"
+                            f"Deducted {bet_amount} coins from {ctx.author.mention},"
+                            f" {user_bal - bet_amount} left in their account."
                         )
 
 

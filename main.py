@@ -6,7 +6,14 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+if not os.path.exists(".env"):
+    print("Could not find '.env'")
+    sys.exit(1)
+
+# api.db_classes loads the .env, so the check must be placed before it's imported.
+# pylint: disable-next=wrong-import-position
 from api.db_classes import db_connect
+
 
 # load environmental variables
 load_dotenv()
@@ -14,73 +21,79 @@ TOKEN = os.getenv('TOKEN')
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 DEFAULT = os.getenv('DEFAULT')
 
-_ = os.makedirs(DB_DIR) if not os.path.exists(DB_DIR) else None
+if not os.path.exists(DB_DIR):
+    os.makedirs(DB_DIR)
+
 activity = discord.Game(name="Dolphin Emulator")
 
-commands_ext = ['commands.db.host.start-task',
-                'commands.db.host.end-task',
-                'commands.db.host.deletesubmission',
-                'commands.db.host.edit-submissions',
-                'commands.db.host.get-submissions',
-                'commands.db.host.get-results',
-                'commands.db.host.set-deadline',
-                'commands.db.host.speedtaskdesc',
-                'commands.db.host.speedtasklength',
-                'commands.db.host.speedtaskreminders',
-                'commands.db.host.submit',
-                'commands.db.admin.rig',
-                'commands.db.admin.set_announcements_channel',
-                'commands.db.admin.set_host_role',
-                'commands.db.admin.set_logs_channel',
-                'commands.db.admin.set_submission_channel',
-                'commands.db.admin.set_seeking_channel',
-                'commands.db.admin.set_submitter_role',
-                'commands.db.admin.set_tasks_channel',
-                'commands.db.admin.setname',
-                'commands.db.admin.togglereminderpings',
-                'commands.db.admin.config',
-                'commands.db.info_nsmbw' if DEFAULT == 'nsmbw' else 'commands.db.info',
-                'commands.db.requesttask',
-                'commands.db.task-info',
-                'commands.db.team.collab',
-                'commands.db.team.leaveteam',
-                'commands.db.team.hostdissolve',
-                'commands.db.team.set_team_name',
-                'commands.db.team.teams',
-                'commands.fun.8ball',
-                'commands.fun.addcoins',
-                'commands.fun.balance',
-                'commands.fun.balancetop',
-                'commands.fun.coinflip',
-                'commands.fun.connect4',
-                'commands.fun.dashsupersecretcommand',
-                'commands.fun.giveqm',
-                'commands.fun.joke',
-                'commands.fun.freeiso',
-                'commands.fun.memory',
-                'commands.fun.rockpaperscissors',
-                'commands.fun.quotes',
-                'commands.fun.shadowsupersecretcommand',
-                'commands.fun.slots',
-                'commands.fun.tomcubesupersecretcommand',
-                'commands.utilities.host.dm',
-                'commands.utilities.admin.say',
-                'commands.utilities.admin.sync',
-                'commands.utilities.credits',
-                'commands.utilities.help',
-                'commands.utilities.manage_messages.clear',
-                'commands.utilities.music',
-                'commands.utilities.prefix',
-                'commands.utilities.track',
-                'commands.utilities.weather',
-                'commands.utilities.urban',
-                'commands.utilities.ping',
-                'commands.utilities.bug-report',
-                'commands.sm64.encode', ]
-events_ext = ['events.on_ready',
-              'events.on_message',
-              'events.errors',
-              'events.command_completion', ]
+commands_ext = [
+    'commands.db.host.start-task',
+    'commands.db.host.end-task',
+    'commands.db.host.deletesubmission',
+    'commands.db.host.edit-submissions',
+    'commands.db.host.get-submissions',
+    'commands.db.host.get-results',
+    'commands.db.host.set-deadline',
+    'commands.db.host.speedtaskdesc',
+    'commands.db.host.speedtasklength',
+    'commands.db.host.speedtaskreminders',
+    'commands.db.host.submit',
+    'commands.db.admin.rig',
+    'commands.db.admin.set_announcements_channel',
+    'commands.db.admin.set_host_role',
+    'commands.db.admin.set_logs_channel',
+    'commands.db.admin.set_submission_channel',
+    'commands.db.admin.set_seeking_channel',
+    'commands.db.admin.set_submitter_role',
+    'commands.db.admin.set_tasks_channel',
+    'commands.db.admin.setname',
+    'commands.db.admin.togglereminderpings',
+    'commands.db.admin.config',
+    'commands.db.info_nsmbw' if DEFAULT == 'nsmbw' else 'commands.db.info',
+    'commands.db.requesttask',
+    'commands.db.task-info',
+    'commands.db.team.collab',
+    'commands.db.team.leaveteam',
+    'commands.db.team.hostdissolve',
+    'commands.db.team.set_team_name',
+    'commands.db.team.teams',
+    'commands.fun.8ball',
+    'commands.fun.addcoins',
+    'commands.fun.balance',
+    'commands.fun.balancetop',
+    'commands.fun.coinflip',
+    'commands.fun.connect4',
+    'commands.fun.dashsupersecretcommand',
+    'commands.fun.giveqm',
+    'commands.fun.joke',
+    'commands.fun.freeiso',
+    'commands.fun.memory',
+    'commands.fun.rockpaperscissors',
+    'commands.fun.quotes',
+    'commands.fun.shadowsupersecretcommand',
+    'commands.fun.slots',
+    'commands.fun.tomcubesupersecretcommand',
+    'commands.utilities.host.dm',
+    'commands.utilities.admin.say',
+    'commands.utilities.admin.sync',
+    'commands.utilities.credits',
+    'commands.utilities.help',
+    'commands.utilities.manage_messages.clear',
+    'commands.utilities.music',
+    'commands.utilities.prefix',
+    'commands.utilities.track',
+    'commands.utilities.weather',
+    'commands.utilities.urban',
+    'commands.utilities.ping',
+    'commands.utilities.bug-report',
+    'commands.sm64.encode',
+]
+events_ext = [
+    'events.on_ready',
+    'events.on_message',
+    'events.errors',
+    'events.command_completion',
+]
 
 
 class Bot(commands.Bot):

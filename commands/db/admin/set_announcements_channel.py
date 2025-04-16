@@ -32,7 +32,8 @@ class SetAnnouncementschannel(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="set-announcements-channel", aliases=['sac'],
-                             description="Set the channel where announcements are posted (used for speed tasks)", with_app_command=True)
+                             description="Set the channel where announcements are posted (used for speed tasks)",
+                             with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
         async with get_session() as session:

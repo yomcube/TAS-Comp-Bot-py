@@ -53,7 +53,9 @@ class AcceptDeclineButtons(discord.ui.View):
                                                     ephemeral=True)
             return
         self.disable_all_buttons()
-        await interaction.response.edit_message(content=f"The collaboration invite to <@{self.user.id}> has been canceled.", view=self)
+        await interaction.response.edit_message(
+            content=f"The collaboration invite to <@{self.user.id}> has been canceled.", view=self
+        )
         await self.cancel_callback(self.user, interaction.user)  # Pass the user who was invited and who cancelled
 
     async def on_timeout(self):
@@ -71,8 +73,8 @@ class AcceptDeclineButtons(discord.ui.View):
 class Collab(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pending_collabs = {}  # Track pending collaborations per author
-
+        # Pending collaborations per user
+        self.pending_collabs: dict[int, list[int]] = {}
 
     @commands.hybrid_command(name="collab", description="Collaborate with someone during a team task", with_app_command=True)
     async def collab(self, ctx, users: Greedy[discord.Member]):
@@ -80,7 +82,9 @@ class Collab(commands.Cog):
 
         # Check if the author already has a pending collaboration
         if author_id in self.pending_collabs:
-            return await ctx.send("You already have a pending collaboration request. Please wait for it to be resolved, or cancel it.")
+            return await ctx.send(
+                "You already have a pending collaboration request. Please wait for it to be resolved, or cancel it."
+            )
 
         team_size = await get_team_size()
 
@@ -230,7 +234,10 @@ class Collab(commands.Cog):
                                 if new_member_mentions:
                                     await ctx.send(f"{new_member_mentions} has been added to your team!")
                                 else:
-                                    await ctx.send("Nobody has been added to your team as all invitations were declined, cancelled, or timed out")
+                                    await ctx.send(
+                                        "Nobody has been added to your team; all invitations"
+                                        " were declined, cancelled, or timed out."
+                                    )
 
                     else:
                         # No existing team, create a new team
@@ -265,7 +272,9 @@ class Collab(commands.Cog):
 
                 else:
                     if await is_in_team(author_id):
-                        message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                        message = (
+                            "Nobody has been added to your team; all invitations were declined, cancelled, or timed out"
+                        )
                     else:
                         message = "No team was formed as all invitations were declined, cancelled or timed out."
 
@@ -324,7 +333,9 @@ class Collab(commands.Cog):
                     del self.pending_collabs[author_id]  # Clear the collaboration state
                 else:
                     if await is_in_team(author_id):
-                        message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                        message = (
+                            "Nobody has been added to your team; all invitations were declined, cancelled, or timed out"
+                        )
                     else:
                         message = "No team was formed as all invitations were declined, cancelled or timed out."
 

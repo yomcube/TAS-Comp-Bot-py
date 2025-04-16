@@ -187,7 +187,10 @@ class Memory(commands.Cog):
                 try:
                     # Get first choice from the user with a 40-second timeout
                     await ctx.send(f"Select first tile! Lives remaining: {lives}")
-                    msg = await self.bot.wait_for('message', timeout=40.0, check=lambda m: m.author == ctx.author and is_valid_choice(m.content))
+                    msg = await self.bot.wait_for(
+                        'message', timeout=40.0,
+                        check=lambda m: m.author == ctx.author and is_valid_choice(m.content)
+                    )
                     row1, col1 = map(int, msg.content.split(","))
                     row1 -= 1  # Adjust for 0-based indexing
                     col1 -= 1
@@ -203,7 +206,10 @@ class Memory(commands.Cog):
 
                     # Get second choice from the user with a 40-second timeout
                     await ctx.send(f"Select second tile! Lives remaining: {lives}")
-                    msg = await self.bot.wait_for('message', timeout=40.0, check=lambda m: m.author == ctx.author and is_valid_choice(m.content))
+                    msg = await self.bot.wait_for(
+                        'message', timeout=40.0,
+                        check=lambda m: m.author == ctx.author and is_valid_choice(m.content)
+                    )
                     row2, col2 = map(int, msg.content.split(","))
                     row2 -= 1  # Adjust for 0-based indexing
                     col2 -= 1

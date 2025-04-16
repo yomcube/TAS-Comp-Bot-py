@@ -13,11 +13,15 @@ load_dotenv()
 DB_DIR = os.path.abspath(os.getenv('DB_DIR'))
 engine = create_async_engine(f"sqlite+aiosqlite:///{DB_DIR}/database.db")
 meta = MetaData()
-Session = async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False, class_=AsyncSession)
+Session = async_sessionmaker(
+    bind=engine, autocommit=False, future=True, expire_on_commit=False, class_=AsyncSession
+)
 
 
 def get_session():
-    return async_sessionmaker(bind=engine, autocommit=False, future=True, expire_on_commit=False, class_=AsyncSession)()
+    return async_sessionmaker(
+        bind=engine, autocommit=False, future=True, expire_on_commit=False, class_=AsyncSession
+    )()
 
 
 class Money(Base):

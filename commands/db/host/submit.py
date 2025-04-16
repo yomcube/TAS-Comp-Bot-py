@@ -28,7 +28,7 @@ class Submit(commands.Cog):
         current_task = await is_task_currently_running()
         url = file.url
 
-        # TODO: Use api.submissions.(mkwii|nsmbwii).(mkwii|nsmbwii)_file_handling
+        # TODO: Use api.submissions.{comp}.{comp}_file_handling
 
         # retrieving lap time, to estimate submission time
         rkg_data = await file.read()

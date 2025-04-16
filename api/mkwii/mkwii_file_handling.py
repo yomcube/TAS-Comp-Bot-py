@@ -9,8 +9,8 @@ from commands.db.requesttask import has_requested_already, is_time_over
 async def handle_mkwii_files(message, attachments, file_dict, self, handle_submissions, first_time_submission):
     current_task = await is_task_currently_running()
 
-    if file_dict.get("rkg") is not None:
-        index = file_dict.get("rkg")
+    if "rkg" in file_dict:
+        index = file_dict["rkg"]
 
         if current_task:
             ##################################################
@@ -110,8 +110,8 @@ async def handle_mkwii_files(message, attachments, file_dict, self, handle_submi
     # recognition of rksys submission
     #################################################
 
-    elif file_dict.get("dat") is not None:
-        index = file_dict.get("dat")
+    elif "dat" in file_dict:
+        index = file_dict["dat"]
         if current_task:
 
             if current_task:

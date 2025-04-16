@@ -55,7 +55,11 @@ async def get_host_role(guild_id):
     default = DEFAULT
     # Retrieves the host role. By default, on the server, the default host role is 'Host'.
     async with get_session() as session:
-        host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
+        host_role = (
+            await session.scalars(
+                select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id)
+            )
+        ).first()
 
         if host_role:
             return host_role
@@ -125,7 +129,7 @@ async def download_from_url(url) -> str:
 
             return file_path
 
-    except: # pylint: disable=bare-except
+    except:
         return None
 
 

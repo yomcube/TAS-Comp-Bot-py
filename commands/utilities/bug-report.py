@@ -26,8 +26,10 @@ class Bug(commands.Cog):
                 names.append(tomcube.display_name)
                 await tomcube.send(bug)
 
-            await ctx.reply(f"Bug sent to {' and '.join(names)}, thank you!"
-                "Remember that you can also [open an issue](https://github.com/crackhex/TAS-Comp-Bot-py/issues/new) on Github if you have an account."
+            await ctx.reply(
+                f"Bug sent to {' and '.join(names)}, thank you! "
+                "Remember that you can also [open an issue](https://github.com/crackhex/TAS-Comp-Bot-py/issues/new)"
+                " on Github if you have an account."
             )
         except discord.HTTPException:
             await ctx.send("Failed to send message")

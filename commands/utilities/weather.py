@@ -29,7 +29,10 @@ class Weather(commands.Cog):
             await ctx.send("Could not find an OpenWeather API key.")
             return
         check_limit()
-        request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric", timeout=60)
+        request = requests.get(
+            f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={key}&units=metric",
+            timeout=60
+        )
         response = request.json()
 
         # Check if the response contains an error message or is missing expected keys
@@ -41,7 +44,10 @@ class Weather(commands.Cog):
             await ctx.reply("Error: Incomplete weather data received.")
             return
 
-        embed = discord.Embed(title=f"Weather for {response['name']}, {response['sys']['country']}", color=discord.Color.blue())
+        embed = discord.Embed(
+            title=f"Weather for {response['name']}, {response['sys']['country']}",
+            color=discord.Color.blue()
+        )
         embed.add_field(name="Temperature", value=f"{(response['main']['temp']):.1f}°C")
         embed.add_field(name="Description", value=f"{response['weather'][0]['description']}")
         embed.add_field(name="Humidity", value=f"{response['main']['humidity']}%")

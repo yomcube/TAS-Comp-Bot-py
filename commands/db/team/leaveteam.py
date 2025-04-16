@@ -64,7 +64,9 @@ class LeaveTeam(commands.Cog):
                         # Rearrange team indexes
                         await reorder_primary_keys()
 
-                        await ctx.send(f"<@{row.leader}> Poor you :( Your partner(s) gave up on you. Your team has been dissolved.")
+                        await ctx.send(
+                            f"<@{row.leader}> Poor you :( Your partner(s) gave up on you. Your team has been dissolved."
+                        )
 
                 await session.commit()
 

@@ -50,8 +50,10 @@ class Slots(commands.Cog):
             probability = 1 / (len(emojis_list) ** (number - 1))
             percentage = probability * 100
             winnings = calculate_winnings(len(emojis_list), number)
-            result_text = (f"You won! The probability of winning was {percentage:.2f}% (1 in {int(1 / probability)}).\n{winnings} "
-                           f"coins were added to your balance. {user_balance + winnings} coins left in your account.")
+            result_text = (
+                f"You won! The probability of winning was {percentage:.2f}% (1 in {int(1 / probability)}).\n"
+                f"{winnings} coins were added to your balance. {user_balance + winnings} coins left in your account."
+            )
             await add_balance(user_id, guild_id, winnings)
 
         await ctx.send(result_text)

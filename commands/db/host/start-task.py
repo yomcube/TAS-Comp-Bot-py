@@ -10,7 +10,9 @@ from sqlalchemy import insert, delete, select
 
 from api.utils import is_task_currently_running, has_host_role, get_submitter_role
 from api.submissions import get_submission_channel
-from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session, SpeedTaskLength, SpeedTaskDesc, SpeedTaskReminders
+from api.db_classes import (
+    Tasks, Submissions, Teams, SpeedTask, get_session, SpeedTaskLength, SpeedTaskDesc, SpeedTaskReminders
+)
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -56,7 +58,8 @@ class Start(commands.Cog):
 
                     if deadline is None:
                         return await ctx.send(
-                            "Speed tasks require a general deadline in order to function properly. Please set one (with a UNIX timestamp)."
+                            "Speed tasks require a general deadline in order to function properly. "
+                            "Please set one (with a UNIX timestamp)."
                         )
 
                 #########################################
@@ -151,7 +154,9 @@ class Start(commands.Cog):
 
             except AttributeError:
                 await ctx.send(
-                    "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")
+                    "Please set the submission channel with `/set-submission-channel`! "
+                    "(Ask an admin if you do not have permission)"
+                )
 
 
 
@@ -184,7 +189,10 @@ class Start(commands.Cog):
         #     await bot_pinned_messages[-1].unpin()
         #
         # except AttributeError:
-        #     await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
+        #     await ctx.send(
+        #         "Please set the seeking channel with `/set-seeking-channel`! "
+        #         "(Ask an admin if you do not have permission)"
+        #     )
         #
         # except IndexError:
         #     print("No message from bot to unpin")
@@ -206,7 +214,10 @@ class Start(commands.Cog):
         #
         #
         # except AttributeError:
-        #     await ctx.send(f"Please set the seeking channel with `/set-seeking-channel`! (Ask an admin if you do not have permission)")
+        #     await ctx.send(
+        #         "Please set the seeking channel with `/set-seeking-channel`! "
+        #         "(Ask an admin if you do not have permission)"
+        #     )
 
 async def setup(bot) -> None:
     await bot.add_cog(Start(bot))

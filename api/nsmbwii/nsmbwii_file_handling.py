@@ -9,8 +9,8 @@ from api.utils import is_task_currently_running, get_team_size, is_in_team, get_
 async def handle_nsmbwii_files(message, attachments, file_dict, self, handle_submissions, first_time_submission):
     current_task = await is_task_currently_running()
 
-    if file_dict.get("dtm") is not None:
-
+    if "dtm" in file_dict:
+        index = file_dict["dtm"]
         if current_task:
             ##################################################
             # Cases where someone is denied submission
@@ -32,7 +32,7 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self, handle_sub
 
             # retrieving lap time, to estimate submission time
 
-            dtm_data = await attachments[0].read()
+            dtm_data = await attachments[index].read()
 
             try:
                 dtm = bytearray(dtm_data)
