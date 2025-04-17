@@ -7,7 +7,7 @@ from discord import ButtonStyle
 from api.utils import get_balance, add_balance, deduct_balance
 from commands.fun.choice_bet_command import ChoiceBetCommand
 
-class CoinFlip(commands.Cog, ChoiceBetCommand):
+class CoinFlip(ChoiceBetCommand):
     def __init__(
         self, bot,
         game = "Heads or Tails",
@@ -21,6 +21,7 @@ class CoinFlip(commands.Cog, ChoiceBetCommand):
     async def command(self, ctx, opponent: discord.Member = None, bet_amount: int = 10):
         if opponent in [None, self.bot.user] and bet_amount != self.default_bet:
             opponent = self.bot.user
+            bet_amount = self.default_bet
             await ctx.send(
                 f"The only possible bet against the bot is {self.default_bet} coins."
                 " That limit is lifted when playing against other people."
@@ -47,13 +48,13 @@ class CoinFlip(commands.Cog, ChoiceBetCommand):
                 )
                 winner = None if win is None else ctx.author if win else opponent
                 loser = None if win is None else opponent if win else ctx.author
-                vs_result(ctx, winner, loser, guild, bet_amount, f"The coin landed on {flip_result}")
+                self.vs_result(ctx, winner, loser, guild, bet_amount, f"The coin landed on {flip_result}")
             else:
                 await ctx.send(f"{opponent.mention} declined the challenge.")
             return
 
         # vs bot
-        choices = bot_choices_wait(ctx)
+        choices = self.bot_choices_wait(ctx)
 
         user_choice = choices[user_id]
         if user_choice is None:
@@ -61,7 +62,7 @@ class CoinFlip(commands.Cog, ChoiceBetCommand):
 
         flip_result = random.choice(self.choices)
 
-        await bot_result(ctx, user_choice == flip_result, guild, f"The coin landed on {flip_result}")
+        await self.bot_result(ctx, user_choice == flip_result, guild, f"The coin landed on {flip_result}")
 
 
 async def setup(bot):
