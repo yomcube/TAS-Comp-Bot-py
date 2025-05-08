@@ -218,7 +218,13 @@ async def check_speed_task_reminders(bot):
                                     time_str = f"{minutes} {minute_unit}"
                         user = bot.get_user(task.user_id)
                         if user:
-                            await user.send(f"You have {time_str} remaining to submit!")
+
+                            # Catch error of not being able to send message
+                            try:
+                                await user.send(f"You have {time_str} remaining to submit!")
+
+                            except (discord.Forbidden, discord.HTTPException) as e:
+                                print(f"Failed to DM user {user.name}: {e}")
 
         # Also do public reminders is task is released
         if ongoing_task[7]:
@@ -319,7 +325,12 @@ async def check_speed_task_deadlines(bot):
 
             # Send user a message when their time is up
             user = bot.get_user(task.user_id)
-            await user.send(f"Your time is up! Thank you for participating in Task {ongoing_task[0]}")
+
+            # Catch error of not being able to send someone a message
+            try:
+                await user.send(f"Your time is up! Thank you for participating in Task {ongoing_task[0]}")
+            except (discord.Forbidden, discord.HTTPException) as e:
+                print(f"Failed to DM user {user.name}: {e}")
 
             # Give the user a role upon their deadline
             guild_id = shared.main_guild.id
