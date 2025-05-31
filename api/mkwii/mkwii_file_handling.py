@@ -170,7 +170,7 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                 submitter_name = await session.scalar(select(Userbase.user).where(Userbase.user_id == submitter_id))
 
         # Add first-time submission
-        if await first_time_submission(message.author.id):
+        if await first_time_submission(submitter_id):
             async with get_session() as session:
                 await session.execute(insert(Submissions).values(task=current_task[0], name=submitter_name,
                                                                  user_id=submitter_id,
