@@ -42,7 +42,12 @@ class Get(commands.Cog):
                     members = await get_team_members(ids)
                     team_name = await get_team_name(submission.user_id)
 
-                    name = f'{team_name} ({" & ".join(members)})'
+                    # No ( ) if no team name
+                    if team_name is None:
+                        name = " & ".join(members)
+                    # Include team name and ( ) with members
+                    else:
+                        name = f'{team_name} ({" & ".join(members)})'
                 else:
                     name = await get_display_name(submission.user_id)
 
