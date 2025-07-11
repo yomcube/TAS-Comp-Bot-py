@@ -1,13 +1,16 @@
 import hashlib
 import os
+from urllib.parse import urlparse
+
 import aiohttp
 import discord
-from urllib.parse import urlparse
 from discord.ext import commands
-from sqlalchemy import select, insert, update, inspect, or_
-from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel
 from dotenv import load_dotenv
+from sqlalchemy import select, insert, update, inspect, or_
+
+from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
+    AnnouncementsChannel
+from api.task_handling import is_task_currently_running
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -149,16 +152,6 @@ def float_to_readable(seconds):
     remaining_seconds = seconds % 60
     time_str = f"{minutes}:{remaining_seconds:06.3f}"
     return time_str
-
-
-async def is_task_currently_running():
-    """Check if a task is currently running. Returns a list with the parameters of active task, if so."""
-    # Is a task running?
-    async with get_session() as session:
-        active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active, Tasks.team_size,
-                                               Tasks.speed_task, Tasks.multiple_tracks, Tasks.deadline, Tasks.is_released)
-                                        .where(Tasks.is_active == 1))).first()
-        return active
 
 
 async def get_team_size():

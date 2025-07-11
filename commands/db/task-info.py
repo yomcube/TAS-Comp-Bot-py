@@ -5,8 +5,8 @@ import shared
 from discord.ext import commands
 
 from api.submissions import count_submissions
-from api.utils import is_task_currently_running, get_team_size, get_host_role
-from sqlalchemy import select
+from api.utils import get_team_size, get_host_role
+from api.task_handling import is_task_currently_running
 
 
 class TaskInfo(commands.Cog):

@@ -1,17 +1,45 @@
-from discord.ext import commands
-import discord
 import os
-import time
+
+import discord
+from discord.ext import commands
 from dotenv import load_dotenv
-from datetime import date
-from api.utils import is_task_currently_running, has_host_role, get_team_size, get_submitter_role
-from api.submissions import get_submission_channel, get_seeking_channel
-from api.db_classes import Tasks, Submissions, Teams, SpeedTask, get_session, SpeedTaskLength, SpeedTaskDesc, SpeedTaskReminders
-from sqlalchemy import insert, delete, select
-import math
+
+from api.submissions import get_submission_channel
+from api.task_handling import start_task
+from api.utils import has_host_role, get_submitter_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
+async def remove_submitter_role(bot, guild_id: int) -> None:
+    # Also clear submitter roles
+    submitter_role = await get_submitter_role(DEFAULT)
+    server = bot.get_guild(guild_id)
+    role = server.get_role(submitter_role)
+
+    for member in role.members:
+        try:
+            await member.remove_roles(role)
+        except discord.Forbidden:
+            print(
+                f"Failed to remove role {role.name} from {member.display_name} due to insufficient permissions.")
+        except discord.HTTPException as e:
+            print(f"Failed to remove role {role.name} from {member.display_name} due to an error: {e}")
+
+async def delete_previous_current_submissions(bot) -> None | str:
+    # Delete previous "Current submissions" message in submission channel
+    channel_id = await get_submission_channel(DEFAULT)
+    channel = bot.get_channel(channel_id)
+
+    try:
+        async for message in channel.history(limit=5):  # Adjust limit as necessary
+            if message.author == bot.user:
+                await message.delete()
+                break
+
+    except AttributeError:
+        return "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)"
+
 
 class Start(commands.Cog):
     def __init__(self, bot) -> None:
@@ -21,134 +49,14 @@ class Start(commands.Cog):
     @has_host_role()
     async def command(self, ctx, number: int, team_size: int = 1, multiple_tracks: int = 0,
                       speed_task: int = 0, year: int = None, deadline: int = None):
-
         await ctx.defer()
-
-        # auto set year
-        if not year:
-            year = date.today().year
-
-        if await is_task_currently_running() is None:
-            async with get_session() as session:
-
-                #########################################
-                # Cases where a task cannot be started
-                #########################################
-                if deadline is not None:
-                    # Prevent a task from creating if deadline is in the past
-                    if deadline < int(time.time()):
-                        return await ctx.send("This deadline is in the past! Retry again.")
-
-                    else:  # if deadline is valid, round it up to nearest minute
-                        deadline = math.ceil(deadline / 60) * 60
-
-                # Don't start speed task if no description is set
-                if speed_task == 1:
-                    async with get_session() as session:
-                        query = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.guild_id == ctx.guild.id)
-                        task_desc = (await session.scalars(query)).first()
-
-                        if task_desc is None:
-                            return await ctx.send("Please set a speed task description with `$speed-task-desc`!")
-
-                    if deadline is None:
-                        return await ctx.send("Speed tasks require a general deadline in order to function properly. Please set one (with a UNIX timestamp).")
-
-                #########################################
-                #
-                #########################################
-
-
-
-                # Insert task in database. Non speed task case (difference is the is-released parameter)
-                if speed_task == 0:
-                    await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
-                                                               multiple_tracks=multiple_tracks, speed_task=speed_task,
-                                                               deadline=deadline, is_released=1))
-
-
-                # Insert task in database. Speed task case
-                else:
-                    await session.execute(insert(Tasks).values(task=number, year=year, is_active=1, team_size=team_size,
-                                                               multiple_tracks=multiple_tracks, speed_task=speed_task,
-                                                               deadline=deadline, is_released=0))
-
-                    # If a speed task and there is no default task duration set, set it to 4h.
-                    query = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == ctx.guild.id)
-                    task_duration = (await session.scalars(query)).first()
-
-                    if task_duration is None:
-                        stmt = insert(SpeedTaskLength).values(guild_id=ctx.message.guild.id, time=4.0, comp=DEFAULT)
-                        await session.execute(stmt)
-                        await session.commit()
-
-
-                    # Find if the speed task reminders were set
-                    result = await session.execute(
-                        select(SpeedTaskReminders).where(SpeedTaskReminders.guild_id == ctx.guild.id))
-                    reminders = result.scalar_one_or_none()
-
-                    # Check if all reminder columns are None, if not, set default reminders
-                    if not reminders:
-
-                        # get task duration
-                        query2 = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == ctx.guild.id)
-                        task_duration = (await session.scalars(query2)).first()
-
-                        new_task_reminder = SpeedTaskReminders(
-                            comp=DEFAULT,
-                            reminder1=(task_duration * 60) * 0.5,
-                            reminder2=(task_duration * 60) * 0.25,
-                            reminder3=10,
-                            reminder4=None,
-                            guild_id=ctx.guild.id
-                        )
-                        session.add(new_task_reminder)
-
-                        # Commit changes to the database
-                        await session.commit()
-
-
-                # Clear submissions from previous task, as well as potential teams, and speed task table
-
-                await session.execute(delete(Submissions))
-                await session.execute(delete(Teams))
-                await session.execute(delete(SpeedTask))
-
-                await session.commit()
-
-                # Also clear submitter roles
-                submitter_role = await get_submitter_role(DEFAULT)
-                server = self.bot.get_guild(ctx.guild.id)
-
-                role = server.get_role(submitter_role)
-
-                for member in role.members:
-                    try:
-                        await member.remove_roles(role)
-                    except discord.Forbidden:
-                        print(
-                            f"Failed to remove role {role.name} from {member.display_name} due to insufficient permissions.")
-                    except discord.HTTPException as e:
-                        print(f"Failed to remove role {role.name} from {member.display_name} due to an error: {e}")
-
-
-
+        result = await start_task(number, team_size, multiple_tracks,
+                                  speed_task, year, deadline, ctx.guild.id, ctx.message.guild.id)
+        if result is True:
             # Delete previous "Current submissions" message in submission channel
-            channel_id = await get_submission_channel(DEFAULT)
-            channel = self.bot.get_channel(channel_id)
-
-            try:
-                async for message in channel.history(limit=5):  # Adjust limit as necessary
-                    if message.author == self.bot.user:
-                        await message.delete()
-                        break
-
-            except AttributeError:
-                await ctx.send(
-                    "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")
-
-
+            # Only not none if there is an error in doing this
+            if await delete_previous_current_submissions(self.bot, ctx.guild.id) is not None:
+                return await ctx.send(await delete_previous_current_submissions(self.bot, ctx.guild.id))
 
             # Successful message to send:
             if deadline is not None:
@@ -156,14 +64,10 @@ class Start(commands.Cog):
             else:
                 await ctx.send(f"Successfully started **Task {number} - {year}**!")
 
+            # Remove the submitter role from all members
+            await remove_submitter_role(self.bot, ctx.guild.id, ctx.author.id)
+        return None
 
-        else:
-            # if a task is already ongoing...
-            await ctx.send(f"A task is already ongoing.\nPlease use `/end-task` to end the current task.")
-            return
-        
-        
-        
         ######################
         #### TEAMS SYSTEM ####
         ######################

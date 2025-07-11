@@ -9,7 +9,8 @@ from api.db_classes import Submissions, get_session
 from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
 from api.submissions import first_time_submission, generate_submission_list, post_submission_list, \
     get_display_name, get_submission_channel, add_competitor_if_new
-from api.utils import is_task_currently_running, readable_to_float, has_host_role
+from api.task_handling import is_task_currently_running
+from api.utils import readable_to_float, has_host_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert
 
 from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTask, get_session
-from api.task_handling import has_requested_already, get_end_time
-from api.utils import is_task_currently_running, get_tasks_channel
+from api.task_handling import has_requested_already, get_end_time, is_task_currently_running
+from api.utils import get_tasks_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
