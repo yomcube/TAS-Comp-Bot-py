@@ -5,11 +5,12 @@ from urllib.parse import urlparse
 import aiohttp
 import discord
 from discord.ext import commands
+from discord.ext.commands import Greedy
 from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel
+    AnnouncementsChannel, SpeedTaskReminders
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -183,8 +184,37 @@ async def get_leader(id):
         leader = result.scalars().first()
         return leader
 
+async def set_speed_task_reminders(reminders: Greedy[int], guild_id: int, comp_name: str) -> None:
+    if len(reminders) > 4:
+        raise ValueError("You can't set more than 4 reminders.")
+    # Prepare the reminders, filling with None if fewer than 4
+    reminders_filled = reminders + [None] * (4 - len(reminders))
+    async with get_session() as session:
+        stmt = select(SpeedTaskReminders).where(SpeedTaskReminders.guild_id == guild_id)
+        result = await session.execute(stmt)
+        existing_reminder = result.scalar_one_or_none()
 
+        if existing_reminder:
+            # Update the existing row
+            existing_reminder.comp = comp_name
+            existing_reminder.reminder1 = reminders_filled[0]
+            existing_reminder.reminder2 = reminders_filled[1]
+            existing_reminder.reminder3 = reminders_filled[2]
+            existing_reminder.reminder4 = reminders_filled[3]
+        else:
+            # If no existing row is found, create a new one
+            new_task_reminder = SpeedTaskReminders(
+                comp=comp_name,
+                reminder1=reminders_filled[0],
+                reminder2=reminders_filled[1],
+                reminder3=reminders_filled[2],
+                reminder4=reminders_filled[3],
+                guild_id=guild_id
+            )
+            session.add(new_task_reminder)
 
+        # Commit changes to the database
+        await session.commit()
 
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))
