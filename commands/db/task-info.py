@@ -28,7 +28,7 @@ class TaskInfo(commands.Cog):
         if deadline_timestamp is not None:
             deadline = f"<t:{deadline_timestamp}:f> (<t:{deadline_timestamp}:R>)"
         else:
-            deadline = "Deadline has not been set by the host. See task channel."
+            deadline = "The host has not set the deadline. See task channel."
 
         submissions = await count_submissions()
 
@@ -52,8 +52,7 @@ class TaskInfo(commands.Cog):
         embed.set_footer(text="TAS Competition Info", icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
 
         await ctx.send(embed=embed)
-
-
+        return None
 
 
 async def setup(bot):

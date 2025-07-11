@@ -20,6 +20,17 @@ async def is_task_currently_running():
                                         .where(Tasks.is_active == 1))).first()
         return active
 
+async def cancel_speed_task(competitor_id: int = None):
+    # Cancel the person's task
+    async with get_session() as session:
+        stmt = (
+            update(SpeedTask)
+            .where(SpeedTask.user_id == competitor_id)
+            .values(active=0)
+        )
+
+        await session.execute(stmt)
+        await session.commit()
 
 async def has_requested_already(user_id):
     async with get_session() as session:

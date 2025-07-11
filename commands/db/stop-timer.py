@@ -4,10 +4,10 @@ import discord
 import shared
 from discord.ext import commands
 from dotenv import load_dotenv
-from sqlalchemy import update, select
+from sqlalchemy import select
 
-from api.db_classes import SpeedTask, get_session, Submissions
-from api.task_handling import is_time_over, is_task_currently_running
+from api.db_classes import get_session, Submissions
+from api.task_handling import is_time_over, is_task_currently_running, cancel_speed_task
 from api.utils import get_host_role, get_submitter_role
 from commands.db.requesttask import has_requested_already
 
@@ -45,6 +45,38 @@ class ConfirmView(discord.ui.View):
         await self.disable_all_buttons()
         await interaction.response.edit_message(view=self)
         self.stop()
+
+
+async def check_and_assign_role(bot, command_author, competitor):
+    # Check if competitor has submitted. If yes, give him is submitted role
+    async with get_session() as session:
+        query = select(Submissions.user_id).where(Submissions.user_id == competitor)
+        result = (await session.execute(query)).first()
+
+    if result:
+        # Give competitor his submitted role
+        guild_id = shared.main_guild.id
+
+        if guild_id is None:
+            print("Guild not detected yet.")
+            return
+
+        submitter_role = await get_submitter_role(DEFAULT)
+
+        # Fetch the member from the detected guild
+        server = bot.get_guild(guild_id)
+        member = server.get_member(competitor)
+
+        if member:
+            role = server.get_role(submitter_role)
+            if role:
+                if role not in member.roles:
+                    await member.add_roles(role)
+                    print(f"Role {role.name} has been assigned to {member.display_name}.")
+            else:
+                print(f"Role with ID {submitter_role} not found in this server.")
+        else:
+            print(f"User with ID {competitor} not found in this server.")
 
 
 class StopTimer(commands.Cog):
@@ -111,50 +143,16 @@ class StopTimer(commands.Cog):
 
         # Cancel the person's task
         if cancelling:
-            async with get_session() as session:
-                stmt = (
-                    update(SpeedTask)
-                    .where(SpeedTask.user_id == competitor)
-                    .values(active=0)
-                )
+            await cancel_speed_task(competitor)
 
-                await session.execute(stmt)
-                await session.commit()
+            # Check if competitor has submitted. If yes, give him is submitted role
+            await check_and_assign_role(self.bot, command_author, competitor)
 
             # If we're cancelling someone else's task, DM them.
             if competitor != command_author.id:
-                await self.bot.get_user(competitor).send(f"Your timer has been ended early by <@{command_author.id}>. Thank you for competing!")
-
-            # Check if competitor has submitted. If yes, give him is submitted role
-            async with get_session() as session:
-                query = select(Submissions.user_id).where(Submissions.user_id == competitor)
-                result = (await session.execute(query)).first()
-
-            if result:
-                # Give competitor his submitted role
-                guild_id = shared.main_guild.id
-
-                if guild_id is None:
-                    print("Guild not detected yet.")
-                    return
-
-                submitter_role = await get_submitter_role(DEFAULT)
-
-                # Fetch the member from the detected guild
-                server = self.bot.get_guild(guild_id)
-                member = server.get_member(competitor)
-
-                if member:
-                    role = server.get_role(submitter_role)
-                    if role:
-                        if role not in member.roles:
-                            await member.add_roles(role)
-                            print(f"Role {role.name} has been assigned to {member.display_name}.")
-                    else:
-                        print(f"Role with ID {submitter_role} not found in this server.")
-                else:
-                    print(f"User with ID {competitor} not found in this server.")
-
+                await self.bot.get_user(competitor).send(
+                    f"Your timer has been ended early by <@{command_author.id}>. Thank you for competing!")
+        return None
 
 
 async def setup(bot) -> None:

@@ -1,5 +1,5 @@
 from discord.ext import commands
-import discord
+
 
 class Clear(commands.Cog):
     def __init__(self, bot) -> None:
