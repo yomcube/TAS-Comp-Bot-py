@@ -21,10 +21,10 @@ async def is_task_currently_running():
         return active
 
 
-async def has_requested_already(id):
+async def has_requested_already(user_id):
     async with get_session() as session:
         result = (await session.execute(select(SpeedTask)
-                                        .where(SpeedTask.user_id == id))).first()
+                                        .where(SpeedTask.user_id == user_id))).first()
         return result
 
 
@@ -52,7 +52,7 @@ async def get_end_time(task_duration):
 
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                         speed_task: int = 0, year: int = None, deadline: int = None,
-                        guild_id: int = None, message_guild_id: int = None) -> str | True:
+                        guild_id: int = None, message_guild_id: int = None) -> str | bool:
     # auto set year
     if not year:
         year = date.today().year

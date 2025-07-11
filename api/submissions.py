@@ -229,7 +229,7 @@ async def generate_submission_list(self):
     return await message_to_edit.edit(content=formatted_submissions)
 
 
-async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> str | True:
+async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> str | bool:
     current_task = await is_task_currently_running()
 
     # retrieving lap time, to estimate submission time
