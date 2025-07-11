@@ -55,8 +55,8 @@ class Start(commands.Cog):
         if result is True:
             # Delete previous "Current submissions" message in submission channel
             # Only not none if there is an error in doing this
-            if await delete_previous_current_submissions(self.bot, ctx.guild.id) is not None:
-                return await ctx.send(await delete_previous_current_submissions(self.bot, ctx.guild.id))
+            if await delete_previous_current_submissions(self.bot) is not None:
+                return await ctx.send(await delete_previous_current_submissions(self.bot))
 
             # Successful message to send:
             if deadline is not None:
@@ -65,7 +65,7 @@ class Start(commands.Cog):
                 await ctx.send(f"Successfully started **Task {number} - {year}**!")
 
             # Remove the submitter role from all members
-            await remove_submitter_role(self.bot, ctx.guild.id, ctx.author.id)
+            await remove_submitter_role(self.bot, ctx.guild.id)
         return None
 
         ######################

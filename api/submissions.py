@@ -3,12 +3,13 @@ import os
 import discord
 import shared
 from dotenv import load_dotenv
-from sqlalchemy import insert, select, or_
+from sqlalchemy import insert, select, or_, update
 
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from api.dm_handlers import handlers_dict, init_dm_handlers
+from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
-    is_task_currently_running
+    is_task_currently_running, readable_to_float
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -59,8 +60,6 @@ async def get_seeking_channel(comp):
             print(f"No seeking channel found for '{comp}'.")
             return None
         return channel[0]
-
-
 
 
 async def first_time_submission(user_id):
@@ -230,6 +229,54 @@ async def generate_submission_list(self):
     return await message_to_edit.edit(content=formatted_submissions)
 
 
+async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> str | True:
+    current_task = await is_task_currently_running()
+
+    # retrieving lap time, to estimate submission time
+    rkg_data = file_data
+
+    try:
+        rkg = bytearray(rkg_data)
+        if rkg[:4] == b'RKGD':
+            lap_times = get_lap_time(rkg)
+
+            # float time to upload to db
+            time = readable_to_float(lap_times[0])  # For most (but not all) mkw single-track tasks, the first
+            # lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
+
+            character = get_character(rkg)
+            vehicle = get_vehicle(rkg)
+
+        else:
+            time = 0
+            character = None
+            vehicle = None
+            return "Invalid RKG file format"
+
+    except UnboundLocalError:
+        # This exception catches blank rkg files
+        time = 0
+        character = None
+        vehicle = None
+        return "Nice blank rkg there"
+
+    # If it's new competitor, add to userbase first
+    await add_competitor_if_new(user_id, user_name, user_dn)
+
+    async with get_session() as session:
+        # Check if user has already submitted
+        if await first_time_submission(user_id):
+            query = insert(Submissions).values(task=current_task[0], name=user_name, user_id=user_id, url=url,
+                                               time=time,
+                                               dq=0, dq_reason='', character=character, vehicle=vehicle)
+            await session.execute(query)
+            await session.commit()
+        else:
+            query = (update(Submissions).values(url=url, time=time, character=character, vehicle=vehicle)
+                     .where(Submissions.user_id == user_id))
+            await session.execute(query)
+            await session.commit()
+    return True
 
 async def handle_submissions(message, self):
     author = message.author
