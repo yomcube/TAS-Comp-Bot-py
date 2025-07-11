@@ -1,14 +1,15 @@
+import os
+
 import discord
 import shared
 from discord.ext import commands
-import os
 from dotenv import load_dotenv
 from sqlalchemy import update, select
 
 from api.db_classes import SpeedTask, get_session, Submissions
-from api.submissions import first_time_submission
+from api.task_handling import is_time_over
 from api.utils import is_task_currently_running, get_host_role, get_submitter_role
-from commands.db.requesttask import has_requested_already, is_time_over
+from commands.db.requesttask import has_requested_already
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

@@ -1,9 +1,11 @@
-from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, is_task_currently_running
-from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
-from commands.db.requesttask import has_requested_already, is_time_over
-from api.db_classes import get_session, Submissions, Teams, Userbase
 from sqlalchemy import insert, update, select
+
+from api.db_classes import get_session, Submissions, Userbase
+from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
+from api.submissions import handle_submissions, first_time_submission
+from api.task_handling import is_time_over
+from api.utils import readable_to_float, get_team_size, is_in_team, get_leader, is_task_currently_running
+from commands.db.requesttask import has_requested_already
 
 
 async def handle_mkwii_files(message, attachments, file_dict, self):

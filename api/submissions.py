@@ -1,11 +1,14 @@
-import discord
 import os
+
+import discord
 import shared
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from sqlalchemy import insert, select, or_
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
+
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from api.dm_handlers import handlers_dict, init_dm_handlers
+from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
+    is_task_currently_running
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -69,12 +72,15 @@ async def first_time_submission(user_id):
         return not result
 
 
-async def new_competitor(user_id):
-    """Checks if a competitor has EVER submitted (present and past tasks)."""
+async def add_competitor_if_new(user_id, user_name, user_dn):
+    """Adds a new competitor to the Userbase if they are not already present."""
     async with get_session() as session:
         query = select(Userbase.user_id).where(Userbase.user_id == user_id)
         result = (await session.execute(query)).first()
-        return not result
+        if not result:
+            # If the user_id is not found, add them to the Userbase
+            await session.execute(insert(Userbase).values(user_id=user_id, user=user_name, display_name=user_dn))
+            await session.commit()
 
 
 async def get_display_name(user_id):
@@ -237,12 +243,8 @@ async def handle_submissions(message, self):
     submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
-    # Checking if submitter has ever participated before
-    if await new_competitor(author_id):
-        # adding him to the user database.
-        async with get_session() as session:
-            await session.execute(insert(Userbase).values(user_id=author_id, user=author_name, display_name=author_dn))
-            await session.commit()
+    # Add competitor to the Userbase if they are not already present
+    await add_competitor_if_new(author_id, author_name, author_dn)
 
     if not channel:
         print("Could not find the channel.")

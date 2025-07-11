@@ -1,52 +1,20 @@
 import os
+
 import discord
 import shared
-from discord.ext import commands, tasks
-from api.utils import is_task_currently_running, get_submitter_role, get_announcement_channel, get_tasks_channel
-from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, SpeedTask, get_session, ReminderPings
-from sqlalchemy import select, insert, update
+from discord.ext import commands
 from dotenv import load_dotenv
-import math
-import time
-import asyncio
+from sqlalchemy import select, insert
+
+from api.db_classes import SpeedTaskDesc, SpeedTaskLength, SpeedTask, get_session
+from api.task_handling import has_requested_already, get_end_time
+from api.utils import is_task_currently_running, get_tasks_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
 # Credits to original sm64 / mkw tas comp bot (by Xander) for messages
-
-
-async def has_requested_already(id):
-    async with get_session() as session:
-        result = (await session.execute(select(SpeedTask)
-                                        .where(SpeedTask.user_id == id))).first()
-        return result
-
-
-async def is_time_over(id):
-    async with get_session() as session:
-        result = (await session.execute(select(SpeedTask.active)
-                                        .where(SpeedTask.user_id == id))).first()
-
-        if result is None: # this happens when they are doing the task after it has been revealed; towards the end
-            return False
-
-
-        return int(result[0]) == 0
-
-
-async def get_end_time(task_duration):
-    """Returns the UNIX timestamp of the user's end of task time"""
-    duration_seconds = task_duration * 3600
-    end_time = time.time() + duration_seconds
-
-    rounded_time = round(end_time)
-
-    rounded_time_to_minute = math.ceil(rounded_time / 60) * 60
-
-    return rounded_time_to_minute
-
 
 class Requesttask(commands.Cog):
     def __init__(self, bot) -> None:

@@ -1,15 +1,15 @@
 import os
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 from dotenv import load_dotenv
-
-from api.utils import is_task_currently_running, readable_to_float, has_host_role
-from api.submissions import first_time_submission, generate_submission_list, new_competitor, post_submission_list, \
-    get_display_name, get_submission_channel
-from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
-from api.db_classes import Submissions, get_session, Userbase
 from sqlalchemy import insert, update
+
+from api.db_classes import Submissions, get_session
+from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
+from api.submissions import first_time_submission, generate_submission_list, post_submission_list, \
+    get_display_name, get_submission_channel, add_competitor_if_new
+from api.utils import is_task_currently_running, readable_to_float, has_host_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -29,7 +29,6 @@ class Submit(commands.Cog):
         url = file.url
 
         # retrieving lap time, to estimate submission time
-
         rkg_data = await file.read()
 
         try:
@@ -59,16 +58,10 @@ class Submit(commands.Cog):
             await ctx.reply("Nice blank rkg there")
             return
 
+        # If it's new competitor, add to userbase first
+        await add_competitor_if_new(user.id, user.name, user.display_name)
+
         async with get_session() as session:
-            # If it's new competitor, add to userbase first
-            if await new_competitor(user.id):
-                await session.execute(
-                    insert(Userbase).values(user_id=user.id, user=user.name, display_name=user.display_name))
-
-                await session.commit()
-
-
-
             # Check if user has already submitted
             if await first_time_submission(user.id):
                 query = insert(Submissions).values(task=current_task[0], name=user.name, user_id=user.id, url=url, time=time,
