@@ -4,7 +4,7 @@ import time
 from datetime import date
 
 from dotenv import load_dotenv
-from sqlalchemy import select, insert, delete
+from sqlalchemy import select, insert, delete, update
 
 from api.db_classes import SpeedTask, get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, \
     Submissions, Teams
@@ -146,3 +146,24 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
         # if a task is already ongoing...
         return "A task is already ongoing.\nPlease use `/end-task` to end the current task."
 
+async def end_task() -> str:
+    async with get_session() as session:
+        currently_running = (await session.execute(select(Tasks.task, Tasks.year).where(Tasks.is_active == 1))).first()
+
+    # Is a task running?
+    if currently_running:
+        async with get_session() as session:
+
+            number = currently_running.task
+            year = currently_running.year
+            await session.execute(update(Tasks).values(is_active=0).where(Tasks.is_active == 1))
+
+            # Delete the task -- we don't really need to keep, and delete speed task desc
+            await session.execute(delete(Tasks).where(Tasks.is_active == 0))
+            await session.execute(delete(SpeedTaskDesc))
+
+            await session.commit()
+
+        return f"Successfully ended **Task {number} - {year}**!"
+    else:
+        return "There is already no ongoing task!"
