@@ -78,6 +78,7 @@ async def set_host_role(role_id: int, name: str, guild_id: int, comp: str = DEFA
 
         await session.commit()
 
+
 async def get_submitter_role(guild_id):
     default = DEFAULT
     # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
@@ -89,6 +90,21 @@ async def get_submitter_role(guild_id):
         else:
             return None
 
+
+async def set_submitter_role(role_id: int, name: str, guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
+
+        # Check if submitter_role doesn't exist yet for the comp
+        if submitter_role is None:
+            stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=guild_id))
+            await session.execute(stmt)
+        else:
+
+            stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
+            await session.execute(stmt)
+
+        await session.commit()
 
 async def get_tasks_channel(comp):
     async with get_session() as session:
