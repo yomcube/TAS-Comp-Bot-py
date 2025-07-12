@@ -142,6 +142,22 @@ async def get_announcement_channel(comp):
             return None
         return channel[0]
 
+async def set_announcements_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
+    async with get_session() as session:
+        query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(AnnouncementsChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(AnnouncementsChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
 async def set_logs_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
     async with get_session() as session:
         query = select(LogChannel.channel_id).where(LogChannel.guild_id == guild_id)

@@ -1,13 +1,13 @@
 import os
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from api.db_classes import get_session, AnnouncementsChannel
-from sqlalchemy import select, insert, update
+
+from api.utils import set_announcements_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
-
 
 class SetAnnouncementschannel(commands.Cog):
     def __init__(self, bot) -> None:
@@ -17,21 +17,7 @@ class SetAnnouncementschannel(commands.Cog):
                              description="Set the channel where announcements are posted (used for speed tasks)", with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
-        async with get_session() as session:
-            query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.guild_id == ctx.guild.id)
-            result = (await session.execute(query)).first()
-
-            if result is None:
-                stmt = insert(AnnouncementsChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-                await session.execute(stmt)
-            elif channel.id == result[0]:
-                pass
-            else:
-                stmt = update(AnnouncementsChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-                await session.execute(stmt)
-
-            await session.commit()
-
+        await set_announcements_channel(channel.id, ctx.guild.id, ctx.message.guild.id, comp)
         await ctx.send(f"The announcements channel has been set! {channel.mention}")
 
 
