@@ -1,9 +1,10 @@
 import os
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from api.db_classes import get_session, LogChannel
-from sqlalchemy import select, insert, update
+
+from api.utils import set_logs_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -16,22 +17,9 @@ class Setlogschannel(commands.Cog):
     @commands.hybrid_command(name="set-logs-channel", aliases=['slc'],
                              description="Set the channel where DMs with the bot are logged", with_app_command=True)
     @commands.has_permissions(administrator=True)
-    async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
-        async with get_session() as session:
-            query = select(LogChannel.channel_id).where(LogChannel.guild_id == ctx.guild.id)
-            result = (await session.execute(query)).first()
+    async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT) -> None:
 
-            if result is None:
-                stmt = insert(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-                await session.execute(stmt)
-            elif channel.id == result[0]:
-                pass
-            else:
-                stmt = update(LogChannel).values(guild_id=ctx.message.guild.id, channel_id=channel.id, comp=comp)
-                await session.execute(stmt)
-
-            await session.commit()
-
+        await set_logs_channel(channel.id, ctx.message.guild.id, comp)
         await ctx.send(f"The log channel has been set! {channel.mention}")
 
 

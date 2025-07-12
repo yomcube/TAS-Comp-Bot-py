@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel, SpeedTaskReminders
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -86,6 +86,7 @@ async def get_tasks_channel(comp):
             return None
         return channel[0]
 
+
 async def get_announcement_channel(comp):
     async with get_session() as session:
         query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.comp == comp)
@@ -96,6 +97,21 @@ async def get_announcement_channel(comp):
             return None
         return channel[0]
 
+async def set_logs_channel(channel_id: int, guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        query = select(LogChannel.channel_id).where(LogChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(LogChannel).values(guild_id=guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(LogChannel).values(guild_id=guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
 
 def has_host_role():
     async def predicate(ctx):
