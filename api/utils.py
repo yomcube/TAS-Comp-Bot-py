@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel, SpeedTaskReminders, LogChannel
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -100,6 +100,21 @@ async def get_tasks_channel(comp):
             return None
         return channel[0]
 
+async def set_seek_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        query = select(SeekingChannel.channel_id).where(SeekingChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(SeekingChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(SeekingChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
 
 async def get_announcement_channel(comp):
     async with get_session() as session:
