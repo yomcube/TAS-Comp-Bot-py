@@ -2,6 +2,8 @@ from discord.ext import commands
 import sys
 import traceback
 
+from api.errors import AppError
+
 
 class Errors(commands.Cog):
     def __init__(self, bot):
@@ -36,6 +38,8 @@ class Errors(commands.Cog):
                 return await ctx.send("You may not use this command!")
             case _ if isinstance(error, commands.PrivateMessageOnly):
                 return await ctx.send("This command is only usable in DMs with the bot.")
+            case _ if isinstance(error, AppError):
+                return await ctx.send(str(error))
         print(f'Ignoring exception in command {ctx.command}:', file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 

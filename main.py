@@ -78,10 +78,10 @@ commands_ext = ['commands.db.host.start-task',
                 'commands.utilities.ping',
                 'commands.utilities.bug-report',
                 'commands.sm64.encode', ]
-events_ext = ['events.on_ready',
-              'events.on_message',
-              'events.errors',
-              'events.command_completion', ]
+events_ext = ['discord_ext.on_ready',
+              'discord_ext.on_message',
+              'discord_ext.discord_errors',
+              'discord_ext.command_completion',]
 
 
 class Bot(commands.Bot):

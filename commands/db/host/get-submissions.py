@@ -5,7 +5,6 @@ from discord.ext import commands
 
 from api.submissions import get_submissions
 from api.utils import has_host_role
-from discord_ext.discord_wrappers import command_handler
 
 class Get(commands.Cog):
     def __init__(self, bot) -> None:
@@ -14,7 +13,6 @@ class Get(commands.Cog):
     @commands.hybrid_command(name="get-submissions", description="Get submissions for current task",
                              with_app_command=True)
     @has_host_role()
-    @command_handler()
     async def command(self, ctx):
         msg_limit = 2000
         buffer = 50  # Small buffer to prevent exceeding the limit
