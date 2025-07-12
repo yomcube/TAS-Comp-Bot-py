@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from api.errors import NoSubmissionChannelError
 from api.submissions import get_submission_channel
 from api.task_handling import start_task
 from api.utils import has_host_role, get_submitter_role
@@ -26,7 +27,7 @@ async def remove_submitter_role(bot, guild_id: int) -> None:
         except discord.HTTPException as e:
             print(f"Failed to remove role {role.name} from {member.display_name} due to an error: {e}")
 
-async def delete_previous_current_submissions(bot) -> None | str:
+async def delete_previous_current_submissions(bot) -> None:
     # Delete previous "Current submissions" message in submission channel
     channel_id = await get_submission_channel(DEFAULT)
     channel = bot.get_channel(channel_id)
@@ -38,7 +39,7 @@ async def delete_previous_current_submissions(bot) -> None | str:
                 break
 
     except AttributeError:
-        return "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)"
+        raise NoSubmissionChannelError("Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")
 
 
 class Start(commands.Cog):
@@ -48,15 +49,13 @@ class Start(commands.Cog):
     @commands.hybrid_command(name="start-task", description="Start a task", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, number: int, team_size: int = 1, multiple_tracks: int = 0,
-                      speed_task: int = 0, year: int = None, deadline: int = None):
+                      speed_task: int = 0, year: int = None, deadline: int = None) -> None:
         await ctx.defer()
         result = await start_task(number, team_size, multiple_tracks,
                                   speed_task, year, deadline, ctx.guild.id, ctx.message.guild.id)
-        if result is True:
+        if result:
             # Delete previous "Current submissions" message in submission channel
-            # Only not none if there is an error in doing this
-            if await delete_previous_current_submissions(self.bot) is not None:
-                return await ctx.send(await delete_previous_current_submissions(self.bot))
+            await delete_previous_current_submissions(self.bot)
 
             # Successful message to send:
             if deadline is not None:
@@ -66,7 +65,6 @@ class Start(commands.Cog):
 
             # Remove the submitter role from all members
             await remove_submitter_role(self.bot, ctx.guild.id)
-        return None
 
         ######################
         #### TEAMS SYSTEM ####

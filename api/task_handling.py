@@ -8,7 +8,7 @@ from sqlalchemy import select, insert, delete, update
 
 from api.db_classes import SpeedTask, get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, \
     Submissions, Teams
-from api.errors import NoActiveTaskError
+from api.errors import NoActiveTaskError, ActiveTaskError, NoDeadlineError, DeadlineInPastError, NoTaskDescriptionError
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -64,7 +64,7 @@ async def get_end_time(task_duration):
 
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                         speed_task: int = 0, year: int = None, deadline: int = None,
-                        guild_id: int = None, message_guild_id: int = None) -> str | bool:
+                        guild_id: int = None, message_guild_id: int = None) -> bool:
     # auto set year
     if not year:
         year = date.today().year
@@ -78,7 +78,7 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
             if deadline is not None:
                 # Prevent a task from creating if deadline is in the past
                 if deadline < int(time.time()):
-                    return "This deadline is in the past! Retry again."
+                    raise DeadlineInPastError("This deadline is in the past! Retry again.")
 
                 else:  # if deadline is valid, round it up to nearest minute
                     deadline = math.ceil(deadline / 60) * 60
@@ -90,11 +90,10 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                     task_desc = (await session.scalars(query)).first()
 
                     if task_desc is None:
-                        return "Please set a speed task description with `$speed-task-desc`!"
+                        raise NoTaskDescriptionError("Please set a speed task description with `$speed-task-desc`!")
 
                 if deadline is None:
-                    return ("Speed tasks require a general deadline in order to function properly."
-                            " Please set one (with a UNIX timestamp).")
+                    raise DeadlineInPastError("Speed tasks require a general deadline to function properly. Please set one (with a UNIX timestamp).")
 
             #########################################
             #
@@ -151,12 +150,12 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
             await session.execute(delete(Teams))
             await session.execute(delete(SpeedTask))
             await session.commit()
-        return True
 
+        return True
 
     else:
         # if a task is already ongoing...
-        return "A task is already ongoing.\nPlease use `/end-task` to end the current task."
+        raise ActiveTaskError("A task is already ongoing.\nPlease use `/end-task` to end the current task.")
 
 async def end_task() -> (int, int):
     async with get_session() as session:
