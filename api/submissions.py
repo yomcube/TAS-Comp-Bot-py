@@ -31,6 +31,21 @@ async def get_submission_channel(comp):
             return None
         return channel[0]
 
+async def set_submission_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+        if result is None:
+            stmt = insert(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
 
 async def get_submission_channel_guild(channel_id):
     async with get_session() as session:

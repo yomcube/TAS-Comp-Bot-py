@@ -4,7 +4,6 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from api.db_classes import get_session
 from api.utils import set_host_role
 
 load_dotenv()
