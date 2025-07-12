@@ -8,6 +8,7 @@ from sqlalchemy import select, insert, delete, update
 
 from api.db_classes import SpeedTask, get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, \
     Submissions, Teams
+from api.errors import NoActiveTaskError
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -157,7 +158,7 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
         # if a task is already ongoing...
         return "A task is already ongoing.\nPlease use `/end-task` to end the current task."
 
-async def end_task() -> str:
+async def end_task() -> (int, int):
     async with get_session() as session:
         currently_running = (await session.execute(select(Tasks.task, Tasks.year).where(Tasks.is_active == 1))).first()
 
@@ -175,6 +176,6 @@ async def end_task() -> str:
 
             await session.commit()
 
-        return f"Successfully ended **Task {number} - {year}**!"
+        return number, year
     else:
-        return "There is already no ongoing task!"
+        raise NoActiveTaskError("There's no active task to end. Please start a task first with `/start-task`.")

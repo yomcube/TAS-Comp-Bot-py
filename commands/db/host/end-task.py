@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from api.task_handling import end_task
 from api.utils import has_host_role
+from discord_ext.discord_wrappers import command_handler
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -15,10 +16,10 @@ class End(commands.Cog):
 
     @commands.hybrid_command(name="end-task", description="End current task", with_app_command=True)
     @has_host_role()
+    @command_handler()
     async def command(self, ctx):
-        message = await end_task()
-        await ctx.send(message)
-
+        task_num, task_year = await end_task()
+        await ctx.send(f"Successfully ended **Task {task_num} - {task_year}**!")
 
 
 async def setup(bot) -> None:
