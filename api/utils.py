@@ -63,7 +63,21 @@ async def get_host_role(guild_id):
         else:
             return None
         
-        
+async def set_host_role(role_id: int, name: str, guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        host_role = (await session.scalars(select(HostRole.comp).where(HostRole.comp == comp))).first()
+
+        # Check if host_role doesn't exist yet for the comp
+        if host_role is None:
+            stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=guild_id))
+            await session.execute(stmt)
+        else:
+
+            stmt = (update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp))
+            await session.execute(stmt)
+
+        await session.commit()
+
 async def get_submitter_role(guild_id):
     default = DEFAULT
     # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
