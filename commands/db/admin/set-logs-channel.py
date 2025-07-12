@@ -19,7 +19,7 @@ class Setlogschannel(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT) -> None:
 
-        await set_logs_channel(channel.id, ctx.message.guild.id, comp)
+        await set_logs_channel(channel.id, ctx.guild.id, ctx.message.guild.id, comp)
         await ctx.send(f"The log channel has been set! {channel.mention}")
 
 
