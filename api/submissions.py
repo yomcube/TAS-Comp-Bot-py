@@ -7,9 +7,10 @@ from sqlalchemy import insert, select, or_, update
 
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from api.dm_handlers import handlers_dict, init_dm_handlers
+from api.errors import SubmissionRetrievalError, NoActiveTaskError
 from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
-    is_task_currently_running, readable_to_float
+    is_task_currently_running, readable_to_float, float_to_readable
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -182,6 +183,55 @@ async def update_submission_list(last_message, id, name):
     new_content = (f"{last_message.content}\n{await count_submissions()}. {name}"
                     f" ||<@{id}>||")
     return await last_message.edit(content=new_content)
+
+async def get_submissions(msg_limit, buffer) -> (list, str):
+    # Get current task by taking random submission, and extracting task number
+    async with get_session() as session:
+        active_task = (await session.scalars(select(Submissions.task).limit(1))).first()
+
+    if active_task is None:
+        raise NoActiveTaskError("There is no active task. Please start a task first.")
+
+    # Get submissions from current task
+    async with get_session() as session:
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
+        total_submissions = len(submissions)
+    submissions_parts = []
+    current_part = ""
+    try:
+        for submission in submissions:
+            if await is_in_team(submission.user_id):
+                ids = await get_team_ids(submission.user_id)
+                members = await get_team_members(ids)
+                team_name = await get_team_name(submission.user_id)
+
+                # No ( ) if no team name
+                if team_name is None:
+                    name = " & ".join(members)
+                # Include team name and ( ) with members
+                else:
+                    name = f'{team_name} ({" & ".join(members)})'
+            else:
+                name = await get_display_name(submission.user_id)
+
+                submission_text = f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
+
+                # Check if adding this submission would exceed the message limit
+                if len(current_part) + len(submission_text) > (msg_limit - buffer):
+                    submissions_parts.append(current_part)  # Save the current part
+                    current_part = submission_text  # Start a new part
+                else:
+                    current_part += submission_text
+    except TypeError as e:
+        print(e)
+        raise SubmissionRetrievalError("Someone's submission could not be retrieved")
+
+    # Append the last part
+    if current_part:
+        submissions_parts.append(current_part)
+
+    header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {total_submissions})\n\n"
+    return submissions_parts, header
 
 
 async def generate_submission_list(self):
