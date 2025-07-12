@@ -30,3 +30,7 @@ class NoTaskDescriptionError(AppError):
 class NoSubmissionChannelError(AppError):
     """Raised when the submission channel is not set."""
     pass
+
+class InvalidRkgError(AppError):
+    """Raised when an invalid RKG is provided."""
+    pass

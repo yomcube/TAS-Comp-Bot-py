@@ -7,7 +7,7 @@ from sqlalchemy import insert, select, or_, update
 
 from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
 from api.dm_handlers import handlers_dict, init_dm_handlers
-from api.errors import SubmissionRetrievalError, NoActiveTaskError
+from api.errors import SubmissionRetrievalError, NoActiveTaskError, InvalidRkgError
 from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
     is_task_currently_running, readable_to_float, float_to_readable
@@ -195,7 +195,6 @@ async def get_submissions(msg_limit, buffer) -> (list, str):
     # Get submissions from current task
     async with get_session() as session:
         submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
-        total_submissions = len(submissions)
     submissions_parts = []
     current_part = ""
     try:
@@ -230,7 +229,7 @@ async def get_submissions(msg_limit, buffer) -> (list, str):
     if current_part:
         submissions_parts.append(current_part)
 
-    header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {total_submissions})\n\n"
+    header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {len(submissions)})\n\n"
     return submissions_parts, header
 
 
@@ -279,7 +278,7 @@ async def generate_submission_list(self):
     return await message_to_edit.edit(content=formatted_submissions)
 
 
-async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> str | bool:
+async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> bool:
     current_task = await is_task_currently_running()
 
     # retrieving lap time, to estimate submission time
@@ -301,14 +300,14 @@ async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, 
             time = 0
             character = None
             vehicle = None
-            return "Invalid RKG file format"
+            raise InvalidRkgError("Invalid RKG file format")
 
     except UnboundLocalError:
         # This exception catches blank rkg files
         time = 0
         character = None
         vehicle = None
-        return "Nice blank rkg there"
+        raise InvalidRkgError("Nice blank rkg there")
 
     # If it's new competitor, add to userbase first
     await add_competitor_if_new(user_id, user_name, user_dn)

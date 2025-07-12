@@ -27,7 +27,7 @@ class Submit(commands.Cog):
         # retrieving lap time, to estimate submission time
         rkg_data = await file.read()
 
-        if await submit_file(rkg_data, url, user.id, user.name, user.display_name) is True:
+        if await submit_file(rkg_data, url, user.id, user.name, user.display_name):
             # If the submission list is already generated (most cases)
             try:
                 await generate_submission_list(self)
