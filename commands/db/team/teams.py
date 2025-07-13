@@ -53,8 +53,5 @@ class TeamsCommand(commands.Cog):
 
         return await ctx.send(content)
 
-        return await ctx.send(content)
-
-
 async def setup(bot):
     await bot.add_cog(TeamsCommand(bot))

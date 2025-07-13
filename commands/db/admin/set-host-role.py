@@ -18,10 +18,7 @@ class Sethostrole(commands.Cog):
                              with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, role: discord.Role, comp: str = DEFAULT):
-        name = role.name
-        role_id = role.id
-        guild_id = ctx.guild.id
-        await set_host_role(role_id, name, guild_id, comp)
+        await set_host_role(role.id, role.name, ctx.guild.id, comp)
         await ctx.send(f"The current host role has been set! {role.mention}")
 
 

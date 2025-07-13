@@ -20,11 +20,11 @@ class DeleteSubmission(commands.Cog):
     @has_host_role()
     async def command(self, ctx, user: discord.Member):
         # delete the user's submission
-        if await delete_submission(user.id, user.display_name):
-            # Update submission list
-            await edit_submission_list(self)
+        await delete_submission(user.id, user.display_name)
+        # Update submission list
+        await edit_submission_list(self)
 
-            await ctx.send(f"{user.display_name}'s submission has been deleted.",
+        await ctx.send(f"{user.display_name}'s submission has been deleted.",
                            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 

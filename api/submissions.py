@@ -256,7 +256,7 @@ async def get_submissions(msg_limit, buffer) -> (list, str):
     header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {len(submissions)})\n\n"
     return submissions_parts, header
 
-async def delete_submission(user_id: int, user_dn: str) -> bool:
+async def delete_submission(user_id: int, user_dn: str):
     """Delete a submission by user ID."""
     async with get_session() as session:
         currently_running = (await session.execute(select(Tasks).where(Tasks.is_active == 1))).first()
@@ -276,7 +276,6 @@ async def delete_submission(user_id: int, user_dn: str) -> bool:
 
     # Re-arrange the indexes in the submission table so that they are no gaps between numbers
     await reorder_primary_keys()
-    return True
 
 async def generate_submission_list() -> str:
     """Generates a formatted list of current submissions for the active task."""
