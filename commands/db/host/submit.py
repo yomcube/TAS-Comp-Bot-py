@@ -4,9 +4,10 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from api.submissions import generate_submission_list, post_submission_list, \
+from api.submissions import post_submission_list, \
     get_display_name, get_submission_channel, submit_file
 from api.utils import has_host_role
+from discord_ext.discord_utils import edit_submission_list
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -30,7 +31,7 @@ class Submit(commands.Cog):
         if await submit_file(rkg_data, url, user.id, user.name, user.display_name):
             # If the submission list is already generated (most cases)
             try:
-                await generate_submission_list(self)
+                await edit_submission_list(self)
 
             # First submission of the task
             except UnboundLocalError:

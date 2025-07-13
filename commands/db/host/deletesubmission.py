@@ -1,11 +1,13 @@
+import os
+
 import discord
 from discord.ext import commands
-from api.utils import has_host_role
-from api.db_classes import Submissions, get_session, Tasks
-from api.submissions import get_submission_channel, get_display_name, generate_submission_list
-from sqlalchemy import select, delete
-import os
 from dotenv import load_dotenv
+from sqlalchemy import select, delete
+
+from api.db_classes import Submissions, get_session, Tasks
+from api.utils import has_host_role
+from discord_ext.discord_utils import edit_submission_list
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -13,7 +15,6 @@ DEFAULT = os.getenv('DEFAULT')
 
 async def reorder_primary_keys():
     async with get_session() as session:
-
         # Retrieve the submissions
         query = select(Submissions).order_by(Submissions.index)
         result = await session.execute(query)
@@ -24,6 +25,7 @@ async def reorder_primary_keys():
             submission.index = idx
 
         await session.commit()
+
 
 class DeleteSubmission(commands.Cog):
     def __init__(self, bot) -> None:
@@ -48,16 +50,14 @@ class DeleteSubmission(commands.Cog):
             await session.execute(delete(Submissions).where(Submissions.user_id == user.id))
             await session.commit()
 
-
         # Re-arrange the indexes in the submission table so that they are no gaps between numbers
         await reorder_primary_keys()
 
         # Update submission list
-        await generate_submission_list(self)
-
+        await edit_submission_list(self)
 
         await ctx.send(f"{user.display_name}'s submission has been deleted.",
-            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                       allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
 async def setup(bot) -> None:

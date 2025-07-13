@@ -31,6 +31,7 @@ async def get_submission_channel(comp):
             return None
         return channel[0]
 
+
 async def set_submission_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
     # TODO: detect which server you are in, so the comp argument is no longer needed
     async with get_session() as session:
@@ -46,6 +47,7 @@ async def set_submission_channel(channel_id: int, guild_id: int, message_guild_i
             await session.execute(stmt)
 
         await session.commit()
+
 
 async def get_submission_channel_guild(channel_id):
     async with get_session() as session:
@@ -104,6 +106,7 @@ async def get_display_name(user_id):
         result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
         return result
 
+
 async def get_team_name(user_id):
     """Returns the display name of the team a certain user ID is in."""
     async with get_session() as session:
@@ -113,6 +116,8 @@ async def get_team_name(user_id):
 
         result = (await session.execute(stmt)).first()
         return result[0] if result else None
+
+
 async def get_team_ids(id):
     """Takes list of IDs, and retrieves all the members of the team. Used for submission list"""
     async with get_session() as session:
@@ -146,6 +151,7 @@ async def count_submissions():
         query = select(Submissions)
         result = (await session.scalars(query)).fetchall()
         return len(result)
+
 
 async def post_submission_list(channel, id, name):
     # Case if user is in team
@@ -183,21 +189,23 @@ async def update_submission_list(last_message, id, name):
 
         # No ( ) if no team name
         if team_name == None:
-            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||")
+            new_content = (
+                f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||")
 
 
         # Case if they actually set a team name
         else:
-            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
-                       f" ||{mentions}||")
-
+            new_content = (
+                f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
+                f" ||{mentions}||")
 
         return await last_message.edit(content=new_content)
 
     # solo submission
     new_content = (f"{last_message.content}\n{await count_submissions()}. {name}"
-                    f" ||<@{id}>||")
+                   f" ||<@{id}>||")
     return await last_message.edit(content=new_content)
+
 
 async def get_submissions(msg_limit, buffer) -> (list, str):
     # Get current task by taking random submission, and extracting task number
@@ -248,18 +256,8 @@ async def get_submissions(msg_limit, buffer) -> (list, str):
     return submissions_parts, header
 
 
-async def generate_submission_list(self):
-    """ Edits the submission list in the submission channel.
-        Takes bot (self) as an argument -- so that the bot may retrieve the channel & message.
-    """
-    submission_channel = await get_submission_channel(DEFAULT)
-    channel = self.bot.get_channel(submission_channel)
-    async for message in channel.history(limit=3):
-        # Check if the message was sent by the bot
-        if message.author == self.bot.user:
-            message_to_edit = message
-
-
+async def generate_submission_list() -> str:
+    """Generates a formatted list of current submissions for the active task."""
     async with get_session() as session:
 
         active_task = (await session.scalars(select(Submissions.task))).first()
@@ -289,8 +287,7 @@ async def generate_submission_list(self):
                         f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
                     )
 
-
-    return await message_to_edit.edit(content=formatted_submissions)
+    return formatted_submissions
 
 
 async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> bool:
@@ -342,6 +339,7 @@ async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, 
             await session.commit()
     return True
 
+
 async def handle_submissions(message, self):
     author = message.author
     author_name = message.author.name
@@ -378,8 +376,7 @@ async def handle_submissions(message, self):
 
         # Add a new line only if it's a new user ID submitting
         if await first_time_submission(author_id):
-
-                await update_submission_list(last_message, author_id, author_display_name)
+            await update_submission_list(last_message, author_id, author_display_name)
 
 
     else:
@@ -389,7 +386,7 @@ async def handle_submissions(message, self):
     ##################################################################
     # Adding submitter role to submitters (if not speed task)
     ##################################################################
-    if not (await is_task_currently_running())[4]: # if not speed task
+    if not (await is_task_currently_running())[4]:  # if not speed task
 
         guild_id = shared.main_guild.id
 
@@ -426,8 +423,8 @@ async def handle_dms(message, self):
         attachments = message.attachments
         if channel:
             await channel.send(f"Message from {author_dn}: {message.content} " +
-                                " ".join([attachment.url for attachment in message.attachments if message.attachments]),
-                                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                               " ".join([attachment.url for attachment in message.attachments if message.attachments]),
+                               allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
         #########################
         # Recognizing submission
@@ -437,10 +434,11 @@ async def handle_dms(message, self):
             file_dict = get_file_types(attachments)
             try:
                 await handlers_dict[DEFAULT](message, attachments, file_dict, self)
-            
+
             except KeyError:
                 print(f"Could not find DM handler for '{DEFAULT}'.")
             except TimeoutError:
                 await channel.send("Could not process Files!")
+
 
 init_dm_handlers()
