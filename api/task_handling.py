@@ -103,6 +103,21 @@ async def set_speed_task_desc(desc: str, guild_id: int, message_guild_it: int, c
 
         await session.commit()
 
+async def set_speed_task_length(time: float, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+        if result is None:
+            stmt = insert(SpeedTaskLength).values(guild_id=message_guild_id, time=time, comp=comp)
+            await session.execute(stmt)
+
+        else:
+            stmt = update(SpeedTaskLength).values(guild_id=message_guild_id, time=time, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
 
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                      speed_task: int = 0, year: int = None, deadline: int = None,
