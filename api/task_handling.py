@@ -62,6 +62,28 @@ async def get_end_time(task_duration):
 
     return rounded_time_to_minute
 
+
+async def set_task_deadline(deadline: int) -> bool:
+    if deadline < int(time.time()):
+        raise DeadlineInPastError("This deadline is in the past! Retry again.")
+
+    else:  # if deadline is valid, round it up to nearest minute
+        deadline = math.ceil(deadline / 60) * 60
+
+    async with get_session() as session:
+        query = select(Tasks.deadline).where(Tasks.is_active == 1)
+        result = (await session.execute(query)).first()
+        if result is None:
+            raise NoActiveTaskError("There is no active task.")
+
+        else:
+            stmt = update(Tasks).values(deadline=deadline).where(Tasks.is_active == 1)
+            await session.execute(stmt)
+
+        await session.commit()
+    return True
+
+
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                         speed_task: int = 0, year: int = None, deadline: int = None,
                         guild_id: int = None, message_guild_id: int = None) -> bool:
