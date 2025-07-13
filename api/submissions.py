@@ -3,14 +3,15 @@ import os
 import discord
 import shared
 from dotenv import load_dotenv
-from sqlalchemy import insert, select, or_, update
+from sqlalchemy import insert, select, or_, update, delete
 
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
+from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams, \
+    Tasks
 from api.dm_handlers import handlers_dict, init_dm_handlers
-from api.errors import SubmissionRetrievalError, NoActiveTaskError, InvalidRkgError
+from api.errors import SubmissionRetrievalError, NoActiveTaskError, InvalidRkgError, NoSubmissionError
 from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
-    is_task_currently_running, readable_to_float, float_to_readable
+    is_task_currently_running, readable_to_float, float_to_readable, reorder_primary_keys
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -255,6 +256,27 @@ async def get_submissions(msg_limit, buffer) -> (list, str):
     header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {len(submissions)})\n\n"
     return submissions_parts, header
 
+async def delete_submission(user_id: int, user_dn: str) -> bool:
+    """Delete a submission by user ID."""
+    async with get_session() as session:
+        currently_running = (await session.execute(select(Tasks).where(Tasks.is_active == 1))).first()
+        if not currently_running:
+            raise NoActiveTaskError("There is no ongoing task")
+
+    async with get_session() as session:
+        data = (await session.scalars(select(Submissions).where(Submissions.user_id == user_id))).first()
+
+    if data is None:
+        raise NoSubmissionError(f"{user_dn} has no submission.")
+
+    # Delete submission from db
+    async with get_session() as session:
+        await session.execute(delete(Submissions).where(Submissions.user_id == user_id))
+        await session.commit()
+
+    # Re-arrange the indexes in the submission table so that they are no gaps between numbers
+    await reorder_primary_keys()
+    return True
 
 async def generate_submission_list() -> str:
     """Generates a formatted list of current submissions for the active task."""

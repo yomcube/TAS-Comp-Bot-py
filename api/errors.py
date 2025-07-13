@@ -41,3 +41,8 @@ class NoSubmissionChannelError(AppError):
 class InvalidRkgError(AppError):
     """Raised when an invalid RKG is provided."""
     pass
+
+
+class NoSubmissionError(AppError):
+    """Raised when there is no submission for a user."""
+    pass

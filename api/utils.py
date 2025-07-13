@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -237,6 +237,20 @@ def has_host_role():
             return False
 
     return commands.check(predicate)
+
+
+async def reorder_primary_keys():
+    async with get_session() as session:
+        # Retrieve the submissions
+        query = select(Submissions).order_by(Submissions.index)
+        result = await session.execute(query)
+        submissions = result.scalars().all()
+
+        # Reassign indexes
+        for idx, submission in enumerate(submissions, start=1):
+            submission.index = idx
+
+        await session.commit()
 
 
 async def download_from_url(url) -> str:
