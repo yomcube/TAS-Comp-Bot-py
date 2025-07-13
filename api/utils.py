@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions
-from api.errors import ReminderLimitError
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions, Userbase
+from api.errors import ReminderLimitError, DisplayNameError, NoSubmissionError
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -329,6 +329,36 @@ async def get_leader(id):
         result = await session.execute(stmt)
         leader = result.scalars().first()
         return leader
+
+async def set_display_name(user_id: int, new_name: str):
+    if '@' in new_name:
+        raise DisplayNameError("You may not use @ in your name.")
+
+    if len(new_name) > 120:
+        raise DisplayNameError("Your name is too long!")
+
+    # Gets his old display_name
+    async with get_session() as session:
+
+        user_id = user_id
+
+        old_display_name = (
+            await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
+
+        if old_display_name is None:
+            raise NoSubmissionError("This person has never submitted. Please submit first!")
+
+        else:
+            # Detect illegal name change (2 identical names)
+            if (
+                    await session.scalars(
+                        select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
+                raise DisplayNameError("The name is already in use by another user.")
+
+            # Update name in database
+            stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == user_id)
+            await session.execute(stmt)
+            await session.commit()
 
 
 async def set_speed_task_reminders(reminders: Greedy[int], guild_id: int, comp_name: str) -> None:
