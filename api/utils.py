@@ -11,6 +11,7 @@ from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
     AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions
+from api.errors import ReminderLimitError
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -332,7 +333,7 @@ async def get_leader(id):
 
 async def set_speed_task_reminders(reminders: Greedy[int], guild_id: int, comp_name: str) -> None:
     if len(reminders) > 4:
-        raise ValueError("You can't set more than 4 reminders.")
+        raise ReminderLimitError("You can't set more than 4 reminders.")
     # Prepare the reminders, filling with None if fewer than 4
     reminders_filled = reminders + [None] * (4 - len(reminders))
     async with get_session() as session:

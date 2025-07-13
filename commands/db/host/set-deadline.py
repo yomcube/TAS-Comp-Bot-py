@@ -19,8 +19,8 @@ class Setdeadline(commands.Cog):
     @has_host_role()
     async def command(self, ctx, deadline: int):
 
-        if await set_task_deadline(deadline):
-            await ctx.send(f"The deadline has been set to <t:{deadline}:F> (<t:{deadline}:R>) for the current task.")
+        await set_task_deadline(deadline)
+        await ctx.send(f"The deadline has been set to <t:{deadline}:F> (<t:{deadline}:R>) for the current task.")
 
 
 async def setup(bot) -> None:

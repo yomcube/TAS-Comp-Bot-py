@@ -68,7 +68,7 @@ async def get_end_time(task_duration):
     return rounded_time_to_minute
 
 
-async def set_task_deadline(deadline: int) -> bool:
+async def set_task_deadline(deadline: int):
     if deadline < int(time.time()):
         raise DeadlineInPastError("This deadline is in the past! Retry again.")
 
@@ -86,7 +86,6 @@ async def set_task_deadline(deadline: int) -> bool:
             await session.execute(stmt)
 
         await session.commit()
-    return True
 
 
 async def set_speed_task_desc(desc: str, guild_id: int, message_guild_it: int, comp: str = DEFAULT):
@@ -107,7 +106,7 @@ async def set_speed_task_desc(desc: str, guild_id: int, message_guild_it: int, c
 
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                      speed_task: int = 0, year: int = None, deadline: int = None,
-                     guild_id: int = None, message_guild_id: int = None) -> bool:
+                     guild_id: int = None, message_guild_id: int = None):
     # auto set year
     if not year:
         year = date.today().year
@@ -194,8 +193,6 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
             await session.execute(delete(Teams))
             await session.execute(delete(SpeedTask))
             await session.commit()
-
-        return True
 
     else:
         # if a task is already ongoing...

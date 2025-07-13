@@ -46,3 +46,8 @@ class InvalidRkgError(AppError):
 class NoSubmissionError(AppError):
     """Raised when there is no submission for a user."""
     pass
+
+
+class ReminderLimitError(AppError):
+    """Raised when the number of reminders exceeds the limit."""
+    pass

@@ -10,7 +10,6 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
-
 class Speedtaskreminder(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -19,9 +18,6 @@ class Speedtaskreminder(commands.Cog):
                              description="Set the reminders necessary for speed tasks", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, reminders: Greedy[int]):
-        if len(reminders) > 4:
-            await ctx.send("You can't set more than 4 reminders.")
-            return
         await set_speed_task_reminders(reminders, ctx.guild.id, DEFAULT)
 
         # Confirmation message
