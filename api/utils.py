@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -56,13 +56,15 @@ async def get_host_role(guild_id):
     default = DEFAULT
     # Retrieves the host role. By default, on the server, the default host role is 'Host'.
     async with get_session() as session:
-        host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
+        host_role = (await session.scalars(
+            select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
 
         if host_role:
             return host_role
         else:
             return None
-        
+
+
 async def set_host_role(role_id: int, name: str, guild_id: int, comp: str = DEFAULT) -> None:
     async with get_session() as session:
         host_role = (await session.scalars(select(HostRole.comp).where(HostRole.comp == comp))).first()
@@ -83,7 +85,8 @@ async def get_submitter_role(guild_id):
     default = DEFAULT
     # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
     async with get_session() as session:
-        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
+        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(
+            SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
 
         if submitter_role:
             return submitter_role
@@ -106,6 +109,7 @@ async def set_submitter_role(role_id: int, name: str, guild_id: int, comp: str =
 
         await session.commit()
 
+
 async def get_tasks_channel(comp):
     async with get_session() as session:
         query = select(TasksChannel.channel_id).where(TasksChannel.comp == comp)
@@ -115,6 +119,7 @@ async def get_tasks_channel(comp):
             print(f"No tasks channel found for '{comp}'.")
             return None
         return channel[0]
+
 
 async def set_seek_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
     async with get_session() as session:
@@ -132,6 +137,7 @@ async def set_seek_channel(channel_id: int, guild_id: int, message_guild_id: int
 
         await session.commit()
 
+
 async def get_announcement_channel(comp):
     async with get_session() as session:
         query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.comp == comp)
@@ -141,6 +147,7 @@ async def get_announcement_channel(comp):
             print(f"No announcements channel found for '{comp}'.")
             return None
         return channel[0]
+
 
 async def set_announcements_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
     async with get_session() as session:
@@ -158,6 +165,7 @@ async def set_announcements_channel(channel_id: int, guild_id: int, message_guil
 
         await session.commit()
 
+
 async def set_logs_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
     async with get_session() as session:
         query = select(LogChannel.channel_id).where(LogChannel.guild_id == guild_id)
@@ -174,6 +182,7 @@ async def set_logs_channel(channel_id: int, guild_id: int, message_guild_id: int
 
         await session.commit()
 
+
 async def set_tasks_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
     async with get_session() as session:
         query = select(TasksChannel.channel_id).where(TasksChannel.guild_id == guild_id)
@@ -189,6 +198,33 @@ async def set_tasks_channel(channel_id: int, guild_id: int, message_guild_id: in
             await session.execute(stmt)
 
         await session.commit()
+
+
+async def toggle_reminder_pings(guild_id: int = None, message_guiild_id: int = None, comp: str = DEFAULT) -> bool:
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(ReminderPings.ping).where(ReminderPings.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result[0] is None:
+            stmt = insert(ReminderPings).values(ping=0, guild_id=message_guiild_id, comp=comp)
+            await session.execute(stmt)
+            new_setting = False
+
+
+        elif result[0] == 0:
+            stmt = update(ReminderPings).values(ping=1, guild_id=message_guiild_id, comp=comp)
+            await session.execute(stmt)
+            new_setting = True
+
+        else:
+            stmt = update(ReminderPings).values(ping=0, guild_id=message_guiild_id, comp=comp)
+            await session.execute(stmt)
+            new_setting = False
+
+        await session.commit()
+        return new_setting
+
 
 def has_host_role():
     async def predicate(ctx):
@@ -256,6 +292,7 @@ async def get_team_size():
     else:
         return None
 
+
 async def is_in_team(id):
     """Returns if a certain id is in a team (found in the Teams db)"""
     async with get_session() as session:
@@ -268,14 +305,16 @@ async def is_in_team(id):
         results = result.scalars().all()
         return results
 
+
 async def get_leader(id):
     """Takes the id and returns the leader of id's team. Used for collab tasks. Returns none if not found."""
     async with get_session() as session:
         stmt = select(Teams.leader).filter(
-            (Teams.leader == id) | (Teams.user2 == id) |(Teams.user3 == id) | (Teams.user4 == id))
+            (Teams.leader == id) | (Teams.user2 == id) | (Teams.user3 == id) | (Teams.user4 == id))
         result = await session.execute(stmt)
         leader = result.scalars().first()
         return leader
+
 
 async def set_speed_task_reminders(reminders: Greedy[int], guild_id: int, comp_name: str) -> None:
     if len(reminders) > 4:
@@ -309,10 +348,12 @@ async def set_speed_task_reminders(reminders: Greedy[int], guild_id: int, comp_n
         # Commit changes to the database
         await session.commit()
 
+
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))
     winnings = constant * slot_number * (1 / probability)
     return int(winnings)
+
 
 def get_file_types(attachments):
     file_list = []
@@ -339,6 +380,3 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
-
-
-
