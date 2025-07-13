@@ -8,18 +8,22 @@ from sqlalchemy import select, insert, delete, update
 
 from api.db_classes import SpeedTask, get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, \
     Submissions, Teams
-from api.errors import NoActiveTaskError, ActiveTaskError, NoDeadlineError, DeadlineInPastError, NoTaskDescriptionError
+from api.errors import NoActiveTaskError, ActiveTaskError, DeadlineInPastError, NoTaskDescriptionError
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
+
 async def is_task_currently_running():
     """Check if a task is currently running. Returns a list with the parameters of active task, if so."""
     # Is a task running?
     async with get_session() as session:
         active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active, Tasks.team_size,
-                                               Tasks.speed_task, Tasks.multiple_tracks, Tasks.deadline, Tasks.is_released)
+                                               Tasks.speed_task, Tasks.multiple_tracks, Tasks.deadline,
+                                               Tasks.is_released)
                                         .where(Tasks.is_active == 1))).first()
         return active
+
 
 async def cancel_speed_task(competitor_id: int = None):
     # Cancel the person's task
@@ -33,6 +37,7 @@ async def cancel_speed_task(competitor_id: int = None):
         await session.execute(stmt)
         await session.commit()
 
+
 async def has_requested_already(user_id):
     async with get_session() as session:
         result = (await session.execute(select(SpeedTask)
@@ -45,7 +50,7 @@ async def is_time_over(user_id):
         result = (await session.scalars(select(SpeedTask.active)
                                         .where(SpeedTask.user_id == user_id))).first()
 
-        if result is None: # this happens when they are doing the task after it has been revealed; towards the end
+        if result is None:  # this happens when they are doing the task after it has been revealed; towards the end
             return False
 
         return int(result) == 0
@@ -84,9 +89,25 @@ async def set_task_deadline(deadline: int) -> bool:
     return True
 
 
+async def set_speed_task_desc(desc: str, guild_id: int, message_guild_it: int, comp: str = DEFAULT):
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+        if result is None:
+            stmt = insert(SpeedTaskDesc).values(guild_id=message_guild_it, desc=desc, comp=comp)
+            await session.execute(stmt)
+
+        else:
+            stmt = update(SpeedTaskDesc).values(guild_id=message_guild_it, desc=desc, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
+
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
-                        speed_task: int = 0, year: int = None, deadline: int = None,
-                        guild_id: int = None, message_guild_id: int = None) -> bool:
+                     speed_task: int = 0, year: int = None, deadline: int = None,
+                     guild_id: int = None, message_guild_id: int = None) -> bool:
     # auto set year
     if not year:
         year = date.today().year
@@ -115,7 +136,8 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
                         raise NoTaskDescriptionError("Please set a speed task description with `$speed-task-desc`!")
 
                 if deadline is None:
-                    raise DeadlineInPastError("Speed tasks require a general deadline to function properly. Please set one (with a UNIX timestamp).")
+                    raise DeadlineInPastError(
+                        "Speed tasks require a general deadline to function properly. Please set one (with a UNIX timestamp).")
 
             #########################################
             #
@@ -178,6 +200,7 @@ async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,
     else:
         # if a task is already ongoing...
         raise ActiveTaskError("A task is already ongoing.\nPlease use `/end-task` to end the current task.")
+
 
 async def end_task() -> (int, int):
     async with get_session() as session:
