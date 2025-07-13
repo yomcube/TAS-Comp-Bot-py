@@ -1,8 +1,8 @@
 import asyncio
+import json
 import random
 import string
 import subprocess
-import json
 
 
 class FFmpegBuilder:

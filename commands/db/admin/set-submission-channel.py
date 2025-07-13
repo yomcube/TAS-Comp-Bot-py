@@ -10,7 +10,6 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
-
 class Setsubmissionchannel(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot

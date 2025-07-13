@@ -11,7 +11,6 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
 
 
-
 class Setname(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot

@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
-from api.utils import float_to_readable, has_host_role
-from api.db_classes import Submissions, get_session
 from sqlalchemy import select, update
+
+from api.db_classes import Submissions, get_session
+from api.utils import float_to_readable, has_host_role
 
 
 class Edit(commands.Cog):
@@ -17,7 +18,7 @@ class Edit(commands.Cog):
 
         if data is None:
             return await ctx.reply(f"{user} has no submission.",
-                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                                   allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
         data_dq = None
         # was DQ or not
         if data.dq == 0:
@@ -40,11 +41,10 @@ class Edit(commands.Cog):
             await session.commit()
 
         await ctx.reply(server_text,
-            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                        allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
         channel = await user.create_dm()
         await channel.send(dm_text,
-            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
-
+                           allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
 async def setup(bot) -> None:

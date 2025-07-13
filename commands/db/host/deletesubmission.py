@@ -25,7 +25,7 @@ class DeleteSubmission(commands.Cog):
         await edit_submission_list(self)
 
         await ctx.send(f"{user.display_name}'s submission has been deleted.",
-                           allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                       allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
 
 async def setup(bot) -> None:

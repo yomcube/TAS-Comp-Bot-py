@@ -1,8 +1,8 @@
 from discord.ext import commands
+from sqlalchemy import select
+
 from api.db_classes import Teams, get_session
-from api.utils import is_in_team, get_team_size
-from api.submissions import get_display_name
-from sqlalchemy import select, delete
+from api.utils import get_team_size
 
 
 class TeamsCommand(commands.Cog):
@@ -52,6 +52,7 @@ class TeamsCommand(commands.Cog):
                 content += f"{row.index}. {display_names}\n"
 
         return await ctx.send(content)
+
 
 async def setup(bot):
     await bot.add_cog(TeamsCommand(bot))

@@ -1,12 +1,15 @@
+import random
+
 import discord
 from discord.ext import commands
-import random
+
 
 class Eightball(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="8ball", description="Ask the bot what he thinks about your question!", with_app_command=True)
+    @commands.hybrid_command(name="8ball", description="Ask the bot what he thinks about your question!",
+                             with_app_command=True)
     async def command(self, ctx, *, question):
         if question.split()[0].lower() == "when":
             when = [
@@ -87,19 +90,18 @@ class Eightball(commands.Cog):
 
             reply = random.choice(yes_no)
 
-            if reply in yes_no[0:12]: # Positive
+            if reply in yes_no[0:12]:  # Positive
                 embed_color = discord.Color.green()
 
-            elif reply in yes_no[12:18]: # Neutral
+            elif reply in yes_no[12:18]:  # Neutral
                 embed_color = discord.Color.yellow()
 
-            else: # Negative
+            else:  # Negative
                 embed_color = discord.Color.red()
 
         embed = discord.Embed(color=embed_color)
         embed.add_field(name=f":question: {ctx.author.display_name} asked...", value=question, inline=False)
         embed.add_field(name=f":8ball: responds...", value=reply, inline=False)
-
 
         await ctx.send(embed=embed)
 

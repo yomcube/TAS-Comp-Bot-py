@@ -52,6 +52,7 @@ class ReminderLimitError(AppError):
     """Raised when the number of reminders exceeds the limit."""
     pass
 
+
 class DisplayNameError(AppError):
     """Raised when there is an error with the display name."""
     pass

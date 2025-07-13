@@ -34,14 +34,13 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
                         query = select(Submissions.user_id).where(Submissions.user_id == message.author.id)
                         result = (await session.execute(query)).first()
 
-
                         if result is None:
-                            message_to_send = (f"You can't submit, your time is up! If you wish to send in a late submission, "
-                                       f"please DM the current host so they can add your submission manually.")
+                            message_to_send = (
+                                f"You can't submit, your time is up! If you wish to send in a late submission, "
+                                f"please DM the current host so they can add your submission manually.")
 
                         else:
                             message_to_send = "You can't submit, your time is up!"
-
 
                     await message.channel.send(message_to_send)
                     return
@@ -85,12 +84,12 @@ async def handle_nsmbwii_files(message, attachments, file_dict, self):
             ####################
             # Adding submission
             ####################
-            
+
             url = " ".join(a.url for a in attachments)
-            
+
             # Hacky, but the character is set with the DTM bytes so
             # another field doesn't have to be added to the DB
-            
+
             # first time submission (within the task)
             if await first_time_submission(submitter_id):
                 async with get_session() as session:

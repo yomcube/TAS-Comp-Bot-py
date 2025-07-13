@@ -51,18 +51,15 @@ async def release_speed_task(bot):
         query = await session.execute(select(SpeedTaskLength).where(SpeedTaskLength.comp == DEFAULT))
         length = query.scalars().first()
 
-
         task_length_seconds = length.time * 3600
 
         # Get the current time rounded to the nearest minute
         current_time = int(time.time())
 
-
         if (current_time >= (deadline - task_length_seconds)) and not is_released:
             # Get tasks channel
             tasks_channel = await get_tasks_channel(DEFAULT)
             channel = bot.get_channel(tasks_channel)
-
 
             # Get speed task description and send it
             query2 = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.comp == DEFAULT)
@@ -77,17 +74,13 @@ async def release_speed_task(bot):
             # Also send an announcement in announcement channel
             announcement_channel = bot.get_channel(await get_announcement_channel(DEFAULT))
             await announcement_channel.send(f"@everyone Task {task_num} has been released publicly! You have until "
-                                      f"<t:{deadline}:t> (<t:{deadline}:R>) to submit to this speed task! "
-                                      f"Please see <#{tasks_channel}> for task information.")
-
-
-
+                                            f"<t:{deadline}:t> (<t:{deadline}:R>) to submit to this speed task! "
+                                            f"Please see <#{tasks_channel}> for task information.")
 
             # set the task to released; everyone may submit, and bot won't publish task again
             await session.execute(update(Tasks).values(is_released=1).where(Tasks.is_active == 1))
 
             await session.commit()
-
 
 
 @release_speed_task.before_loop
@@ -163,6 +156,7 @@ async def before_check_deadline():
     now = time.time()
     seconds_until_next_minute = 60 - (int(now) % 60)
     await asyncio.sleep(seconds_until_next_minute)
+
 
 ####################################################
 # Check for reminders in speed tasks
@@ -263,13 +257,15 @@ async def check_speed_task_reminders(bot):
                                         time_str = f"{minutes} {minute_unit}"
 
                             # Send reminder (with @everyone ping depending on setting)
-                            ping_query = select(ReminderPings.ping).where(ReminderPings.guild_id == shared.main_guild.id)
+                            ping_query = select(ReminderPings.ping).where(
+                                ReminderPings.guild_id == shared.main_guild.id)
                             result = (await session.execute(ping_query)).first()
 
                             if result is None or result[0] == 0:
                                 await announcement_channel.send(f"Reminder: You have {time_str} remaining to submit!")
                             else:
-                                await announcement_channel.send(f"@everyone Reminder: You have {time_str} remaining to submit!")
+                                await announcement_channel.send(
+                                    f"@everyone Reminder: You have {time_str} remaining to submit!")
 
 
 @check_speed_task_reminders.before_loop

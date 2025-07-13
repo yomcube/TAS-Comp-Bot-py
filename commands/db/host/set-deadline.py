@@ -18,7 +18,6 @@ class Setdeadline(commands.Cog):
                              description="Adjust or set the deadline after the task has started", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, deadline: int):
-
         await set_task_deadline(deadline)
         await ctx.send(f"The deadline has been set to <t:{deadline}:F> (<t:{deadline}:R>) for the current task.")
 

@@ -103,6 +103,7 @@ async def set_speed_task_desc(desc: str, guild_id: int, message_guild_it: int, c
 
         await session.commit()
 
+
 async def set_speed_task_length(time: float, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
     # TODO: detect which server you are in, so the comp argument is no longer needed
     async with get_session() as session:

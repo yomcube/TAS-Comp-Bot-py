@@ -21,7 +21,7 @@ class Start(commands.Cog):
                       speed_task: int = 0, year: int = None, deadline: int = None) -> None:
         await ctx.defer()
         await start_task(number, team_size, multiple_tracks,
-                                  speed_task, year, deadline, ctx.guild.id, ctx.message.guild.id)
+                         speed_task, year, deadline, ctx.guild.id, ctx.message.guild.id)
         # Delete previous "Current submissions" message in submission channel
         await delete_previous_current_submissions(self.bot)
 

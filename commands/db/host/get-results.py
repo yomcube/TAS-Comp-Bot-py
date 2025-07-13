@@ -1,8 +1,9 @@
 from discord.ext import commands
-from api.utils import float_to_readable, has_host_role
-from api.submissions import get_display_name, is_in_team, get_team_ids, get_team_members, get_team_name
-from api.db_classes import Submissions, get_session
 from sqlalchemy import select
+
+from api.db_classes import Submissions, get_session
+from api.submissions import get_display_name, is_in_team, get_team_ids, get_team_members, get_team_name
+from api.utils import float_to_readable, has_host_role
 
 
 class Results(commands.Cog):
@@ -57,9 +58,9 @@ class Results(commands.Cog):
 
         await ctx.send(content)
 
-        #except TypeError: # can happen if get_display_name throws an error; an id is not found in user.db
+        # except TypeError: # can happen if get_display_name throws an error; an id is not found in user.db
         # Happens, for example, if an admin /submit for someone who is not in the user.db
-        #await ctx.send("Someone's result could not be retrieved.")
+        # await ctx.send("Someone's result could not be retrieved.")
 
 
 async def setup(bot) -> None:

@@ -1,12 +1,12 @@
-import discord
 from discord.ext import commands
+from sqlalchemy import select, delete
+
 from api.db_classes import Teams, get_session
-from sqlalchemy import select, delete, inspect
-from api.utils import get_team_size, is_in_team
+from api.utils import is_in_team
+
 
 async def reorder_primary_keys():
     async with get_session() as session:
-
         # Retrieve the teams
         query = select(Teams).order_by(Teams.index)
         result = await session.execute(query)
@@ -17,6 +17,7 @@ async def reorder_primary_keys():
             team.index = idx
 
         await session.commit()
+
 
 class LeaveTeam(commands.Cog):
     def __init__(self, bot):
@@ -64,11 +65,11 @@ class LeaveTeam(commands.Cog):
                         # Rearrange team indexes
                         await reorder_primary_keys()
 
-                        await ctx.send(f"<@{row.leader}> Poor you :( Your partner(s) gave up on you. Your team has been dissolved.")
+                        await ctx.send(
+                            f"<@{row.leader}> Poor you :( Your partner(s) gave up on you. Your team has been dissolved.")
 
                 await session.commit()
 
 
-                
 async def setup(bot):
     await bot.add_cog(LeaveTeam(bot))

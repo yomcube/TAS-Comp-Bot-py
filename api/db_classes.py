@@ -1,8 +1,9 @@
 import os
+
 from dotenv import load_dotenv
 from sqlalchemy import Column, Integer, String, Float, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -53,6 +54,7 @@ class Submissions(Base):
     character = Column('character', String)
     vehicle = Column('vehicle', String)
 
+
 class SpeedTask(Base):
     __tablename__ = "speedtask"
     user_id = Column('user_id', Integer, primary_key=True)
@@ -101,8 +103,8 @@ class HostRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
-    
-    
+
+
 class SubmitterRole(Base):
     __tablename__ = "submitter_role"
     index = Column(Integer, primary_key=True)
@@ -110,7 +112,8 @@ class SubmitterRole(Base):
     name = Column('name', String)
     comp = Column('comp', String)
     guild_id = Column('guild_id', Integer)
-    
+
+
 class SeekingChannel(Base):
     __tablename__ = "seeking_channel"
     index = Column(Integer, primary_key=True)
@@ -120,11 +123,12 @@ class SeekingChannel(Base):
 
 
 class TasksChannel(Base):
-        __tablename__ = "tasks_channel"
-        index = Column(Integer, primary_key=True)
-        comp = Column('comp', String)
-        channel_id = Column('channel_id', Integer)
-        guild_id = Column('guild_id', Integer)
+    __tablename__ = "tasks_channel"
+    index = Column(Integer, primary_key=True)
+    comp = Column('comp', String)
+    channel_id = Column('channel_id', Integer)
+    guild_id = Column('guild_id', Integer)
+
 
 class AnnouncementsChannel(Base):
     __tablename__ = "announcements_channel"
@@ -133,12 +137,14 @@ class AnnouncementsChannel(Base):
     channel_id = Column('channel_id', Integer)
     guild_id = Column('guild_id', Integer)
 
+
 class SpeedTaskLength(Base):
     __tablename__ = "speedtasklength"
     index = Column(Integer, primary_key=True)
     comp = Column('comp', String)
-    time = Column('time', Float, default = 4.0)
+    time = Column('time', Float, default=4.0)
     guild_id = Column('guild_id', Integer)
+
 
 class SpeedTaskDesc(Base):
     __tablename__ = "speedtaskdesc"
@@ -146,6 +152,7 @@ class SpeedTaskDesc(Base):
     comp = Column('comp', String)
     desc = Column('desc', Integer)
     guild_id = Column('guild_id', Integer)
+
 
 class SpeedTaskReminders(Base):
     __tablename__ = "speedtaskreminders"

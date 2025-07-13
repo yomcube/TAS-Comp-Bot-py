@@ -330,6 +330,7 @@ async def get_leader(id):
         leader = result.scalars().first()
         return leader
 
+
 async def set_display_name(user_id: int, new_name: str):
     if '@' in new_name:
         raise DisplayNameError("You may not use @ in your name.")

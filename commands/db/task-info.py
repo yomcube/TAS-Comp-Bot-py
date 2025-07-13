@@ -20,7 +20,6 @@ class TaskInfo(commands.Cog):
         if current_task is None:
             return await ctx.send("There is no ongoing task.")
 
-
         task_num, task_year, _, team_size, speed_task, _, deadline_timestamp, _ = current_task
 
         collab = f"Yes, {await get_team_size()} people" if team_size > 1 else "No"

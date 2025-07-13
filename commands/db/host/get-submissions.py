@@ -6,6 +6,7 @@ from discord.ext import commands
 from api.submissions import get_submissions
 from api.utils import has_host_role
 
+
 class Get(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -23,15 +24,15 @@ class Get(commands.Cog):
             if i == 0:
                 if len(header + part) > msg_limit:
                     await ctx.reply(header,
-                        allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
+                                    allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
                     await ctx.reply(part,
-                        allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
+                                    allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
                 else:
                     await ctx.reply(header + part,
-                        allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
+                                    allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
             else:
                 await ctx.reply(part,
-                    allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
+                                allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
 
             await asyncio.sleep(1)
 

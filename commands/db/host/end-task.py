@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 
 from api.task_handling import end_task
 from api.utils import has_host_role
+
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
 
 class End(commands.Cog):
     def __init__(self, bot) -> None:
@@ -14,7 +16,6 @@ class End(commands.Cog):
 
     @commands.hybrid_command(name="end-task", description="End current task", with_app_command=True)
     @has_host_role()
-
     async def command(self, ctx):
         task_num, task_year = await end_task()
         await ctx.send(f"Successfully ended **Task {task_num} - {task_year}**!")

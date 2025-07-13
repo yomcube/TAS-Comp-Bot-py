@@ -1,11 +1,12 @@
 from discord.ext import commands
+from sqlalchemy import select, delete
+
 from api.db_classes import Teams, get_session
 from api.utils import has_host_role
-from sqlalchemy import select, delete
+
 
 async def reorder_primary_keys():
     async with get_session() as session:
-
         # Retrieve the teams
         query = select(Teams).order_by(Teams.index)
         result = await session.execute(query)
@@ -32,7 +33,6 @@ class HostDissolve(commands.Cog):
 
             if index < 0 or index > total_teams:
                 return await ctx.send("Invalid team number entered. See $teams")
-
 
             await session.execute(delete(Teams).where(Teams.index == index))
             await session.commit()

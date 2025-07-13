@@ -1,10 +1,10 @@
-import discord
-from discord.ext import commands
-import yt_dlp
 import asyncio
 import os
+
+import discord
+import yt_dlp
+from discord.ext import commands
 from dotenv import load_dotenv
-import asyncio
 
 queues = {}
 voice_clients = {}
@@ -18,6 +18,7 @@ ffmpeg_options = {
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
 
 class Music(commands.Cog):
     def __init__(self, bot) -> None:
@@ -47,7 +48,8 @@ class Music(commands.Cog):
         else:
             await ctx.send("You are not connected to a voice channel.")
 
-    @commands.hybrid_command(name="play", description="Play the sound of a youtube video in a VC!", with_app_command=True)
+    @commands.hybrid_command(name="play", description="Play the sound of a youtube video in a VC!",
+                             with_app_command=True)
     async def play(self, ctx, url):
         try:
             if ctx.voice_client is not None:

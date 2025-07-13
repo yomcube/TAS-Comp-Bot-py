@@ -1,10 +1,11 @@
 import asyncio
 import os
-import traceback
 import sys
-from dotenv import load_dotenv
+import traceback
+
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from api.db_classes import db_connect
 
@@ -81,7 +82,7 @@ commands_ext = ['commands.db.host.start-task',
 events_ext = ['discord_ext.on_ready',
               'discord_ext.on_message',
               'discord_ext.discord_errors',
-              'discord_ext.command_completion',]
+              'discord_ext.command_completion', ]
 
 
 class Bot(commands.Bot):

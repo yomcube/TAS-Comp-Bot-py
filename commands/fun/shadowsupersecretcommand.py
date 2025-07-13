@@ -1,7 +1,9 @@
-from discord.ext import commands
+import random
+
 import requests
 from bs4 import BeautifulSoup
-import random
+from discord.ext import commands
+
 
 class Shadow(commands.Cog):
     def __init__(self, bot):
@@ -34,6 +36,7 @@ class Shadow(commands.Cog):
             await ctx.send(random_image)
         else:
             await ctx.send("No images found.")
+
 
 async def setup(bot):
     await bot.add_cog(Shadow(bot))

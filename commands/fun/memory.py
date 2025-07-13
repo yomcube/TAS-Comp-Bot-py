@@ -1,7 +1,9 @@
+import asyncio
+import random
+
 import discord
 from discord.ext import commands
-import random
-import asyncio
+
 
 class MemoryGameView(discord.ui.View):
     def __init__(self, bot, ctx, size):
@@ -36,6 +38,7 @@ class MemoryGameView(discord.ui.View):
         # Delete the message when the view times out
         message = await self.ctx.fetch_message(self.ctx.message.id)
         await message.delete()
+
 
 class Memory(commands.Cog):
     def __init__(self, bot) -> None:
@@ -157,7 +160,8 @@ class Memory(commands.Cog):
                 ]
                 for r in range(size):
                     for c in range(size):
-                        if hidden_board[r][c] != '❓' or (r, c) == middle_pos:  # Keep matched pairs visible and middle 'X'
+                        if hidden_board[r][c] != '❓' or (r,
+                                                         c) == middle_pos:  # Keep matched pairs visible and middle 'X'
                             single_tile_board[r][c] = hidden_board[r][c]
                 # Keep only the selected tile visible
                 single_tile_board[row][col] = display_board[row][col]
@@ -181,11 +185,13 @@ class Memory(commands.Cog):
                     return False
 
             # Main game loop with timeout handling
-            while lives > 0 and len(found_pairs) < size * size - (1 if middle_pos else 0):  # Adjust for missing middle tile
+            while lives > 0 and len(found_pairs) < size * size - (
+            1 if middle_pos else 0):  # Adjust for missing middle tile
                 try:
                     # Get first choice from the user with a 40-second timeout
                     await ctx.send(f"Select first tile! Lives remaining: {lives}")
-                    msg = await self.bot.wait_for('message', timeout=40.0, check=lambda m: m.author == ctx.author and is_valid_choice(m.content))
+                    msg = await self.bot.wait_for('message', timeout=40.0,
+                                                  check=lambda m: m.author == ctx.author and is_valid_choice(m.content))
                     row1, col1 = map(int, msg.content.split(","))
                     row1 -= 1  # Adjust for 0-based indexing
                     col1 -= 1
@@ -201,7 +207,8 @@ class Memory(commands.Cog):
 
                     # Get second choice from the user with a 40-second timeout
                     await ctx.send(f"Select second tile! Lives remaining: {lives}")
-                    msg = await self.bot.wait_for('message', timeout=40.0, check=lambda m: m.author == ctx.author and is_valid_choice(m.content))
+                    msg = await self.bot.wait_for('message', timeout=40.0,
+                                                  check=lambda m: m.author == ctx.author and is_valid_choice(m.content))
                     row2, col2 = map(int, msg.content.split(","))
                     row2 -= 1  # Adjust for 0-based indexing
                     col2 -= 1

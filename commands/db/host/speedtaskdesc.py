@@ -10,7 +10,6 @@ load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
 
 
-
 class Speedtaskdesc(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -19,7 +18,6 @@ class Speedtaskdesc(commands.Cog):
                              description="Set the description of the speed tasks", with_app_command=True)
     @has_host_role()
     async def command(self, ctx, *, desc: str, comp: str = DEFAULT):
-
         await set_speed_task_desc(desc, ctx.guild.id, ctx.message.guild.id, comp)
         await ctx.send(f"The speed task description has been set! \n{desc}")
 

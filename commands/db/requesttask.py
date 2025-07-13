@@ -28,7 +28,6 @@ class Requesttask(commands.Cog):
         if current_task is None:
             return await ctx.send("There is no active speed task yet.")
 
-
         # if not speed task
         if not current_task[4]:
             tasks_channel = await get_tasks_channel(DEFAULT)
@@ -40,7 +39,8 @@ class Requesttask(commands.Cog):
         # if task is released, but try to requets task
         if current_task[7]:
             tasks_channel = await get_tasks_channel(DEFAULT)
-            return await ctx.send(f"The task has already been posted publicly! Please see <#{tasks_channel}> for task information.")
+            return await ctx.send(
+                f"The task has already been posted publicly! Please see <#{tasks_channel}> for task information.")
 
         async with get_session() as session:
 

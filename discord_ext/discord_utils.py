@@ -9,6 +9,8 @@ from api.utils import get_submitter_role
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
+
+
 async def edit_submission_list(self):
     """ Edits the submission list in the submission channel.
             Takes bot (self) as an argument -- so that the bot may retrieve the channel & message.
@@ -22,6 +24,7 @@ async def edit_submission_list(self):
             message_to_edit = message
     formatted_submissions = generate_submission_list()
     return await message_to_edit.edit(content=formatted_submissions)
+
 
 async def remove_submitter_role(bot, guild_id: int) -> None:
     # Also clear submitter roles
@@ -38,6 +41,7 @@ async def remove_submitter_role(bot, guild_id: int) -> None:
         except discord.HTTPException as e:
             print(f"Failed to remove role {role.name} from {member.display_name} due to an error: {e}")
 
+
 async def delete_previous_current_submissions(bot) -> None:
     # Delete previous "Current submissions" message in submission channel
     channel_id = await get_submission_channel(DEFAULT)
@@ -50,4 +54,5 @@ async def delete_previous_current_submissions(bot) -> None:
                 break
 
     except AttributeError:
-        raise NoSubmissionChannelError("Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")
+        raise NoSubmissionChannelError(
+            "Please set the submission channel with `/set-submission-channel`! (Ask an admin if you do not have permission)")

@@ -15,10 +15,10 @@ class SetTaskschannel(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="set-tasks-channel", aliases=['stc'],
-                             description="Set the channel where tasks are posted (used for speed tasks)", with_app_command=True)
+                             description="Set the channel where tasks are posted (used for speed tasks)",
+                             with_app_command=True)
     @commands.has_permissions(administrator=True)
     async def command(self, ctx, channel: discord.TextChannel, comp: str = DEFAULT):
-
         await set_tasks_channel(channel.id, ctx.guild.id, ctx.message.guild.id, comp)
         await ctx.send(f"The Tasks channel has been set! {channel.mention}")
 
