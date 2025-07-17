@@ -80,6 +80,21 @@ async def get_team_members(id_list):
         Members.append(name)
     return Members
 
+async def get_current_team(user_id):
+    async with get_session() as session:
+        result = await session.execute(
+            select(Teams).where(
+                (Teams.leader == user_id) |
+                (Teams.user2 == user_id) |
+                (Teams.user3 == user_id) |
+                (Teams.user4 == user_id)
+            )
+        )
+        team = result.scalar()
+        if team:
+            team_members = [team.leader, team.user2, team.user3, team.user4]
+            return [member for member in team_members if member]
+        return None
 
 async def get_results():
     async with get_session() as session:

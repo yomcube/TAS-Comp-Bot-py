@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update
 
 from api.db_classes import Teams, get_session
-from api.submissions import add_competitor_if_new
+from api.submissions import add_competitor_if_new, get_current_team
 from api.utils import get_team_size, is_in_team, get_display_name
 
 load_dotenv()
@@ -155,22 +155,6 @@ class Collab(commands.Cog):
             self.bot.get_user(ctx.author.id).display_name
         )
 
-    async def get_current_team(self, user_id):
-        async with get_session() as session:
-            result = await session.execute(
-                select(Teams).where(
-                    (Teams.leader == user_id) |
-                    (Teams.user2 == user_id) |
-                    (Teams.user3 == user_id) |
-                    (Teams.user4 == user_id)
-                )
-            )
-            team = result.scalar()
-            if team:
-                team_members = [team.leader, team.user2, team.user3, team.user4]
-                return [member for member in team_members if member]
-            return None
-
     async def user_response(self, ctx, author_id, user, accepted):
         if author_id in self.pending_collabs and user.id in self.pending_collabs[author_id]:
             self.pending_collabs[author_id][user.id] = accepted
@@ -181,7 +165,7 @@ class Collab(commands.Cog):
 
                 if accepted_users:
                     # Fetch the current team
-                    current_team = await self.get_current_team(author_id)
+                    current_team = await get_current_team(author_id)
 
                     if current_team:
                         # Prepare the list of new members before modifying
