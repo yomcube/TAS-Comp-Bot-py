@@ -26,30 +26,16 @@ class Config(commands.Cog):
                       seeking_channel: discord.TextChannel, submitter_role: discord.Role,
                       announcement_channel: discord.TextChannel, tasks_channel: discord.TextChannel,
                       comp: str = DEFAULT):
-
-        ### SET HOST ROLE ###
         await set_host_role(host_role.id, host_role.name, ctx.guild.id, comp)
-
-        ### SET LOGS CHANNEL ###
         await set_logs_channel(logs_channel.id, ctx.guild.id, ctx.message.guild.id, comp)
-
-        ### SUBMISSION CHANNEL ###
         await set_submission_channel(submission_channel.id, ctx.guild.id, ctx.message.guild.id, comp)
-
-        ### SEEK CHANNEL ###
         await set_seek_channel(seeking_channel.id, ctx.guild.id, ctx.message.guild.id, comp)
-
-        ### SUBMITTER ROLE ###
         await set_submitter_role(submitter_role.id, submitter_role.name, ctx.guild.id, comp)
-
-        ### Tasks CHANNEL ###
         await set_tasks_channel(tasks_channel.id, ctx.guild.id, ctx.message.guild.id, comp)
-
-        ### Announcements CHANNEL ###
         await set_announcements_channel(announcement_channel.id, ctx.guild.id, ctx.message.guild.id, comp)
 
         await ctx.send(
-        f"The current host role has been set! {host_role.mention}\nThe log channel has been set! {logs_channel.mention}\nThe submission channel has been set! {submission_channel.mention}\nThe seek channel has been set! {seeking_channel.mention}\nThe submitter role has been set! {submitter_role.mention}\nThe tasks channel has been set! {tasks_channel.mention}\nThe announcement channel has been set! {announcement_channel.mention}")
+            f"The current host role has been set! {host_role.mention}\nThe log channel has been set! {logs_channel.mention}\nThe submission channel has been set! {submission_channel.mention}\nThe seek channel has been set! {seeking_channel.mention}\nThe submitter role has been set! {submitter_role.mention}\nThe tasks channel has been set! {tasks_channel.mention}\nThe announcement channel has been set! {announcement_channel.mention}")
 
 
 async def setup(bot) -> None:

@@ -257,6 +257,34 @@ async def get_submissions(msg_limit, buffer) -> (list, str):
     return submissions_parts, header
 
 
+async def edit_submission(user_id: int, user_str: str, time: float, dq: bool, dq_reason: str = '') -> (str, str):
+    async with get_session() as session:
+        data = (await session.scalars(select(Submissions).where(Submissions.user_id == user_id))).first()
+
+    if data is None:
+        raise NoSubmissionError(f"{user_str} has no submission.")
+    data_dq = None
+    # was DQ or not
+    if data.dq == 0:
+        data_dq = False
+    elif data.dq == 1:
+        data_dq = True
+
+    readable_time = float_to_readable(time)
+    server_text = f"Succesfully edited {user_str}'s submission with:\nTime: from {data.time} to {time}\nDQ: from {data_dq} to {dq}"
+    dm_text = f"Your submission has been edited:\nTime: from {float_to_readable(data.time)} to {readable_time}\nDQ: from {data_dq} to {dq}"
+
+    if dq:
+        server_text += f" ({dq_reason})"
+        dm_text += f" ({dq_reason})"
+
+    # Update submission to db
+    async with get_session() as session:
+        await session.execute(
+            update(Submissions).values(time=time, dq=dq, dq_reason=dq_reason).where(Submissions.user_id == user_id))
+        await session.commit()
+
+
 async def delete_submission(user_id: int, user_dn: str):
     """Delete a submission by user ID."""
     async with get_session() as session:
