@@ -4,7 +4,8 @@ from sqlalchemy import select
 
 from api.db_classes import Submissions, get_session
 from api.mkwii.mkwii_utils import characters, vehicles
-from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
+from api.utils import float_to_readable, is_in_team, get_leader
+from api.task_handling import get_team_size
 
 
 class Info(commands.Cog):

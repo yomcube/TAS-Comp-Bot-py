@@ -13,8 +13,6 @@ from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, T
     AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions, Userbase, \
     SubmissionChannel
 from api.errors import ReminderLimitError, DisplayNameError, NoSubmissionError
-from api.submissions import DEFAULT
-from api.task_handling import is_task_currently_running
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -308,7 +306,7 @@ def has_host_role():
     return commands.check(predicate)
 
 
-async def reorder_primary_keys():
+async def reorder_submission_primary_keys():
     async with get_session() as session:
         # Retrieve the submissions
         query = select(Submissions).order_by(Submissions.index)
@@ -321,6 +319,18 @@ async def reorder_primary_keys():
 
         await session.commit()
 
+async def reorder_teams_primary_keys():
+    async with get_session() as session:
+        # Retrieve the teams
+        query = select(Teams).order_by(Teams.index)
+        result = await session.execute(query)
+        teams = result.scalars().all()
+
+        # Reassign indexes
+        for idx, team in enumerate(teams, start=1):
+            team.index = idx
+
+        await session.commit()
 
 async def download_from_url(url) -> str:
     try:
@@ -365,15 +375,6 @@ def float_to_readable(seconds):
     remaining_seconds = seconds % 60
     time_str = f"{minutes}:{remaining_seconds:06.3f}"
     return time_str
-
-
-async def get_team_size():
-    """Retrieves the team size of the running task. Over 1 means it is a collab task"""
-    current_task = await is_task_currently_running()
-    if current_task is not None:
-        return current_task[3]
-    else:
-        return None
 
 
 async def is_in_team(id):

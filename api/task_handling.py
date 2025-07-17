@@ -10,7 +10,7 @@ from api.db_classes import SpeedTask, get_session, Tasks, SpeedTaskDesc, SpeedTa
     Submissions, Teams
 from api.errors import NoActiveTaskError, ActiveTaskError, DeadlineInPastError, NoTaskDescriptionError, \
     NotSpeedTaskError, AlreadyRequestedError
-from api.utils import get_tasks_channel
+from api.utils import get_tasks_channel, reorder_teams_primary_keys
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -69,6 +69,27 @@ async def get_end_time(task_duration):
 
     return rounded_time_to_minute
 
+
+async def get_team_size():
+    """Retrieves the team size of the running task. Over 1 means it is a collab task"""
+    current_task = await is_task_currently_running()
+    if current_task is not None:
+        return current_task[3]
+    else:
+        return None
+
+async def dissolve_team(index: int):
+    async with get_session() as session:
+        teamlist = (await session.scalars(select(Teams))).fetchall()
+        total_teams = len(teamlist)
+
+        if index < 0 or index > total_teams:
+            raise ValueError("Invalid team number entered. See $teams")
+
+        await session.execute(delete(Teams).where(Teams.index == index))
+        await session.commit()
+
+        await reorder_teams_primary_keys()
 
 async def set_task_deadline(deadline: int):
     if deadline < int(time.time()):

@@ -8,7 +8,8 @@ from sqlalchemy import select, insert, update
 
 from api.db_classes import Teams, get_session
 from api.submissions import add_competitor_if_new, get_current_team
-from api.utils import get_team_size, is_in_team, get_display_name
+from api.utils import is_in_team, get_display_name
+from api.task_handling import get_team_size
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

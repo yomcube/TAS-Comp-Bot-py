@@ -2,7 +2,7 @@ from discord.ext import commands
 from sqlalchemy import select
 
 from api.db_classes import Teams, get_session
-from api.utils import get_team_size
+from api.task_handling import get_team_size
 
 
 class TeamsCommand(commands.Cog):

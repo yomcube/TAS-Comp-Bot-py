@@ -5,7 +5,8 @@ from discord.ext import commands
 from sqlalchemy import select
 
 from api.db_classes import Submissions, get_session
-from api.utils import get_team_size, is_in_team, get_leader
+from api.utils import is_in_team, get_leader
+from api.task_handling import get_team_size
 
 
 class Info(commands.Cog):

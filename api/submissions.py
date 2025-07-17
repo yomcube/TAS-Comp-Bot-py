@@ -10,9 +10,10 @@ from api.db_classes import Userbase, get_session, Submissions, Teams, \
 from api.dm_handlers import handlers_dict, init_dm_handlers
 from api.errors import SubmissionRetrievalError, NoActiveTaskError, InvalidRkgError, NoSubmissionError
 from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
-    is_task_currently_running, readable_to_float, float_to_readable, reorder_primary_keys, get_submission_channel, \
+from api.utils import get_file_types, get_leader, is_in_team, get_submitter_role, \
+    readable_to_float, float_to_readable, reorder_submission_primary_keys, get_submission_channel, \
     get_logs_channel, get_display_name
+from api.task_handling import get_team_size, is_task_currently_running
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -301,7 +302,7 @@ async def delete_submission(user_id: int, user_dn: str):
         await session.commit()
 
     # Re-arrange the indexes in the submission table so that they are no gaps between numbers
-    await reorder_primary_keys()
+    await reorder_submission_primary_keys()
 
 
 async def generate_submission_list() -> str:
