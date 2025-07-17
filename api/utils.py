@@ -10,8 +10,10 @@ from dotenv import load_dotenv
 from sqlalchemy import select, insert, update, inspect, or_
 
 from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions, Userbase
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions, Userbase, \
+    SubmissionChannel
 from api.errors import ReminderLimitError, DisplayNameError, NoSubmissionError
+from api.submissions import DEFAULT
 from api.task_handling import is_task_currently_running
 
 load_dotenv()
@@ -51,6 +53,13 @@ async def deduct_balance(user_id, guild, amount):
     current_balance = await get_balance(user_id, guild)
     new_balance = max(current_balance - amount, 0)  # Ensure balance doesn't go negative
     await update_balance(user_id, guild, new_balance)
+
+
+async def get_display_name(user_id):
+    """Returns the display name of a certain user ID."""
+    async with get_session() as session:
+        result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
+        return result
 
 
 async def get_host_role(guild_id):
@@ -111,13 +120,50 @@ async def set_submitter_role(role_id: int, name: str, guild_id: int, comp: str =
         await session.commit()
 
 
-async def get_tasks_channel(comp):
+async def get_submission_channel(comp):
     async with get_session() as session:
-        query = select(TasksChannel.channel_id).where(TasksChannel.comp == comp)
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
         channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
         # Handle case where no rows are found in the database
         if channel is None or channel[0] is None:
-            print(f"No tasks channel found for '{comp}'.")
+            print(f"No submission channel found for competition '{comp}'.")
+            return None
+        return channel[0]
+
+
+async def set_submission_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+        if result is None:
+            stmt = insert(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
+
+async def get_submission_channel_guild(channel_id):
+    async with get_session() as session:
+        query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
+        guild_id = (await session.scalars(query)).first()
+        if guild_id is None:
+            return None
+        return guild_id
+
+
+async def get_seeking_channel(comp):
+    async with get_session() as session:
+        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No seeking channel found for '{comp}'.")
             return None
         return channel[0]
 
@@ -167,6 +213,17 @@ async def set_announcements_channel(channel_id: int, guild_id: int, message_guil
         await session.commit()
 
 
+async def get_logs_channel(comp):
+    async with get_session() as session:
+        query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No logging channel found for '{comp}'.")
+            return None
+        return channel[0]
+
+
 async def set_logs_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
     async with get_session() as session:
         query = select(LogChannel.channel_id).where(LogChannel.guild_id == guild_id)
@@ -182,6 +239,17 @@ async def set_logs_channel(channel_id: int, guild_id: int, message_guild_id: int
             await session.execute(stmt)
 
         await session.commit()
+
+
+async def get_tasks_channel(comp):
+    async with get_session() as session:
+        query = select(TasksChannel.channel_id).where(TasksChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No tasks channel found for '{comp}'.")
+            return None
+        return channel[0]
 
 
 async def set_tasks_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):

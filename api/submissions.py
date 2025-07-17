@@ -5,13 +5,14 @@ import shared
 from dotenv import load_dotenv
 from sqlalchemy import insert, select, or_, update, delete
 
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams, \
+from api.db_classes import Userbase, get_session, Submissions, Teams, \
     Tasks
 from api.dm_handlers import handlers_dict, init_dm_handlers
 from api.errors import SubmissionRetrievalError, NoActiveTaskError, InvalidRkgError, NoSubmissionError
 from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
 from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, \
-    is_task_currently_running, readable_to_float, float_to_readable, reorder_primary_keys
+    is_task_currently_running, readable_to_float, float_to_readable, reorder_primary_keys, get_submission_channel, \
+    get_logs_channel, get_display_name
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -20,65 +21,6 @@ if DEFAULT == 'mkw':
     guild_id = 1214800758881394718
 elif DEFAULT == 'nsmbw':
     guild_id = 1238999592947810366
-
-
-async def get_submission_channel(comp):
-    async with get_session() as session:
-        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No submission channel found for competition '{comp}'.")
-            return None
-        return channel[0]
-
-
-async def set_submission_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
-    # TODO: detect which server you are in, so the comp argument is no longer needed
-    async with get_session() as session:
-        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == guild_id)
-        result = (await session.execute(query)).first()
-        if result is None:
-            stmt = insert(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
-            await session.execute(stmt)
-        elif channel_id == result[0]:
-            pass
-        else:
-            stmt = update(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
-            await session.execute(stmt)
-
-        await session.commit()
-
-
-async def get_submission_channel_guild(channel_id):
-    async with get_session() as session:
-        query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
-        guild_id = (await session.scalars(query)).first()
-        if guild_id is None:
-            return None
-        return guild_id
-
-
-async def get_logs_channel(comp):
-    async with get_session() as session:
-        query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No logging channel found for '{comp}'.")
-            return None
-        return channel[0]
-
-
-async def get_seeking_channel(comp):
-    async with get_session() as session:
-        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No seeking channel found for '{comp}'.")
-            return None
-        return channel[0]
 
 
 async def first_time_submission(user_id):
@@ -99,13 +41,6 @@ async def add_competitor_if_new(user_id, user_name, user_dn):
             # If the user_id is not found, add them to the Userbase
             await session.execute(insert(Userbase).values(user_id=user_id, user=user_name, display_name=user_dn))
             await session.commit()
-
-
-async def get_display_name(user_id):
-    """Returns the display name of a certain user ID."""
-    async with get_session() as session:
-        result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
-        return result
 
 
 async def get_team_name(user_id):
@@ -144,6 +79,53 @@ async def get_team_members(id_list):
         name = await get_display_name(id)
         Members.append(name)
     return Members
+
+
+async def get_results():
+    async with get_session() as session:
+        active_task = (await session.scalars(select(Submissions.task))).first()
+        # Get all submissions ordered by time
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                                       Submissions.dq == 0).order_by(
+            Submissions.time.asc()))).fetchall()
+
+        # Get all DQs ordered by time
+        DQs = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                               Submissions.dq == 1).order_by(
+            Submissions.time.asc()))).fetchall()
+
+    content = f"**__Task {active_task} Results__**:\n\n"
+
+    for (n, submission) in enumerate(submissions, start=1):
+        if await is_in_team(submission.user_id):
+            ids = await get_team_ids(submission.user_id)
+            members = await get_team_members(ids)
+            team_name = await get_team_name(submission.user_id)
+
+            # No ( ) if no team name
+            if team_name is None:
+                name = " & ".join(members)
+
+            # Include team name and ( ) with members
+            else:
+                name = f'{team_name} ({" & ".join(members)})'
+        else:
+            name = await get_display_name(submission.user_id)
+
+        readable_time = float_to_readable(submission.time)
+        content += f'{n}. {name} — {readable_time}\n'
+
+    # add return incase of DQs.
+    content += '\n'
+
+    # Rank DQs in order
+    for run in DQs:
+        display_name = await get_display_name(run.user_id)
+        readable_time = float_to_readable(run.time)
+        dq_reason = run.dq_reason
+        content += f'DQ. {display_name} — {readable_time} [{dq_reason}]\n'
+
+    return content
 
 
 async def count_submissions():

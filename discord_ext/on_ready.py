@@ -10,9 +10,8 @@ from sqlalchemy import select, update, delete, insert
 
 from api.db_classes import get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, ReminderPings, SpeedTaskReminders, \
     SpeedTask
-from api.submissions import get_logs_channel
 from api.task_handling import is_task_currently_running
-from api.utils import get_tasks_channel, get_announcement_channel, get_submitter_role
+from api.utils import get_tasks_channel, get_announcement_channel, get_submitter_role, get_logs_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64

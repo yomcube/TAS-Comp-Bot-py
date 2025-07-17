@@ -4,8 +4,8 @@ import discord
 from dotenv import load_dotenv
 
 from api.errors import NoSubmissionChannelError
-from api.submissions import get_submission_channel, generate_submission_list
-from api.utils import get_submitter_role
+from api.submissions import generate_submission_list
+from api.utils import get_submitter_role, get_submission_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

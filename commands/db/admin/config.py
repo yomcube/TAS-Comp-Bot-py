@@ -6,9 +6,8 @@ from api.db_classes import get_session, HostRole, LogChannel, SubmissionChannel,
     TasksChannel, AnnouncementsChannel
 from sqlalchemy import select, insert, update
 
-from api.submissions import set_submission_channel
 from api.utils import set_submitter_role, set_host_role, set_logs_channel, set_seek_channel, set_tasks_channel, \
-    set_announcements_channel
+    set_announcements_channel, set_submission_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
