@@ -8,7 +8,9 @@ from sqlalchemy import select, insert, delete, update
 
 from api.db_classes import SpeedTask, get_session, Tasks, SpeedTaskDesc, SpeedTaskLength, SpeedTaskReminders, \
     Submissions, Teams
-from api.errors import NoActiveTaskError, ActiveTaskError, DeadlineInPastError, NoTaskDescriptionError
+from api.errors import NoActiveTaskError, ActiveTaskError, DeadlineInPastError, NoTaskDescriptionError, \
+    NotSpeedTaskError, AlreadyRequestedError
+from api.utils import get_tasks_channel
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -118,6 +120,47 @@ async def set_speed_task_length(time: float, guild_id: int, message_guild_id: in
             await session.execute(stmt)
 
         await session.commit()
+
+
+async def request_task(author_id: int, guild_id: int = None) -> (str, str, str, str):
+    # TODO: Refactor
+    # Credits to original sm64 / mkw tas comp bot (by Xander) for messages
+    current_task = await is_task_currently_running()
+
+    if current_task is None:
+        raise NoActiveTaskError("There is no active speed task yet.")
+
+    # if not speed task
+    if not current_task[4]:
+        tasks_channel = await get_tasks_channel(DEFAULT)
+        raise NotSpeedTaskError(f"This is not a speed task! Please see <#{tasks_channel}> for task information.")
+
+    if await has_requested_already(author_id):
+        raise AlreadyRequestedError("You have already requested the task.")
+
+    # if task is released, but try to requets task
+    if current_task[7]:
+        tasks_channel = await get_tasks_channel(DEFAULT)
+        raise AlreadyRequestedError(
+            f"The task has already been posted publicly! Please see <#{tasks_channel}> for task information.")
+
+    async with get_session() as session:
+
+        # use shared.main_guild.id to be able to use the command both in server, and in DM (where guild is None)
+        query = select(SpeedTaskDesc.desc).where(SpeedTaskDesc.guild_id == guild_id)
+        task_desc = (await session.scalars(query)).first()
+
+        query2 = select(SpeedTaskLength.time).where(SpeedTaskLength.guild_id == guild_id)
+        task_duration = (await session.scalars(query2)).first()
+
+        task_number = current_task[0]
+        task_year = current_task[1]
+
+        end_time = await get_end_time(task_duration)
+        await session.execute(insert(SpeedTask).values(user_id=author_id, end_time=end_time, active=1))
+
+        await session.commit()
+        return task_number, task_year, task_desc, end_time
 
 
 async def start_task(number: int, team_size: int = 1, multiple_tracks: int = 0,

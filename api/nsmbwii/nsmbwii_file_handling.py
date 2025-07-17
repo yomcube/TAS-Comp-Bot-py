@@ -4,9 +4,8 @@ from sqlalchemy import insert, update, select
 
 from api.db_classes import get_session, Submissions, Userbase
 from api.submissions import handle_submissions, first_time_submission
-from api.task_handling import is_time_over, is_task_currently_running
+from api.task_handling import is_time_over, is_task_currently_running, has_requested_already
 from api.utils import get_team_size, is_in_team, get_leader
-from commands.db.requesttask import has_requested_already
 
 
 async def handle_nsmbwii_files(message, attachments, file_dict, self):

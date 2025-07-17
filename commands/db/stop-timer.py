@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 from sqlalchemy import select
 
 from api.db_classes import get_session, Submissions
-from api.task_handling import is_time_over, is_task_currently_running, cancel_speed_task
+from api.task_handling import is_time_over, is_task_currently_running, cancel_speed_task, has_requested_already
 from api.utils import get_host_role, get_submitter_role
-from commands.db.requesttask import has_requested_already
+
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')

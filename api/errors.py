@@ -56,3 +56,11 @@ class ReminderLimitError(AppError):
 class DisplayNameError(AppError):
     """Raised when there is an error with the display name."""
     pass
+
+class NotSpeedTaskError(AppError):
+    """Raised when the task is not a speed task."""
+    pass
+
+class AlreadyRequestedError(AppError):
+    """Raised when the user has already requested the task."""
+    pass
