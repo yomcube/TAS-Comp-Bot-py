@@ -1,7 +1,9 @@
-from discord.ext import commands
+import random
+
 import requests
 from bs4 import BeautifulSoup
-import random
+from discord.ext import commands
+
 
 class Yoshi(commands.Cog):
     def __init__(self, bot) -> None:
@@ -37,6 +39,7 @@ class Yoshi(commands.Cog):
             await ctx.send(random_image)
         else:
             await ctx.send("No images found.")
+
 
 async def setup(bot) -> None:
     await bot.add_cog(Yoshi(bot))

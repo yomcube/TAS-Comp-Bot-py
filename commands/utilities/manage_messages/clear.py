@@ -1,5 +1,5 @@
 from discord.ext import commands
-import discord
+
 
 class Clear(commands.Cog):
     def __init__(self, bot) -> None:
@@ -15,7 +15,7 @@ class Clear(commands.Cog):
         if amount > 20:
             await ctx.send('For security reasons, you may not delete more than 20 messages at once', ephemeral=True)
             return
-        
+
         deleting_message = await ctx.send(f'Deleting {amount} messages...', ephemeral=True)
         await deleting_message.delete()
 
@@ -27,6 +27,7 @@ class Clear(commands.Cog):
             deleted = await ctx.channel.purge(limit=amount + 1)  # +1 to include the command message itself
             confirmation_message = await ctx.send(f'Deleted {len(deleted) - 1} messages.', ephemeral=True)
         await confirmation_message.delete(delay=5)
+
 
 async def setup(bot) -> None:
     await bot.add_cog(Clear(bot))

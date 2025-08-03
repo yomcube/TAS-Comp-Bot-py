@@ -1,6 +1,9 @@
-from discord.ext import commands
 import sys
 import traceback
+
+from discord.ext import commands
+
+from api.errors import AppError
 
 
 class Errors(commands.Cog):
@@ -32,10 +35,12 @@ class Errors(commands.Cog):
             case _ if isinstance(error, commands.MissingRequiredArgument):
                 return await ctx.send(f'Missing arguments in {ctx.command}.')
             case _ if isinstance(error, commands.CheckFailure):  # I use checks to verify for permissions (if someone
-                                                                 # has the correct role for X command)
+                # has the correct role for X command)
                 return await ctx.send("You may not use this command!")
             case _ if isinstance(error, commands.PrivateMessageOnly):
                 return await ctx.send("This command is only usable in DMs with the bot.")
+            case _ if isinstance(error, AppError):
+                return await ctx.send(str(error))
         print(f'Ignoring exception in command {ctx.command}:', file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 

@@ -1,9 +1,10 @@
-from api.submissions import handle_submissions, first_time_submission
-from api.utils import is_task_currently_running, readable_to_float, get_team_size, is_in_team, get_leader, is_task_currently_running
-from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
-from commands.db.requesttask import has_requested_already, is_time_over
-from api.db_classes import get_session, Submissions, Teams, Userbase
 from sqlalchemy import insert, update, select
+
+from api.db_classes import get_session, Submissions, Userbase
+from api.mkwii.mkwii_utils import get_lap_time, get_character, get_vehicle
+from api.submissions import handle_submissions, first_time_submission
+from api.task_handling import is_time_over, is_task_currently_running, has_requested_already, get_team_size
+from api.utils import readable_to_float, is_in_team, get_leader
 
 
 async def handle_mkwii_files(message, attachments, file_dict, self):
@@ -36,14 +37,13 @@ async def handle_mkwii_files(message, attachments, file_dict, self):
                     query = select(Submissions.user_id).where(Submissions.user_id == message.author.id)
                     result = (await session.execute(query)).first()
 
-
                     if result is None:
-                        message_to_send = (f"You can't submit, your time is up! If you wish to send in a late submission, "
-                                   f"please DM the current host so they can add your submission manually.")
+                        message_to_send = (
+                            f"You can't submit, your time is up! If you wish to send in a late submission, "
+                            f"please DM the current host so they can add your submission manually.")
 
                     else:
                         message_to_send = "You can't submit, your time is up!"
-
 
                 await message.channel.send(message_to_send)
                 return

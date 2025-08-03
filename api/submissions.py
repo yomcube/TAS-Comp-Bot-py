@@ -1,11 +1,19 @@
-import discord
 import os
+
+import discord
 import shared
 from dotenv import load_dotenv
-from api.db_classes import SubmissionChannel, Userbase, get_session, Submissions, LogChannel, SeekingChannel, Teams
-from sqlalchemy import insert, select, or_
-from api.utils import get_file_types, get_leader, get_team_size, is_in_team, get_submitter_role, is_task_currently_running
+from sqlalchemy import insert, select, or_, update, delete
+
+from api.db_classes import Userbase, get_session, Submissions, Teams, \
+    Tasks
 from api.dm_handlers import handlers_dict, init_dm_handlers
+from api.errors import SubmissionRetrievalError, NoActiveTaskError, InvalidRkgError, NoSubmissionError
+from api.mkwii.mkwii_utils import get_character, get_vehicle, get_lap_time
+from api.utils import get_file_types, get_leader, is_in_team, get_submitter_role, \
+    readable_to_float, float_to_readable, reorder_submission_primary_keys, get_submission_channel, \
+    get_logs_channel, get_display_name
+from api.task_handling import get_team_size, is_task_currently_running
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -14,50 +22,6 @@ if DEFAULT == 'mkw':
     guild_id = 1214800758881394718
 elif DEFAULT == 'nsmbw':
     guild_id = 1238999592947810366
-
-
-async def get_submission_channel(comp):
-    async with get_session() as session:
-        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No submission channel found for competition '{comp}'.")
-            return None
-        return channel[0]
-
-
-async def get_submission_channel_guild(channel_id):
-    async with get_session() as session:
-        query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
-        guild_id = (await session.scalars(query)).first()
-        if guild_id is None:
-            return None
-        return guild_id
-
-
-async def get_logs_channel(comp):
-    async with get_session() as session:
-        query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No logging channel found for '{comp}'.")
-            return None
-        return channel[0]
-
-
-async def get_seeking_channel(comp):
-    async with get_session() as session:
-        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No seeking channel found for '{comp}'.")
-            return None
-        return channel[0]
-
-
 
 
 async def first_time_submission(user_id):
@@ -69,19 +33,16 @@ async def first_time_submission(user_id):
         return not result
 
 
-async def new_competitor(user_id):
-    """Checks if a competitor has EVER submitted (present and past tasks)."""
+async def add_competitor_if_new(user_id, user_name, user_dn):
+    """Adds a new competitor to the Userbase if they are not already present."""
     async with get_session() as session:
         query = select(Userbase.user_id).where(Userbase.user_id == user_id)
         result = (await session.execute(query)).first()
-        return not result
+        if not result:
+            # If the user_id is not found, add them to the Userbase
+            await session.execute(insert(Userbase).values(user_id=user_id, user=user_name, display_name=user_dn))
+            await session.commit()
 
-
-async def get_display_name(user_id):
-    """Returns the display name of a certain user ID."""
-    async with get_session() as session:
-        result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
-        return result
 
 async def get_team_name(user_id):
     """Returns the display name of the team a certain user ID is in."""
@@ -92,6 +53,8 @@ async def get_team_name(user_id):
 
         result = (await session.execute(stmt)).first()
         return result[0] if result else None
+
+
 async def get_team_ids(id):
     """Takes list of IDs, and retrieves all the members of the team. Used for submission list"""
     async with get_session() as session:
@@ -118,6 +81,68 @@ async def get_team_members(id_list):
         Members.append(name)
     return Members
 
+async def get_current_team(user_id):
+    async with get_session() as session:
+        result = await session.execute(
+            select(Teams).where(
+                (Teams.leader == user_id) |
+                (Teams.user2 == user_id) |
+                (Teams.user3 == user_id) |
+                (Teams.user4 == user_id)
+            )
+        )
+        team = result.scalar()
+        if team:
+            team_members = [team.leader, team.user2, team.user3, team.user4]
+            return [member for member in team_members if member]
+        return None
+
+async def get_results():
+    async with get_session() as session:
+        active_task = (await session.scalars(select(Submissions.task))).first()
+        # Get all submissions ordered by time
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                                       Submissions.dq == 0).order_by(
+            Submissions.time.asc()))).fetchall()
+
+        # Get all DQs ordered by time
+        DQs = (await session.scalars(select(Submissions).where(Submissions.task == active_task,
+                                                               Submissions.dq == 1).order_by(
+            Submissions.time.asc()))).fetchall()
+
+    content = f"**__Task {active_task} Results__**:\n\n"
+
+    for (n, submission) in enumerate(submissions, start=1):
+        if await is_in_team(submission.user_id):
+            ids = await get_team_ids(submission.user_id)
+            members = await get_team_members(ids)
+            team_name = await get_team_name(submission.user_id)
+
+            # No ( ) if no team name
+            if team_name is None:
+                name = " & ".join(members)
+
+            # Include team name and ( ) with members
+            else:
+                name = f'{team_name} ({" & ".join(members)})'
+        else:
+            name = await get_display_name(submission.user_id)
+
+        readable_time = float_to_readable(submission.time)
+        content += f'{n}. {name} — {readable_time}\n'
+
+    # add return incase of DQs.
+    content += '\n'
+
+    # Rank DQs in order
+    for run in DQs:
+        display_name = await get_display_name(run.user_id)
+        readable_time = float_to_readable(run.time)
+        dq_reason = run.dq_reason
+        content += f'DQ. {display_name} — {readable_time} [{dq_reason}]\n'
+
+    return content
+
 
 async def count_submissions():
     """Counts the number of submissions in the current task."""
@@ -125,6 +150,7 @@ async def count_submissions():
         query = select(Submissions)
         result = (await session.scalars(query)).fetchall()
         return len(result)
+
 
 async def post_submission_list(channel, id, name):
     # Case if user is in team
@@ -162,35 +188,125 @@ async def update_submission_list(last_message, id, name):
 
         # No ( ) if no team name
         if team_name == None:
-            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||")
+            new_content = (
+                f"{last_message.content}\n{(await count_submissions()) + 1}. {' & '.join(members)} ||{mentions}||")
 
 
         # Case if they actually set a team name
         else:
-            new_content = (f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
-                       f" ||{mentions}||")
-
+            new_content = (
+                f"{last_message.content}\n{(await count_submissions()) + 1}. {team_name} ({' & '.join(members)})"
+                f" ||{mentions}||")
 
         return await last_message.edit(content=new_content)
 
     # solo submission
     new_content = (f"{last_message.content}\n{await count_submissions()}. {name}"
-                    f" ||<@{id}>||")
+                   f" ||<@{id}>||")
     return await last_message.edit(content=new_content)
 
 
-async def generate_submission_list(self):
-    """ Edits the submission list in the submission channel.
-        Takes bot (self) as an argument -- so that the bot may retrieve the channel & message.
-    """
-    submission_channel = await get_submission_channel(DEFAULT)
-    channel = self.bot.get_channel(submission_channel)
-    async for message in channel.history(limit=3):
-        # Check if the message was sent by the bot
-        if message.author == self.bot.user:
-            message_to_edit = message
+async def get_submissions(msg_limit, buffer) -> (list, str):
+    # Get current task by taking random submission, and extracting task number
+    async with get_session() as session:
+        active_task = (await session.scalars(select(Submissions.task).limit(1))).first()
+
+    if active_task is None:
+        raise NoActiveTaskError("There is no active task. Please start a task first.")
+
+    # Get submissions from current task
+    async with get_session() as session:
+        submissions = (await session.scalars(select(Submissions).where(Submissions.task == active_task))).fetchall()
+    submissions_parts = []
+    current_part = ""
+    try:
+        for submission in submissions:
+            if await is_in_team(submission.user_id):
+                ids = await get_team_ids(submission.user_id)
+                members = await get_team_members(ids)
+                team_name = await get_team_name(submission.user_id)
+
+                # No ( ) if no team name
+                if team_name is None:
+                    name = " & ".join(members)
+                # Include team name and ( ) with members
+                else:
+                    name = f'{team_name} ({" & ".join(members)})'
+            else:
+                name = await get_display_name(submission.user_id)
+
+                submission_text = f"{submissions.index(submission) + 1}. {name} : {submission.url} | Fetched time: ||{float_to_readable(submission.time)}||\n"
+
+                # Check if adding this submission would exceed the message limit
+                if len(current_part) + len(submission_text) > (msg_limit - buffer):
+                    submissions_parts.append(current_part)  # Save the current part
+                    current_part = submission_text  # Start a new part
+                else:
+                    current_part += submission_text
+    except TypeError as e:
+        print(e)
+        raise SubmissionRetrievalError("Someone's submission could not be retrieved")
+
+    # Append the last part
+    if current_part:
+        submissions_parts.append(current_part)
+
+    header = f"__**Task {active_task} submissions**__:\n-# (Total submissions: {len(submissions)})\n\n"
+    return submissions_parts, header
 
 
+async def edit_submission(user_id: int, user_str: str, time: float, dq: bool, dq_reason: str = '') -> (str, str):
+    async with get_session() as session:
+        data = (await session.scalars(select(Submissions).where(Submissions.user_id == user_id))).first()
+
+    if data is None:
+        raise NoSubmissionError(f"{user_str} has no submission.")
+    data_dq = None
+    # was DQ or not
+    if data.dq == 0:
+        data_dq = False
+    elif data.dq == 1:
+        data_dq = True
+
+    readable_time = float_to_readable(time)
+    server_text = f"Succesfully edited {user_str}'s submission with:\nTime: from {data.time} to {time}\nDQ: from {data_dq} to {dq}"
+    dm_text = f"Your submission has been edited:\nTime: from {float_to_readable(data.time)} to {readable_time}\nDQ: from {data_dq} to {dq}"
+
+    if dq:
+        server_text += f" ({dq_reason})"
+        dm_text += f" ({dq_reason})"
+
+    # Update submission to db
+    async with get_session() as session:
+        await session.execute(
+            update(Submissions).values(time=time, dq=dq, dq_reason=dq_reason).where(Submissions.user_id == user_id))
+        await session.commit()
+
+
+async def delete_submission(user_id: int, user_dn: str):
+    """Delete a submission by user ID."""
+    async with get_session() as session:
+        currently_running = (await session.execute(select(Tasks).where(Tasks.is_active == 1))).first()
+        if not currently_running:
+            raise NoActiveTaskError("There is no ongoing task")
+
+    async with get_session() as session:
+        data = (await session.scalars(select(Submissions).where(Submissions.user_id == user_id))).first()
+
+    if data is None:
+        raise NoSubmissionError(f"{user_dn} has no submission.")
+
+    # Delete submission from db
+    async with get_session() as session:
+        await session.execute(delete(Submissions).where(Submissions.user_id == user_id))
+        await session.commit()
+
+    # Re-arrange the indexes in the submission table so that they are no gaps between numbers
+    await reorder_submission_primary_keys()
+
+
+async def generate_submission_list() -> str:
+    """Generates a formatted list of current submissions for the active task."""
     async with get_session() as session:
 
         active_task = (await session.scalars(select(Submissions.task))).first()
@@ -220,9 +336,57 @@ async def generate_submission_list(self):
                         f"\n{submission.index}. {team_name} ({' & '.join(members)}) ||{mentions}||"
                     )
 
+    return formatted_submissions
 
-    return await message_to_edit.edit(content=formatted_submissions)
 
+async def submit_file(file_data: bytes, url: str, user_id: int, user_name: str, user_dn: str) -> bool:
+    current_task = await is_task_currently_running()
+
+    # retrieving lap time, to estimate submission time
+    rkg_data = file_data
+
+    try:
+        rkg = bytearray(rkg_data)
+        if rkg[:4] == b'RKGD':
+            lap_times = get_lap_time(rkg)
+
+            # float time to upload to db
+            time = readable_to_float(lap_times[0])  # For most (but not all) mkw single-track tasks, the first
+            # lap time is usually the time of the submission, given the task is on lap 1 and not backwards.
+
+            character = get_character(rkg)
+            vehicle = get_vehicle(rkg)
+
+        else:
+            time = 0
+            character = None
+            vehicle = None
+            raise InvalidRkgError("Invalid RKG file format")
+
+    except UnboundLocalError:
+        # This exception catches blank rkg files
+        time = 0
+        character = None
+        vehicle = None
+        raise InvalidRkgError("Nice blank rkg there")
+
+    # If it's new competitor, add to userbase first
+    await add_competitor_if_new(user_id, user_name, user_dn)
+
+    async with get_session() as session:
+        # Check if user has already submitted
+        if await first_time_submission(user_id):
+            query = insert(Submissions).values(task=current_task[0], name=user_name, user_id=user_id, url=url,
+                                               time=time,
+                                               dq=0, dq_reason='', character=character, vehicle=vehicle)
+            await session.execute(query)
+            await session.commit()
+        else:
+            query = (update(Submissions).values(url=url, time=time, character=character, vehicle=vehicle)
+                     .where(Submissions.user_id == user_id))
+            await session.execute(query)
+            await session.commit()
+    return True
 
 
 async def handle_submissions(message, self):
@@ -237,12 +401,8 @@ async def handle_submissions(message, self):
     submission_channel = await get_submission_channel(DEFAULT)
     channel = self.bot.get_channel(submission_channel)
 
-    # Checking if submitter has ever participated before
-    if await new_competitor(author_id):
-        # adding him to the user database.
-        async with get_session() as session:
-            await session.execute(insert(Userbase).values(user_id=author_id, user=author_name, display_name=author_dn))
-            await session.commit()
+    # Add competitor to the Userbase if they are not already present
+    await add_competitor_if_new(author_id, author_name, author_dn)
 
     if not channel:
         print("Could not find the channel.")
@@ -265,8 +425,7 @@ async def handle_submissions(message, self):
 
         # Add a new line only if it's a new user ID submitting
         if await first_time_submission(author_id):
-
-                await update_submission_list(last_message, author_id, author_display_name)
+            await update_submission_list(last_message, author_id, author_display_name)
 
 
     else:
@@ -276,7 +435,7 @@ async def handle_submissions(message, self):
     ##################################################################
     # Adding submitter role to submitters (if not speed task)
     ##################################################################
-    if not (await is_task_currently_running())[4]: # if not speed task
+    if not (await is_task_currently_running())[4]:  # if not speed task
 
         guild_id = shared.main_guild.id
 
@@ -313,8 +472,8 @@ async def handle_dms(message, self):
         attachments = message.attachments
         if channel:
             await channel.send(f"Message from {author_dn}: {message.content} " +
-                                " ".join([attachment.url for attachment in message.attachments if message.attachments]),
-                                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                               " ".join([attachment.url for attachment in message.attachments if message.attachments]),
+                               allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
         #########################
         # Recognizing submission
@@ -324,10 +483,11 @@ async def handle_dms(message, self):
             file_dict = get_file_types(attachments)
             try:
                 await handlers_dict[DEFAULT](message, attachments, file_dict, self)
-            
+
             except KeyError:
                 print(f"Could not find DM handler for '{DEFAULT}'.")
             except TimeoutError:
                 await channel.send("Could not process Files!")
+
 
 init_dm_handlers()

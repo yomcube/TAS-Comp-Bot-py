@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -8,7 +9,6 @@ class Help(commands.Cog):
     async def help(self, ctx, category: str = ""):
         try:
             if category == "":
-
                 help_menu = """**MKWTASCompBot** - A Multi TAS Comp Bot
     List of commands\n
     **Commands**:
@@ -100,7 +100,6 @@ class Help(commands.Cog):
       **toggle-reminder-pings** -- Toggle whether we want to ping @ everyone when doing speed task reminders. Default: False
       """
 
-
             await ctx.send(help_menu)
 
 
@@ -108,10 +107,5 @@ class Help(commands.Cog):
             await ctx.send("Invalid argument.")
 
 
-
-
-
-
 async def setup(bot):
     await bot.add_cog(Help(bot))
-

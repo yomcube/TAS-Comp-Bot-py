@@ -1,18 +1,21 @@
+from datetime import datetime, timedelta
+
 import discord
 from discord.ext import commands
-from datetime import datetime, timedelta
+
 
 class GiveQM(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.last_used = {}  # Dictionary to keep track of the last usage time per user
 
-    @commands.hybrid_command(name="giveqm", description="Give QM to another user", aliases=["gqm"], with_app_command=True)
+    @commands.hybrid_command(name="giveqm", description="Give QM to another user", aliases=["gqm"],
+                             with_app_command=True)
     async def command(self, ctx, user: discord.Member):
         if user is None:
             await ctx.reply("Please mention a user")
             return
-        
+
         # Get the current time
         now = datetime.utcnow()
 
@@ -24,8 +27,9 @@ class GiveQM(commands.Cog):
 
         # Update the last used time
         self.last_used[ctx.author.id] = now
-        
+
         await ctx.reply(f"Gave {user.mention} good QM!")
+
 
 async def setup(bot):
     await bot.add_cog(GiveQM(bot))

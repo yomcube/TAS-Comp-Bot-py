@@ -1,7 +1,9 @@
-from discord.ext import commands
-import requests
-from json import loads
 import random
+from json import loads
+
+import requests
+from discord.ext import commands
+
 
 class TomCube(commands.Cog):
     def __init__(self, bot) -> None:
@@ -26,6 +28,7 @@ class TomCube(commands.Cog):
             await ctx.send(random_repo['html_url'])
         else:
             await ctx.send("No repositories found.")
+
 
 async def setup(bot) -> None:
     await bot.add_cog(TomCube(bot))

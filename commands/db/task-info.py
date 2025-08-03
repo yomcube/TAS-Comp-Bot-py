@@ -5,8 +5,8 @@ import shared
 from discord.ext import commands
 
 from api.submissions import count_submissions
-from api.utils import is_task_currently_running, get_team_size, get_host_role
-from sqlalchemy import select
+from api.utils import get_host_role
+from api.task_handling import is_task_currently_running, get_team_size
 
 
 class TaskInfo(commands.Cog):
@@ -20,7 +20,6 @@ class TaskInfo(commands.Cog):
         if current_task is None:
             return await ctx.send("There is no ongoing task.")
 
-
         task_num, task_year, _, team_size, speed_task, _, deadline_timestamp, _ = current_task
 
         collab = f"Yes, {await get_team_size()} people" if team_size > 1 else "No"
@@ -28,7 +27,7 @@ class TaskInfo(commands.Cog):
         if deadline_timestamp is not None:
             deadline = f"<t:{deadline_timestamp}:f> (<t:{deadline_timestamp}:R>)"
         else:
-            deadline = "Deadline has not been set by the host. See task channel."
+            deadline = "The host has not set the deadline. See task channel."
 
         submissions = await count_submissions()
 
@@ -52,8 +51,7 @@ class TaskInfo(commands.Cog):
         embed.set_footer(text="TAS Competition Info", icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
 
         await ctx.send(embed=embed)
-
-
+        return None
 
 
 async def setup(bot):

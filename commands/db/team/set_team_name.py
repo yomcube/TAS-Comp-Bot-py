@@ -1,15 +1,15 @@
-import discord
-from discord.ext import commands
-from api.db_classes import  Teams, get_session
-from api.submissions import get_submission_channel, generate_submission_list
-from api.utils import is_in_team
-from sqlalchemy import select, update, or_
 import os
+
+from discord.ext import commands
 from dotenv import load_dotenv
+from sqlalchemy import select, update, or_
+
+from api.db_classes import Teams, get_session
+from api.utils import is_in_team
+from discord_ext.discord_utils import edit_submission_list
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
-
 
 
 class Setteamname(commands.Cog):
@@ -29,7 +29,6 @@ class Setteamname(commands.Cog):
         if not await is_in_team(ctx.author.id):
             return await ctx.reply("You are not in a team")
 
-
         async with get_session() as session:
 
             # Detect illegal name change (2 identical names)
@@ -48,7 +47,7 @@ class Setteamname(commands.Cog):
             await session.commit()
 
         # Update submission list
-        await generate_submission_list(self)
+        await edit_submission_list(self)
 
         await ctx.send(f"Successfully set team name to **{new_name}**.")
 

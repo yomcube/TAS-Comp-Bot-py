@@ -1,7 +1,8 @@
 from discord import AllowedMentions
 from discord.ext import commands
-from api.db_classes import Money, get_session
 from sqlalchemy import select
+
+from api.db_classes import Money, get_session
 
 
 class Balancetop(commands.Cog):
@@ -26,7 +27,7 @@ class Balancetop(commands.Cog):
             leaderboard += f"{i + 1}: {name} - {result[i].coins}\n"
 
         await ctx.send(leaderboard,
-            allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
+                       allowed_mentions=AllowedMentions.none(), suppress_embeds=True)
 
 
 async def setup(bot) -> None:

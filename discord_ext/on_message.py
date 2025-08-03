@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
+
 from api import submissions
 
 
 class Message(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -37,7 +37,6 @@ class Message(commands.Cog):
         elif msg_list[3] in lower_content:
             await message.reply(
                 "A confirmed date and time of the stream will be announced by the current host or the streamer after the deadline in <#657107735720230922>")
-
 
     async def wait_crazy(self, message):
         def check(m):

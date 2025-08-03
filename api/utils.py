@@ -1,13 +1,18 @@
 import hashlib
 import os
+from urllib.parse import urlparse
+
 import aiohttp
 import discord
-from urllib.parse import urlparse
 from discord.ext import commands
-from sqlalchemy import select, insert, update, inspect, or_
-from api.db_classes import Money, Tasks, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
-    AnnouncementsChannel
+from discord.ext.commands import Greedy
 from dotenv import load_dotenv
+from sqlalchemy import select, insert, update, inspect, or_
+
+from api.db_classes import Money, Teams, HostRole, SubmitterRole, get_session, TasksChannel, \
+    AnnouncementsChannel, SpeedTaskReminders, LogChannel, SeekingChannel, ReminderPings, Submissions, Userbase, \
+    SubmissionChannel
+from api.errors import ReminderLimitError, DisplayNameError, NoSubmissionError
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')  # Choices: mkw, sm64
@@ -48,28 +53,190 @@ async def deduct_balance(user_id, guild, amount):
     await update_balance(user_id, guild, new_balance)
 
 
+async def get_display_name(user_id):
+    """Returns the display name of a certain user ID."""
+    async with get_session() as session:
+        result = (await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
+        return result
+
+
 async def get_host_role(guild_id):
     default = DEFAULT
     # Retrieves the host role. By default, on the server, the default host role is 'Host'.
     async with get_session() as session:
-        host_role = (await session.scalars(select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
+        host_role = (await session.scalars(
+            select(HostRole.role_id).where(HostRole.comp == default and HostRole.guild_id == guild_id))).first()
 
         if host_role:
             return host_role
         else:
             return None
-        
-        
+
+
+async def set_host_role(role_id: int, name: str, guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        host_role = (await session.scalars(select(HostRole.comp).where(HostRole.comp == comp))).first()
+
+        # Check if host_role doesn't exist yet for the comp
+        if host_role is None:
+            stmt = (insert(HostRole).values(role_id=role_id, name=name, comp=comp, guild_id=guild_id))
+            await session.execute(stmt)
+        else:
+
+            stmt = (update(HostRole).values(role_id=role_id, name=name).where(HostRole.comp == comp))
+            await session.execute(stmt)
+
+        await session.commit()
+
+
 async def get_submitter_role(guild_id):
     default = DEFAULT
     # Retrieves the submitter role. By default, on the server, the default submitter role is 'submitter'.
     async with get_session() as session:
-        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
+        submitter_role = (await session.scalars(select(SubmitterRole.role_id).where(
+            SubmitterRole.comp == default and SubmitterRole.guild_id == guild_id))).first()
 
         if submitter_role:
             return submitter_role
         else:
             return None
+
+
+async def set_submitter_role(role_id: int, name: str, guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        submitter_role = (await session.scalars(select(SubmitterRole.comp).where(SubmitterRole.comp == comp))).first()
+
+        # Check if submitter_role doesn't exist yet for the comp
+        if submitter_role is None:
+            stmt = (insert(SubmitterRole).values(role_id=role_id, name=name, comp=comp, guild_id=guild_id))
+            await session.execute(stmt)
+        else:
+
+            stmt = (update(SubmitterRole).values(role_id=role_id, name=name).where(SubmitterRole.comp == comp))
+            await session.execute(stmt)
+
+        await session.commit()
+
+
+async def get_submission_channel(comp):
+    async with get_session() as session:
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No submission channel found for competition '{comp}'.")
+            return None
+        return channel[0]
+
+
+async def set_submission_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(SubmissionChannel.channel_id).where(SubmissionChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+        if result is None:
+            stmt = insert(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(SubmissionChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
+
+async def get_submission_channel_guild(channel_id):
+    async with get_session() as session:
+        query = select(SubmissionChannel.guild_id).where(SubmissionChannel.channel_id == channel_id)
+        guild_id = (await session.scalars(query)).first()
+        if guild_id is None:
+            return None
+        return guild_id
+
+
+async def get_seeking_channel(comp):
+    async with get_session() as session:
+        query = select(SeekingChannel.channel_id).where(SeekingChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No seeking channel found for '{comp}'.")
+            return None
+        return channel[0]
+
+
+async def set_seek_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        query = select(SeekingChannel.channel_id).where(SeekingChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(SeekingChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(SeekingChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
+
+async def get_announcement_channel(comp):
+    async with get_session() as session:
+        query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No announcements channel found for '{comp}'.")
+            return None
+        return channel[0]
+
+
+async def set_announcements_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
+    async with get_session() as session:
+        query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(AnnouncementsChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(AnnouncementsChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
+
+async def get_logs_channel(comp):
+    async with get_session() as session:
+        query = select(LogChannel.channel_id).where(LogChannel.comp == comp)
+        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
+        # Handle case where no rows are found in the database
+        if channel is None or channel[0] is None:
+            print(f"No logging channel found for '{comp}'.")
+            return None
+        return channel[0]
+
+
+async def set_logs_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT) -> None:
+    async with get_session() as session:
+        query = select(LogChannel.channel_id).where(LogChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(LogChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(LogChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
 
 
 async def get_tasks_channel(comp):
@@ -82,15 +249,48 @@ async def get_tasks_channel(comp):
             return None
         return channel[0]
 
-async def get_announcement_channel(comp):
+
+async def set_tasks_channel(channel_id: int, guild_id: int, message_guild_id: int, comp: str = DEFAULT):
     async with get_session() as session:
-        query = select(AnnouncementsChannel.channel_id).where(AnnouncementsChannel.comp == comp)
-        channel = (await session.execute(query)).first()  # there should only be 1 entry per table per competition
-        # Handle case where no rows are found in the database
-        if channel is None or channel[0] is None:
-            print(f"No announcements channel found for '{comp}'.")
-            return None
-        return channel[0]
+        query = select(TasksChannel.channel_id).where(TasksChannel.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result is None:
+            stmt = insert(TasksChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+        elif channel_id == result[0]:
+            pass
+        else:
+            stmt = update(TasksChannel).values(guild_id=message_guild_id, channel_id=channel_id, comp=comp)
+            await session.execute(stmt)
+
+        await session.commit()
+
+
+async def toggle_reminder_pings(guild_id: int = None, message_guiild_id: int = None, comp: str = DEFAULT) -> bool:
+    # TODO: detect which server you are in, so the comp argument is no longer needed
+    async with get_session() as session:
+        query = select(ReminderPings.ping).where(ReminderPings.guild_id == guild_id)
+        result = (await session.execute(query)).first()
+
+        if result[0] is None:
+            stmt = insert(ReminderPings).values(ping=0, guild_id=message_guiild_id, comp=comp)
+            await session.execute(stmt)
+            new_setting = False
+
+
+        elif result[0] == 0:
+            stmt = update(ReminderPings).values(ping=1, guild_id=message_guiild_id, comp=comp)
+            await session.execute(stmt)
+            new_setting = True
+
+        else:
+            stmt = update(ReminderPings).values(ping=0, guild_id=message_guiild_id, comp=comp)
+            await session.execute(stmt)
+            new_setting = False
+
+        await session.commit()
+        return new_setting
 
 
 def has_host_role():
@@ -105,6 +305,32 @@ def has_host_role():
 
     return commands.check(predicate)
 
+
+async def reorder_submission_primary_keys():
+    async with get_session() as session:
+        # Retrieve the submissions
+        query = select(Submissions).order_by(Submissions.index)
+        result = await session.execute(query)
+        submissions = result.scalars().all()
+
+        # Reassign indexes
+        for idx, submission in enumerate(submissions, start=1):
+            submission.index = idx
+
+        await session.commit()
+
+async def reorder_teams_primary_keys():
+    async with get_session() as session:
+        # Retrieve the teams
+        query = select(Teams).order_by(Teams.index)
+        result = await session.execute(query)
+        teams = result.scalars().all()
+
+        # Reassign indexes
+        for idx, team in enumerate(teams, start=1):
+            team.index = idx
+
+        await session.commit()
 
 async def download_from_url(url) -> str:
     try:
@@ -151,24 +377,6 @@ def float_to_readable(seconds):
     return time_str
 
 
-async def is_task_currently_running():
-    """Check if a task is currently running. Returns a list with the parameters of active task, if so."""
-    # Is a task running?
-    async with get_session() as session:
-        active = (await session.execute(select(Tasks.task, Tasks.year, Tasks.is_active, Tasks.team_size,
-                                               Tasks.speed_task, Tasks.multiple_tracks, Tasks.deadline, Tasks.is_released)
-                                        .where(Tasks.is_active == 1))).first()
-        return active
-
-
-async def get_team_size():
-    """Retrieves the team size of the running task. Over 1 means it is a collab task"""
-    current_task = await is_task_currently_running()
-    if current_task is not None:
-        return current_task[3]
-    else:
-        return None
-
 async def is_in_team(id):
     """Returns if a certain id is in a team (found in the Teams db)"""
     async with get_session() as session:
@@ -181,22 +389,86 @@ async def is_in_team(id):
         results = result.scalars().all()
         return results
 
+
 async def get_leader(id):
     """Takes the id and returns the leader of id's team. Used for collab tasks. Returns none if not found."""
     async with get_session() as session:
         stmt = select(Teams.leader).filter(
-            (Teams.leader == id) | (Teams.user2 == id) |(Teams.user3 == id) | (Teams.user4 == id))
+            (Teams.leader == id) | (Teams.user2 == id) | (Teams.user3 == id) | (Teams.user4 == id))
         result = await session.execute(stmt)
         leader = result.scalars().first()
         return leader
 
 
+async def set_display_name(user_id: int, new_name: str):
+    if '@' in new_name:
+        raise DisplayNameError("You may not use @ in your name.")
+
+    if len(new_name) > 120:
+        raise DisplayNameError("Your name is too long!")
+
+    # Gets his old display_name
+    async with get_session() as session:
+
+        user_id = user_id
+
+        old_display_name = (
+            await session.scalars(select(Userbase.display_name).where(Userbase.user_id == user_id))).first()
+
+        if old_display_name is None:
+            raise NoSubmissionError("This person has never submitted. Please submit first!")
+
+        else:
+            # Detect illegal name change (2 identical names)
+            if (
+                    await session.scalars(
+                        select(Userbase.display_name).where(Userbase.display_name == new_name))).first():
+                raise DisplayNameError("The name is already in use by another user.")
+
+            # Update name in database
+            stmt = update(Userbase).values(display_name=new_name).where(Userbase.user_id == user_id)
+            await session.execute(stmt)
+            await session.commit()
+
+
+async def set_speed_task_reminders(reminders: Greedy[int], guild_id: int, comp_name: str) -> None:
+    if len(reminders) > 4:
+        raise ReminderLimitError("You can't set more than 4 reminders.")
+    # Prepare the reminders, filling with None if fewer than 4
+    reminders_filled = reminders + [None] * (4 - len(reminders))
+    async with get_session() as session:
+        stmt = select(SpeedTaskReminders).where(SpeedTaskReminders.guild_id == guild_id)
+        result = await session.execute(stmt)
+        existing_reminder = result.scalar_one_or_none()
+
+        if existing_reminder:
+            # Update the existing row
+            existing_reminder.comp = comp_name
+            existing_reminder.reminder1 = reminders_filled[0]
+            existing_reminder.reminder2 = reminders_filled[1]
+            existing_reminder.reminder3 = reminders_filled[2]
+            existing_reminder.reminder4 = reminders_filled[3]
+        else:
+            # If no existing row is found, create a new one
+            new_task_reminder = SpeedTaskReminders(
+                comp=comp_name,
+                reminder1=reminders_filled[0],
+                reminder2=reminders_filled[1],
+                reminder3=reminders_filled[2],
+                reminder4=reminders_filled[3],
+                guild_id=guild_id
+            )
+            session.add(new_task_reminder)
+
+        # Commit changes to the database
+        await session.commit()
 
 
 def calculate_winnings(num_emojis, slot_number, constant=3):
     probability = 1 / (num_emojis ** (slot_number - 1))
     winnings = constant * slot_number * (1 / probability)
     return int(winnings)
+
 
 def get_file_types(attachments):
     file_list = []
@@ -223,6 +495,3 @@ def hash_file(filename: str):
     """
     with open(filename, 'rb', buffering=0) as f:
         return hashlib.file_digest(f, 'sha256')
-
-
-

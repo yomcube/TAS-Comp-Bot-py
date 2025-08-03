@@ -1,5 +1,6 @@
-from discord.ext import commands
 import discord
+from discord.ext import commands
+
 from api.utils import get_balance
 
 
@@ -14,7 +15,7 @@ class Balance(commands.Cog):
             user_handle = user.id
             balance = await get_balance(user_handle, ctx.message.guild.id)
             await ctx.reply(f"{user.display_name} current balance is {balance} coins.",
-                allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                            allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
         else:
             user_id = ctx.author.id
             balance = await get_balance(user_id, ctx.message.guild.id)

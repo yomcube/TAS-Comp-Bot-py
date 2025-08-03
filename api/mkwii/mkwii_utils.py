@@ -39,9 +39,6 @@ def get_vehicle(rkg):
     return rkg[0x8] >> 0x2
 
 
-
-
-
 tracks = ["Luigi Circuit", "Moo Moo Meadows", "Mushroom Gorge", "Toad's Factory", "Mario Circuit", "Coconut Mall",
           "DK Summit", "Wario's Gold Mine", "Daisy Circuit", "Koopa Cape", "Maple Treeway", "Grumble Volcano",
           "Dry Dry Ruins", "Moonview Highway", "Bowser's Castle", "Rainbow Road", "GCN Peach Beach", "DS Yoshi Falls",
@@ -52,8 +49,6 @@ tracks_abbreviated = ['LC', 'MMM', 'MG', 'TF', 'MC', 'CM', 'DKSC', 'WGM', 'DC', 
                       'RR', 'rPB', 'rYF', 'rGV2', 'rMR', 'rSL', 'rSGB', 'rDS', 'rWS', 'rDH', 'rBC3', 'rDKJP', 'rMC',
                       'rMC3', 'rPG', 'rDKM', 'rBC']
 
-
-
 characters = {
     0: "Mario",
     1: "Baby Peach",
@@ -63,7 +58,7 @@ characters = {
     5: "Dry Bones",
     6: "Baby Mario",
     7: "Luigi",
-    8:"Toad",
+    8: "Toad",
     9: "Donkey Kong",
     10: "Yoshi",
     11: "Wario",

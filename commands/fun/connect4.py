@@ -1,9 +1,10 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
-import typing
-import random
 import asyncio
+import random
+import typing
+
+import discord
+from discord import app_commands
+from discord.ext import commands
 
 
 class Connect4(commands.Cog):
@@ -117,8 +118,8 @@ class Connect4(commands.Cog):
     async def update_board_message(self):
         if self.last_board_message:
             await self.last_board_message.delete()
-        embed = discord.Embed(description = self.print_board(), colour = 0x0858ee)
-        self.last_board_message = await self.game_channel.send(embed = embed)
+        embed = discord.Embed(description=self.print_board(), colour=0x0858ee)
+        self.last_board_message = await self.game_channel.send(embed=embed)
 
     async def send_challenge(self, ctx, opponent):
         view = ChallengeView(self, ctx, opponent)
@@ -166,7 +167,7 @@ class Connect4(commands.Cog):
                     col = int(msg.content) - 1
                     await self.make_move(col, self.current_player)
                 except asyncio.TimeoutError:
-                    #await self.game_channel.send('You took too long to respond! Game over.')
+                    # await self.game_channel.send('You took too long to respond! Game over.')
                     self.game_over = True
             else:
                 await self.game_channel.send('Bot is thinking...')
@@ -358,4 +359,3 @@ class ChallengeView(discord.ui.View):
 
 async def setup(bot) -> None:
     await bot.add_cog(Connect4(bot))
-

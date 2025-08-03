@@ -1,11 +1,12 @@
-from discord.ext import commands
-import requests
 import random
+
+import requests
+from discord.ext import commands
+
 
 class Quote(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
-
 
     @commands.command(name="quote")
     async def quote(self, ctx):
@@ -23,7 +24,6 @@ class Quote(commands.Cog):
         message = f"> {quote}\n -{author}"
 
         await ctx.send(message)
-
 
 
 async def setup(bot) -> None:

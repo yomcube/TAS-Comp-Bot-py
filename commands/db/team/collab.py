@@ -1,12 +1,15 @@
+import os
+
 import discord
 from discord.ext import commands
 from discord.ext.commands import Greedy
-from api.utils import get_team_size, is_in_team
-from api.db_classes import Teams, Userbase, get_session
-from api.submissions import new_competitor, get_display_name, get_seeking_channel
-from sqlalchemy import select, insert, update, delete
-import os
 from dotenv import load_dotenv
+from sqlalchemy import select, insert, update
+
+from api.db_classes import Teams, get_session
+from api.submissions import add_competitor_if_new, get_current_team
+from api.utils import is_in_team, get_display_name
+from api.task_handling import get_team_size
 
 load_dotenv()
 DEFAULT = os.getenv('DEFAULT')
@@ -29,7 +32,8 @@ class AcceptDeclineButtons(discord.ui.View):
             return
         self.value = True
         self.disable_all_buttons()
-        await interaction.response.edit_message(content=f"{self.user.mention} has accepted the collaboration!", view=self)
+        await interaction.response.edit_message(content=f"{self.user.mention} has accepted the collaboration!",
+                                                view=self)
         await self.callback(self.user, True)
 
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red)
@@ -39,9 +43,9 @@ class AcceptDeclineButtons(discord.ui.View):
             return
         self.value = False
         self.disable_all_buttons()
-        await interaction.response.edit_message(content=f"{self.user.mention} has declined the collaboration!", view=self)
+        await interaction.response.edit_message(content=f"{self.user.mention} has declined the collaboration!",
+                                                view=self)
         await self.callback(self.user, False)
-
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.gray)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -50,7 +54,8 @@ class AcceptDeclineButtons(discord.ui.View):
                                                     ephemeral=True)
             return
         self.disable_all_buttons()
-        await interaction.response.edit_message(content=f"The collaboration invite to <@{self.user.id}> has been canceled.", view=self)
+        await interaction.response.edit_message(
+            content=f"The collaboration invite to <@{self.user.id}> has been canceled.", view=self)
         await self.cancel_callback(self.user, interaction.user)  # Pass the user who was invited and who cancelled
 
     async def on_timeout(self):
@@ -70,14 +75,15 @@ class Collab(commands.Cog):
         self.bot = bot
         self.pending_collabs = {}  # Track pending collaborations per author
 
-
-    @commands.hybrid_command(name="collab", description="Collaborate with someone during a team task", with_app_command=True)
+    @commands.hybrid_command(name="collab", description="Collaborate with someone during a team task",
+                             with_app_command=True)
     async def collab(self, ctx, users: Greedy[discord.Member]):
         author_id = ctx.author.id
 
         # Check if the author already has a pending collaboration
         if author_id in self.pending_collabs:
-            return await ctx.send("You already have a pending collaboration request. Please wait for it to be resolved, or cancel it.")
+            return await ctx.send(
+                "You already have a pending collaboration request. Please wait for it to be resolved, or cancel it.")
 
         team_size = await get_team_size()
 
@@ -101,7 +107,7 @@ class Collab(commands.Cog):
         for user in users:
             if await is_in_team(user.id):
                 return await ctx.send(f"{user.display_name} is already in a team and cannot join another.",
-                    allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
+                                      allowed_mentions=discord.AllowedMentions.none(), suppress_embeds=True)
 
         # Check if the author is already in a team
         current_team = await self.get_current_team(author_id)
@@ -121,9 +127,6 @@ class Collab(commands.Cog):
         for user in users:
             if user.id == author_id:
                 return await ctx.send("Collaborating with... yourself? sus")
-
-
-
 
         #####################
         # Button view
@@ -147,32 +150,11 @@ class Collab(commands.Cog):
         ####################################
         # Adding executor to user db if new
         ####################################
-        if await new_competitor(ctx.author.id):
-            async with get_session() as session:
-                await session.execute(
-                    insert(Userbase).values(
-                        user_id=ctx.author.id,
-                        user=self.bot.get_user(ctx.author.id).name,
-                        display_name=self.bot.get_user(ctx.author.id).display_name
-                    )
-                )
-                await session.commit()
-
-    async def get_current_team(self, user_id):
-        async with get_session() as session:
-            result = await session.execute(
-                select(Teams).where(
-                    (Teams.leader == user_id) |
-                    (Teams.user2 == user_id) |
-                    (Teams.user3 == user_id) |
-                    (Teams.user4 == user_id)
-                )
-            )
-            team = result.scalar()
-            if team:
-                team_members = [team.leader, team.user2, team.user3, team.user4]
-                return [member for member in team_members if member]
-            return None
+        await add_competitor_if_new(
+            ctx.author.id,
+            self.bot.get_user(ctx.author.id).name,
+            self.bot.get_user(ctx.author.id).display_name
+        )
 
     async def user_response(self, ctx, author_id, user, accepted):
         if author_id in self.pending_collabs and user.id in self.pending_collabs[author_id]:
@@ -184,7 +166,7 @@ class Collab(commands.Cog):
 
                 if accepted_users:
                     # Fetch the current team
-                    current_team = await self.get_current_team(author_id)
+                    current_team = await get_current_team(author_id)
 
                     if current_team:
                         # Prepare the list of new members before modifying
@@ -232,9 +214,18 @@ class Collab(commands.Cog):
                                 if new_member_mentions:
                                     await ctx.send(f"{new_member_mentions} has been added to your team!")
                                 else:
-                                    await ctx.send("Nobody has been added to your team as all invitations were declined, cancelled, or timed out")
+                                    await ctx.send(
+                                        "Nobody has been added to your team as all invitations were declined, cancelled, or timed out")
 
                     else:
+                        # Add any new users to Userbase db
+                        for user_id in accepted_users:
+                            await add_competitor_if_new(
+                                user_id,
+                                self.bot.get_user(user_id).name,
+                                self.bot.get_user(user_id).display_name
+                            )
+
                         # No existing team, create a new team
                         user_mentions = ", ".join(f"<@{uid}>" for uid in accepted_users if uid != author_id)
                         async with get_session() as session:
@@ -247,18 +238,6 @@ class Collab(commands.Cog):
                                     user4=accepted_users[2] if len(accepted_users) > 2 else None
                                 )
                             )
-
-                            # Add any new users to Userbase db
-                            for id in accepted_users:
-                                if await new_competitor(id):
-                                    await session.execute(
-                                        insert(Userbase).values(
-                                            user_id=id,
-                                            user=self.bot.get_user(id).name,
-                                            display_name=self.bot.get_user(id).display_name
-                                        )
-                                    )
-
                             await session.commit()
 
                         await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
@@ -274,64 +253,57 @@ class Collab(commands.Cog):
                     await ctx.send(message)
                     del self.pending_collabs[author_id]
 
-
-
     async def cancel_collab(self, ctx, author_id, invited_user, cancelling_user):
-            if author_id in self.pending_collabs and invited_user.id in self.pending_collabs[author_id]:
-                self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
+        if author_id in self.pending_collabs and invited_user.id in self.pending_collabs[author_id]:
+            self.pending_collabs[author_id][invited_user.id] = False  # Treat cancellation as a decline
 
+            # Check if this cancellation resolves the pending state
+            if all(resp is not None for resp in self.pending_collabs[author_id].values()):
+                accepted_users = [uid for uid, resp in self.pending_collabs[author_id].items() if resp]
+                if accepted_users:
+                    user_mentions = ", ".join(f"<@{uid}>" for uid in accepted_users)
+                    await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
 
-                # Check if this cancellation resolves the pending state
-                if all(resp is not None for resp in self.pending_collabs[author_id].values()):
-                    accepted_users = [uid for uid, resp in self.pending_collabs[author_id].items() if resp]
-                    if accepted_users:
-                        user_mentions = ", ".join(f"<@{uid}>" for uid in accepted_users)
-                        await ctx.send(f"<@{author_id}> is now collaborating with {user_mentions}!")
+                    members = [await get_display_name(author_id)]
 
-                        members = []
-                        members.append(await get_display_name(author_id))
-
-                        for member in accepted_users:
-                            if await get_display_name(member) is not None:
-                                member_name = await get_display_name(member)
-                            else:
-                                member_name = self.bot.get_user(member).display_name
-                            members.append(member_name)
-                        default_team_name = None
-
-                        # Add team to Teams db
-                        async with get_session() as session:
-                            await session.execute(
-                                insert(Teams).values(
-                                    team_name=default_team_name,
-                                    leader=author_id,
-                                    user2=accepted_users[0] if len(accepted_users) > 0 else None,
-                                    user3=accepted_users[1] if len(accepted_users) > 1 else None,
-                                    user4=accepted_users[2] if len(accepted_users) > 2 else None
-                                )
-                            )
-
-                            # Add any new users to Userbase db
-                            for id in accepted_users:
-                                if await new_competitor(id):
-                                    await session.execute(
-                                        insert(Userbase).values(
-                                            user_id=id,
-                                            user=self.bot.get_user(id).name,
-                                            display_name=self.bot.get_user(id).display_name
-                                        )
-                                    )
-                            await session.commit()
-
-                        del self.pending_collabs[author_id]  # Clear the collaboration state
-                    else:
-                        if await is_in_team(author_id):
-                            message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                    for member in accepted_users:
+                        if await get_display_name(member) is not None:
+                            member_name = await get_display_name(member)
                         else:
-                            message = "No team was formed as all invitations were declined, cancelled or timed out."
+                            member_name = self.bot.get_user(member).display_name
+                        members.append(member_name)
+                    default_team_name = None
 
-                        await ctx.send(message)
-                        del self.pending_collabs[author_id]  # Clear the collaboration state
+                    # Add any new users to Userbase db
+                    for user_id in accepted_users:
+                        await add_competitor_if_new(
+                            user_id,
+                            self.bot.get_user(user_id).name,
+                            self.bot.get_user(user_id).display_name,
+                        )
+
+                    # Add team to Teams db
+                    async with get_session() as session:
+                        await session.execute(
+                            insert(Teams).values(
+                                team_name=default_team_name,
+                                leader=author_id,
+                                user2=accepted_users[0] if len(accepted_users) > 0 else None,
+                                user3=accepted_users[1] if len(accepted_users) > 1 else None,
+                                user4=accepted_users[2] if len(accepted_users) > 2 else None
+                            )
+                        )
+                        await session.commit()
+
+                    del self.pending_collabs[author_id]  # Clear the collaboration state
+                else:
+                    if await is_in_team(author_id):
+                        message = "Nobody has been added to your team as all invitations were declined, cancelled, or timed out"
+                    else:
+                        message = "No team was formed as all invitations were declined, cancelled or timed out."
+
+                    await ctx.send(message)
+                    del self.pending_collabs[author_id]  # Clear the collaboration state
 
 
 async def setup(bot):

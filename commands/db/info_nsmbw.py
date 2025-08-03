@@ -1,9 +1,12 @@
+from struct import unpack
+
 import discord
 from discord.ext import commands
-from api.utils import float_to_readable, get_team_size, is_in_team, get_leader
-from api.db_classes import Submissions, get_session
 from sqlalchemy import select
-from struct import unpack
+
+from api.db_classes import Submissions, get_session
+from api.utils import is_in_team, get_leader
+from api.task_handling import get_team_size
 
 
 class Info(commands.Cog):
