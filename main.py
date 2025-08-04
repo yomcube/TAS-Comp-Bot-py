@@ -31,7 +31,7 @@ from application.services.speed_task_service import SpeedTaskService
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 if not TOKEN:
-    print("❌TOKEN non défini dans .env", file=sys.stderr)
+    print("Please insert the discord bot token in the .env file.", file=sys.stderr)
     sys.exit(1)
 
 # ────────────────────────── BOT ACTIVITY ───────────────────────────
