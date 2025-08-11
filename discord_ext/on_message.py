@@ -1,8 +1,14 @@
+from os import getenv
+
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from api import submissions
+from api.utils import get_announcement_channel
 
+load_dotenv()
+DEFAULT = getenv('DEFAULT')
 
 class Message(commands.Cog):
     def __init__(self, bot):
@@ -36,7 +42,8 @@ class Message(commands.Cog):
             await message.add_reaction("✈️")
         elif msg_list[3] in lower_content:
             await message.reply(
-                "A confirmed date and time of the stream will be announced by the current host or the streamer after the deadline in <#657107735720230922>")
+                "A confirmed date and time of the stream will be announced by the current host or the streamer"
+                f"after the deadline in <#{await get_announcement_channel(DEFAULT)}>.")
 
     async def wait_crazy(self, message):
         def check(m):
